@@ -1,0 +1,111 @@
+---
+formDetails:
+- file_name: opportunity-detail
+  fileCode: opportunitydetail
+  form_id: '1594890810035'
+  file_format: ''
+  isFormIdPresentFileName: false
+  esIndexName: 'kronos-opportunity-detail'
+  esIndexDocType: 'opportunitydetail'
+  kafkaTopic: 'opportunity-detail'
+  kakfkaKey: 'opportunity-detail'
+  description: 'action fields has logs index name'
+  action: 'kronos-opportunity-detail-logs'
+- file_name: group-banner
+  fileCode: groupbanner
+  form_id: '1594890436747'
+  file_format: ''
+  isFormIdPresentFileName: false
+  esIndexName: 'kronos-group-banner'
+  esIndexDocType: 'groupbanner'
+  kafkaTopic: 'group-banner'
+  kakfkaKey: 'group-banner'
+  description: 'action fields has logs index name'
+  action: 'kronos-group-banner-logs'
+- file_name: revenue-market
+  fileCode: revenuemarket
+  form_id: '1594891472457'
+  file_format: ''
+  isFormIdPresentFileName: false
+  esIndexName: 'kronos-revenue-market'
+  esIndexDocType: 'revenuemarket'
+  kafkaTopic: 'revenue-market'
+  kakfkaKey: 'revenue-market'
+  description: 'action fields has logs index name'
+  action: 'kronos-revenue-market-logs'
+- file_name: revenue-target-detail
+  fileCode: revenuetargetdetail
+  form_id: '1595919240937'
+  file_format: ''
+  isFormIdPresentFileName: false
+  esIndexName: 'kronos-revenue-target-detail'
+  esIndexDocType: 'revenuetargetdetail'
+  kafkaTopic: 'revenue-target-detail'
+  kakfkaKey: 'revenue-target-detail'
+  description: 'action fields has logs index name'
+  action: 'kronos-revenue-target-detail-logs'
+- file_name: revenue-target-master
+  fileCode: revenuetargetmaster
+  form_id: '1594970154868'
+  file_format: ''
+  isFormIdPresentFileName: false
+  esIndexName: 'kronos-revenue-target-master'
+  esIndexDocType: 'revenuetargetmaster'
+  kafkaTopic: 'revenue-target-master'
+  kakfkaKey: 'revenue-target-master'
+  description: 'action fields has logs index name'
+  action: 'kronos-revenue-target-master-logs'
+- file_name: sales-target-detail
+  fileCode: salestargetdetail
+  form_id: '1594891063130'
+  file_format: ''
+  isFormIdPresentFileName: false
+  esIndexName: 'kronos-sales-target-detail'
+  esIndexDocType: 'salestargetdetail'
+  kafkaTopic: 'sales-target-detail'
+  kakfkaKey: 'sales-target-detail'
+  description: 'action fields has logs index name'
+  action: 'kronos-sales-target-detail-logs'
+- file_name: document-version-logs
+  fileCode: documentversionlogs
+  form_id: ''
+  file_format: ''
+  isFormIdPresentFileName: false
+  esIndexName: 'document-version-logs'
+  esIndexDocType: 'documentversionlogs'
+  kafkaTopic: 'document-version-logs'
+  kakfkaKey: 'document-version-logs'
+  description: 'This index is helpful for maintaing the logs of documents with older versions. It does not support any form.'
+- file_name: employees-status
+  fileCode: employeesstatus
+  form_id: '1596075890491'
+  file_format: ''
+  isFormIdPresentFileName: false
+  esIndexName: 'kronos-employees-status'
+  esIndexDocType: 'employeesstatus'
+  kafkaTopic: 'kronos-employees-status'
+  kakfkaKey: 'kronos-employees-status'
+  description: 'action fields has logs index name'
+  action: 'kronos-employees-status-logs'
+- file_name: Summary
+  fileCode: summary
+  form_id: '1621562959855'
+  file_format: ''
+  isFormIdPresentFileName: false
+  esIndexName: 'kronos-tarento-summary'
+  esIndexDocType: 'kronostarentosummary'
+  kafkaTopic: 'kronos-tarento-summary'
+  kakfkaKey: 'kronos-tarento-summary'
+  description: 'action fields has logs index name'
+  action: 'kronos-tarento-summary-logs'
+- file_name: MIS-IBU
+  fileCode: MIS-IBU
+  form_id: '1621977715045'
+  file_format: ''
+  isFormIdPresentFileName: false
+  esIndexName: 'kronos-mis-ibu'
+  esIndexDocType: 'kronosmisibu'
+  kafkaTopic: 'kronos-mis-ibu'
+  kakfkaKey: 'kronos-mis-ibu'
+  description: 'action fields has logs index name'
+  action: 'kronos-mis-ibu-logs'

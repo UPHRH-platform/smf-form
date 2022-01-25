@@ -1,0 +1,52 @@
+package com.tarento.formservice.utils;
+
+public interface PathRoutes {
+
+	public interface FormServiceApi {
+		final String FORMS_ROOT = "/forms";
+
+		final String GET_ALL_FORMS = "/getAllForms";
+		final String GET_FORM_BY_ID = "/getFormById";
+
+		final String CREATE_FORM = "/createForm";
+		final String UPLOAD_RECORDS = "/uploadRecordData";
+
+		final String UPLOAD_USER_COURSE_DATA = "/uploadUserCourseData";
+
+		final String UPLOAD_ASSESSMENT_DATA = "/uploadAssessmentData";
+
+		final String UPLOAD_DATA = "/uploadData";
+		final String SAVE_FORM_SUBMIT = "/saveFormSubmit";
+		final String VERIFY_FEEDBACK = "/verifyFeedback";
+		final String VOTE_FEEDBACK = "/voteFeedback";
+		final String CHALLENGE_FEEDBACK = "/challengeFeedback";
+		final String SAVE_FORM_SUBMIT_BULK = "/saveFormSubmitBulk";
+		final String REQUEST_FEEDBACK = "/requestFeedback";
+
+		final String SAVE_USER_CHART = "/saveUserChart";
+		final String GET_CHART_BY_ID = "/getChartById";
+		final String GET_ALL_CHARTS = "/getAllCharts";
+		final String DELETE_CHART_BY_ID = "/deleteChartById";
+
+		final String SAVE_USER_DASHBOARD = "/saveUserDashboard";
+		final String GET_DASHBOARD_BY_ID = "/getDashboardById";
+		final String GET_ALL_DASHBOARDS = "/getAllDashboards";
+		final String DELETE_DASHBOARD_BY_ID = "/deleteDashboardById";
+
+		final String GET_FEEDBACKS = "/getFeedbacks";
+		final String GET_FEEDBACK_BY_ID = "/getFeedbackById";
+		final String GET_ALL_FEEDBACKS = "/getAllFeedbacks";
+		final String GET_OVERVIEW_COUNT = "/getOverviewCount";
+		final String ADD_INTERACTION = "/addInteraction";
+		final String GET_ALL_INTERACTIONS = "/getAllInteractions";
+		final String GET_AGENT_AGGREGATIONS = "/getAgentAggregations";
+		final String REPLY_FEEDBACK = "/replyFeedback";
+
+	}
+
+	public interface JsonFormServiceApi {
+		final String JSON_FORM_ROOT = "/admin";
+		final String FORMS = "/forms";
+		final String UPLOAD_JSON_DATA = "/uploadFormData";
+	}
+}
