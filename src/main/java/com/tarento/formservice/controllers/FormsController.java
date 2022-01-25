@@ -1,18 +1,16 @@
 package com.tarento.formservice.controllers;
 
-import org.springframework.http.MediaType;
 import java.io.File;
 import java.io.IOException;
-import org.apache.tomcat.util.codec.binary.Base64;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -105,13 +103,6 @@ public class FormsController {
 		Boolean matchConfigStatus = false;
 		if (incomingData != null) {
 			logger.info("Incomming Data : {}", incomingData);
-			if (userInfo != null)
-				incomingData.setCustomerId(userInfo.getId());
-			if (StringUtils.isNotBlank(incomingData.getFormData())) {
-				fData = decodeValue(incomingData.getFormData());
-				userInfo.setId(fData.getCustomer());
-				incomingData.setAgentId(fData.getAgent());
-			}
 			formModel = mapper.readValue(new File(fileDirectory + fileName),
 					// mapper.readValue(ResourceUtils.getFile("classpath:schema/FormConfig.yml"),
 					// ,
@@ -185,31 +176,6 @@ public class FormsController {
 
 	}
 
-	@PostMapping(value = PathRoutes.FormServiceApi.CHALLENGE_FEEDBACK)
-	public String challengeFeedbacks(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
-			@RequestBody VerifyFeedbackDto verifyFeedbackDto) throws IOException {
-		Boolean stat = formsService.challengeFeedback(verifyFeedbackDto.getId(),
-				verifyFeedbackDto.getReasonForChallenge());
-		if (stat) {
-			return ResponseGenerator.successResponse(stat);
-		} else {
-			return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
-		}
-	}
-
-	@PostMapping(value = PathRoutes.FormServiceApi.REQUEST_FEEDBACK)
-	public String requestFeedback(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
-			@RequestBody FormData formData) throws IOException {
-		FormData fDataDecoded = decodeValue(formData.getFormData());
-		fDataDecoded.setFormData(formData.getFormData());
-		Boolean stat = formsService.requestFeedback(fDataDecoded);
-		if (stat) {
-			return ResponseGenerator.successResponse(stat);
-		} else {
-			return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
-		}
-	}
-
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_FEEDBACKS, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getFeedbacks(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
 			@RequestParam(value = "formId", required = false) Long formId,
@@ -258,29 +224,10 @@ public class FormsController {
 		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
 	}
 
-	@GetMapping(value = PathRoutes.FormServiceApi.GET_OVERVIEW_COUNT, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getOverviewCount(@RequestHeader(value = "x-user-info", required = false) String xUserInfo)
-			throws JsonProcessingException {
-		OverviewCount overviewCount = null;
-		if (StringUtils.isNotBlank(xUserInfo)) {
-			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
-			overviewCount = formsService.getOverviewCount(userInfo);
-		} else {
-			overviewCount = formsService.getOverviewCount(null);
-		}
-
-		if (overviewCount != null) {
-			return ResponseGenerator.successResponse(overviewCount);
-		}
-		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
-	}
-
 	@PostMapping(value = PathRoutes.FormServiceApi.SAVE_FORM_SUBMIT_BULK)
 	public String saveFormSubmitBulk(@RequestBody List<IncomingData> incomingDataList) throws IOException {
 		if (incomingDataList != null && incomingDataList.size() > 0) {
 			for (IncomingData incomingData : incomingDataList) {
-				incomingData.setCustomerId(null);
-				incomingData.setAgentId(null);
 				formsService.saveFormSubmit(incomingData);
 			}
 		}

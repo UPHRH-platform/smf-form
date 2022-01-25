@@ -2,30 +2,22 @@ package com.tarento.formservice.service.impl;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tomcat.util.codec.binary.Base64;
-import org.apache.velocity.VelocityContext;
-import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -47,17 +39,14 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.tarento.formservice.dao.FormsDao;
 import com.tarento.formservice.executor.MasterDataManager;
-import com.tarento.formservice.model.AgentOverview;
 import com.tarento.formservice.model.FormData;
 import com.tarento.formservice.model.IncomingData;
-import com.tarento.formservice.model.OverviewCount;
 import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.ResponseData;
 import com.tarento.formservice.model.Result;
@@ -71,9 +60,6 @@ import com.tarento.formservice.models.FormDetail;
 import com.tarento.formservice.repository.ElasticSearchRepository;
 import com.tarento.formservice.service.FormsService;
 import com.tarento.formservice.utils.Constants;
-import com.tarento.formservice.utils.DateUtils;
-import com.tarento.formservice.utils.JsonKey;
-import com.tarento.formservice.utils.SendMail;
 
 @Service(Constants.ServiceRepositories.FORM_SERVICE)
 public class FormsServiceImpl implements FormsService {
@@ -548,25 +534,6 @@ public class FormsServiceImpl implements FormsService {
 					IncomingData form = new IncomingData();
 					form = gson.fromJson(eachInnerHit.findValue("sourceAsMap").toString(), IncomingData.class);
 					form.setRecordId(documentId);
-					if (MasterDataManager.getUserData().get(form.getCustomerId()) != null) {
-						form.setCustomerName(MasterDataManager.getUserData().get(form.getCustomerId()).getUsername());
-					} else {
-						ResponseData data = fetchUserInfo(form.getCustomerId());
-						if (data != null) {
-							MasterDataManager.getUserData().put(form.getCustomerId(), data);
-							form.setCustomerName(data.getUsername().toString());
-						}
-					}
-					if (MasterDataManager.getUserData().get(form.getAgentId()) != null) {
-						form.setAgentName(
-								MasterDataManager.getUserData().get(form.getAgentId()).getUsername().toString());
-					} else {
-						ResponseData data = fetchUserInfo(form.getAgentId());
-						if (data != null) {
-							MasterDataManager.getUserData().put(form.getAgentId(), data);
-							form.setAgentName(data.getUsername().toString());
-						}
-					}
 					incomingData.add(form);
 					LOGGER.info("Each Form : {}", gson.toJson(form));
 				}
@@ -591,30 +558,6 @@ public class FormsServiceImpl implements FormsService {
 					IncomingData form = new IncomingData();
 					form = gson.fromJson(eachInnerHit.findValue("sourceAsMap").toString(), IncomingData.class);
 					form.setRecordId(documentId);
-					if (form.getCustomerId() != null) {
-						if (MasterDataManager.getUserData() != null
-								&& MasterDataManager.getUserData().containsKey(form.getCustomerId())) {
-							form.setCustomerName(
-									MasterDataManager.getUserData().get(form.getCustomerId()).getUsername());
-						} else {
-							ResponseData data = fetchUserInfo(form.getCustomerId());
-							if (data != null) {
-								MasterDataManager.getUserData().put(form.getCustomerId(), data);
-								form.setCustomerName(data.getUsername());
-							}
-						}
-					}
-					if (form.getAgentId() != null) {
-						if (MasterDataManager.getUserData().get(form.getAgentId()) != null) {
-							form.setAgentName(MasterDataManager.getUserData().get(form.getAgentId()).getUsername());
-						} else {
-							ResponseData data = fetchUserInfo(form.getAgentId());
-							if (data != null) {
-								MasterDataManager.getUserData().put(form.getAgentId(), data);
-								form.setAgentName(data.getUsername());
-							}
-						}
-					}
 					incomingData.add(form);
 					LOGGER.info("Each Form : {}", gson.toJson(form));
 				}
@@ -633,9 +576,6 @@ public class FormsServiceImpl implements FormsService {
 			jsonMap.put("approval", verifyFeedbackDto.getStatus());
 			jsonMap.put("approvedTime", new Date().getTime());
 			jsonMap.put("approvedBy", userInfo.getId());
-			if (verifyFeedbackDto.getStatus().equalsIgnoreCase("REJECTED")) {
-				jsonMap.put("reasonForApprovalRejection", verifyFeedbackDto.getReasonForApprovalRejection());
-			}
 		} else if (verifyFeedbackDto.getCondition().equalsIgnoreCase("CHALLENGE")
 				&& !StringUtils.isBlank(verifyFeedbackDto.getStatus())
 				&& (verifyFeedbackDto.getStatus().equalsIgnoreCase("OVERRULED")
@@ -644,104 +584,13 @@ public class FormsServiceImpl implements FormsService {
 			jsonMap.put("challengeStatus", true);
 			jsonMap.put("challengeVerifiedTime", new Date().getTime());
 			jsonMap.put("challengeVerifiedBy", userInfo.getId());
-			if (verifyFeedbackDto.getCondition().equalsIgnoreCase("CHALLENGE")) {
-				jsonMap.put("reasonForChallenge", verifyFeedbackDto.getReasonForChallenge());
-			}
 		}
 		return formsDao.verifyFeedback(jsonMap, verifyFeedbackDto.getId());
 	}
 
-	@Override
-	public FormData addInteraction(FormData fData) throws IOException {
-		String encodedString = encodeFormsData(fData);
-		fData.setUrlCode(encodedString);
-		boolean status = formsDao.addInteraction(fData, getHttpHeaders());
-		return (status) ? fData : null;
-	}
-
-	@Override
-	public boolean updateInteraction(Map<String, Object> jsonMap, String id) throws IOException {
-		return formsDao.updateInteraction(jsonMap, id, getHttpHeaders());
-	}
 
 	private String encodeFormsData(FormData fData) {
 		return new String(Base64.encodeBase64(new Gson().toJson(fData).getBytes(Charset.forName(US_ASCII))));
-	}
-
-	@Override
-	public List<FormData> getAllInteractions() {
-		List<FormData> interactions = new ArrayList<>();
-		SearchRequest searchRequest = buildQueryForInteractions(null, null);
-		MultiSearchResponse response = formsDao.executeMultiSearchRequest(searchRequest);
-		SearchResponse searchResponse = response.getResponses()[0].getResponse();
-		JsonNode responseNode = null;
-		if (searchResponse != null && searchResponse.getHits() != null) {
-			responseNode = new ObjectMapper().convertValue(searchResponse.getHits(), JsonNode.class);
-			if (responseNode.has("hits")) {
-				JsonNode innerHits = responseNode.findValue("hits");
-				for (JsonNode eachInnerHit : innerHits) {
-					FormData fData = new FormData();
-					fData = gson.fromJson(eachInnerHit.findValue("sourceAsMap").toString(), FormData.class);
-					if (MasterDataManager.getUserData().get(fData.getCustomer()) != null) {
-						fData.setCustomerName(
-								MasterDataManager.getUserData().get(fData.getCustomer()).getUsername().toString());
-					} else {
-						ResponseData data = fetchUserInfo(fData.getCustomer());
-						if (data != null) {
-							MasterDataManager.getUserData().put(fData.getCustomer(), data);
-							fData.setCustomerName(data.getUsername().toString());
-						}
-					}
-					if (MasterDataManager.getUserData().get(fData.getAgent()) != null) {
-						fData.setAgentName(
-								MasterDataManager.getUserData().get(fData.getAgent()).getUsername().toString());
-					} else {
-						ResponseData data = fetchUserInfo(fData.getAgent());
-						if (data != null) {
-							MasterDataManager.getUserData().put(fData.getAgent(), data);
-							fData.setAgentName(data.getUsername().toString());
-						}
-					}
-					interactions.add(fData);
-				}
-			}
-		}
-		return interactions;
-	}
-
-	@Override
-	public List<FormData> getAllInteractionsForAutomatedRequestFeedback() throws Exception {
-		List<FormData> interactions = new ArrayList<>();
-		List<String> ids = new ArrayList<>();
-		LocalDateTime today = LocalDateTime.now();
-		LocalDateTime aweekago = today.minusDays(8);
-		long newTimestamp = DateUtils.now(today).getTime();
-		long startDate = DateUtils.startOfDay(aweekago).getTime();
-		long endDate = DateUtils.endOfDay(aweekago).getTime();
-		SearchRequest searchRequest = buildQueryForInteractions(startDate, endDate);
-		MultiSearchResponse response = formsDao.executeMultiSearchRequest(searchRequest);
-		SearchResponse searchResponse = response.getResponses()[0].getResponse();
-		BulkRequest request = new BulkRequest();
-		Map<String, Object> jsonMap = new HashMap<>();
-		jsonMap.put("linkSentDate", newTimestamp);
-		JsonNode responseNode = null;
-		if (searchResponse != null && searchResponse.getHits() != null) {
-			responseNode = new ObjectMapper().convertValue(searchResponse.getHits(), JsonNode.class);
-			if (responseNode.has("hits")) {
-				JsonNode innerHits = responseNode.findValue("hits");
-				if (!innerHits.isEmpty()) {
-					for (JsonNode eachInnerHit : innerHits) {
-						String id = eachInnerHit.findValue("id").toPrettyString();
-						if (id != null) {
-							ids.add(id);
-							request.add(formsDao.addBulkUpdateRequest(id, jsonMap));
-						}
-					}
-					Boolean updateBulkRequest = formsDao.updateBulkRequest(request);
-				}
-			}
-		}
-		return interactions;
 	}
 
 	@Override
@@ -795,26 +644,6 @@ public class FormsServiceImpl implements FormsService {
 				for (JsonNode eachInnerHit : innerHits) {
 					IncomingData form = new IncomingData();
 					form = gson.fromJson(eachInnerHit.findValue("sourceAsMap").toString(), IncomingData.class);
-					if (MasterDataManager.getUserData().get(form.getCustomerId()) != null) {
-						form.setCustomerName(
-								MasterDataManager.getUserData().get(form.getCustomerId()).getUsername().toString());
-					} else {
-						ResponseData data = fetchUserInfo(form.getCustomerId());
-						if (data != null) {
-							MasterDataManager.getUserData().put(form.getCustomerId(), data);
-							form.setCustomerName(data.getUsername().toString());
-						}
-					}
-					if (MasterDataManager.getUserData().get(form.getAgentId()) != null) {
-						form.setAgentName(
-								MasterDataManager.getUserData().get(form.getAgentId()).getUsername().toString());
-					} else {
-						ResponseData data = fetchUserInfo(form.getAgentId());
-						if (data != null) {
-							MasterDataManager.getUserData().put(form.getAgentId(), data);
-							form.setAgentName(data.getUsername().toString());
-						}
-					}
 					incomingData.add(form);
 					LOGGER.info("Each Form : {}", gson.toJson(form));
 				}
@@ -924,139 +753,6 @@ public class FormsServiceImpl implements FormsService {
 		return new SearchRequest("fs-forms-data").types("forms").source(searchSourceBuilder);
 	}
 
-	@Override
-	public OverviewCount getOverviewCount(UserInfo userInfo) {
-		OverviewCount overviewCount = new OverviewCount();
-		SearchRequest searchRequest = null;
-		SearchRequest secondSearchRequest = null;
-		MultiSearchResponse secondResponse = null;
-		String userRole = "";
-		for (Role role : userInfo.getRoles()) {
-			userRole = role.getName();
-		}
-		if (userRole.equals("Agent")) {
-			searchRequest = buildQueryForAgentOverview(userInfo.getId());
-			secondSearchRequest = buildQueryForAgentOverviewForInteractions(userInfo.getId());
-		} else {
-			searchRequest = buildQueryForGetCount();
-		}
-		MultiSearchResponse response = formsDao.executeMultiSearchRequest(searchRequest);
-		if (secondSearchRequest != null && userRole.equals("Agent")) {
-			secondResponse = formsDao.executeMultiSearchRequest(secondSearchRequest);
-		}
-		SearchResponse searchResponse = response.getResponses()[0].getResponse();
-		SearchResponse secondSearchResponse = secondResponse != null ? secondResponse.getResponses()[0].getResponse()
-				: null;
-		JsonNode responseNode = null;
-		if (searchResponse != null && userRole.equals("Agent")) {
-			responseNode = new ObjectMapper().convertValue(searchResponse.getAggregations(), JsonNode.class);
-			int reviewsReceived = responseNode.findValue("Reviews Received").findValue("value").asInt();
-			overviewCount.setReviewsReceived(reviewsReceived);
-			int reviewsChallenged = responseNode.findValue("Reviews Challenged").findValue("value").asInt();
-			overviewCount.setReviewsChallenged(reviewsChallenged);
-			double averageRating = responseNode.findValue("Average Rating").findValue("value").asDouble();
-			overviewCount.setAverageRating(averageRating);
-			if (secondSearchResponse != null) {
-				responseNode = new ObjectMapper().convertValue(secondSearchResponse.getAggregations(), JsonNode.class);
-				int interactions = responseNode.findValue("Interactions").findValue("value").asInt();
-				overviewCount.setCustomersInteracted(interactions);
-			}
-		} else {
-			responseNode = new ObjectMapper().convertValue(searchResponse.getAggregations(), JsonNode.class);
-			JsonNode aggregationNode = responseNode.findValue("Approval Pending").get("aggregations");
-			JsonNode buckets = aggregationNode.findValue("Approval Pending Count");
-			overviewCount
-					.setPendingApproval(gson.fromJson(buckets.findValue("value").toString(), Long.class).intValue());
-			JsonNode aaaggregationNode = responseNode.findValue("Approval Addressed").get("aggregations");
-			JsonNode aabuckets = aaaggregationNode.findValue("Approval Addressed Count");
-			overviewCount.setApprovalSum(gson.fromJson(aabuckets.findValue("value").toString(), Long.class).intValue());
-			JsonNode caaggregationNode = responseNode.findValue("Challenge Addressed").get("aggregations");
-			JsonNode cabuckets = caaggregationNode.findValue("Challenge Addressed Count");
-			overviewCount
-					.setChallengeSum(gson.fromJson(cabuckets.findValue("value").toString(), Long.class).intValue());
-			JsonNode cpaggregationNode = responseNode.findValue("Challenge Pending").get("aggregations");
-			JsonNode cpbuckets = cpaggregationNode.findValue("Challenge Pending Count");
-			overviewCount
-					.setPendingChallenge(gson.fromJson(cpbuckets.findValue("value").toString(), Long.class).intValue());
-		}
-		return overviewCount;
-	}
-
-	public AgentOverview getAgentAggregations(Long agentId) {
-		AgentOverview agentOverview = new AgentOverview();
-		SearchRequest searchRequest = buildQueryForAgentAggregations(agentId);
-		MultiSearchResponse response = formsDao.executeMultiSearchRequest(searchRequest);
-		SearchResponse searchResponse = response.getResponses()[0].getResponse();
-		JsonNode responseNode = null;
-		if (searchResponse != null) {
-			responseNode = new ObjectMapper().convertValue(searchResponse.getAggregations(), JsonNode.class);
-			Double averageRating = responseNode.findValue("Average Rating").findValue("value").asDouble();
-			agentOverview.setAverageRating(averageRating);
-
-			Long totalRating = responseNode.findValue("Total Ratings").findValue("value").asLong();
-			agentOverview.setTotalRating(totalRating);
-			Long totalRatingSum = totalRating * 5;
-
-			Map<Integer, Double> ratingSplit = new HashMap<Integer, Double>() {
-				{
-					put(1, 0.0);
-					put(2, 0.0);
-					put(3, 0.0);
-					put(4, 0.0);
-					put(5, 0.0);
-				}
-			};
-			Map<String, Double> featureListing = new HashMap<String, Double>();
-			JsonNode buckets = (ArrayNode) responseNode.findValue("Rating Split").findValue("buckets");
-			buckets.forEach(bucket -> {
-				int docCount = bucket.findValue("docCount").asInt();
-				double percentage = ((double) docCount / totalRating) * 100;
-				ratingSplit.put(bucket.findValue("key").asInt(), percentage);
-			});
-			agentOverview.setRatingSplit(ratingSplit);
-
-			Long quality = responseNode.findValue("Quality Of Listing").findValue("value").asLong();
-			double qualityDouble = ((double) quality / totalRatingSum) * 100;
-			featureListing.put("Quality Of Listing", qualityDouble);
-
-			Long responsiveness = responseNode.findValue("Responsiveness").findValue("value").asLong();
-			double responsivenessDouble = ((double) responsiveness / totalRatingSum) * 100;
-			featureListing.put("Responsiveness", responsivenessDouble);
-
-			Long serviceOrientation = responseNode.findValue("Service Orientation").findValue("value").asLong();
-			double serviceOrientationDouble = ((double) serviceOrientation / totalRatingSum) * 100;
-			featureListing.put("Service Orientation", serviceOrientationDouble);
-
-			Long kk = responseNode.findValue("Knowledge and Expertise").findValue("value").asLong();
-			double kkDouble = ((double) kk / totalRatingSum) * 100;
-			featureListing.put("Knowledge and Expertise", kkDouble);
-
-			agentOverview.setFeatureListing(featureListing);
-		}
-		return agentOverview;
-	}
-
-	private SearchRequest buildQueryForAgentAggregations(Long agentId) {
-		BoolQueryBuilder agentIdMatchQuery = QueryBuilders.boolQuery();
-		agentIdMatchQuery.must().add(QueryBuilders.termQuery("agentId", agentId));
-
-		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0);
-		searchSourceBuilder.aggregation(AggregationBuilders.filter("User Based Filter", agentIdMatchQuery)
-				.subAggregation(AggregationBuilders.avg("Average Rating")
-						.field("dataObject.How would you rate your overall experience with our agent? (Mandatory)"))
-				.subAggregation(AggregationBuilders.count("Total Ratings").field("id"))
-				.subAggregation(AggregationBuilders.terms("Rating Split")
-						.field("dataObject.How would you rate your overall experience with our agent? (Mandatory)"))
-				.subAggregation(AggregationBuilders.sum("Quality Of Listing")
-						.field("dataObject.How was the quality of listing of the property you were interested in?"))
-				.subAggregation(AggregationBuilders.sum("Responsiveness")
-						.field("dataObject.How was the responsiveness of the agent when you tried to reach?"))
-				.subAggregation(AggregationBuilders.sum("Service Orientation")
-						.field("dataObject.How satisfied are you with the service orientation of the agent?"))
-				.subAggregation(AggregationBuilders.sum("Knowledge and Expertise")
-						.field("dataObject.How knowledgeable and expert was the agent?")));
-		return new SearchRequest("fs-forms-data").types("forms").source(searchSourceBuilder);
-	}
 
 	@Override
 	public Boolean replyFeedback(UserInfo userInfo, ReplyFeedbackDto replyFeedbackDto) throws IOException {
@@ -1093,55 +789,5 @@ public class FormsServiceImpl implements FormsService {
 			replies.add(replyFeedbackDto);
 		jsonMap.put("replies", replies);
 		return formsDao.replyFeedback(jsonMap, replyFeedbackDto.getRecordId());
-	}
-
-	@Override
-	public Boolean requestFeedback(FormData formData) throws IOException {
-		ResponseData data = fetchUserInfo(formData.getCustomer());
-		String name = data.getFirstName();
-		VelocityContext context = new VelocityContext();
-		try {
-			context.put(JsonKey.MAIL_SUBJECT, "Requesting your feedback!");
-			context.put(JsonKey.MAIL_BODY, "Based on your interaction with our agent, we seek your feedback");
-			context.put(JsonKey.FIRST_NAME, name);
-			context.put(JsonKey.PSWRD, "https://rain.tarento.com/survey/" + formData.getFormData());
-		} catch (Exception e) {
-			LOGGER.error(String.format("Encountered an Exception while sending an email :  %s", e.getMessage()));
-		}
-		String receipientEmail = "sakthivel.govindan@tarento.com";
-		String secondaryEmail = "darshan.nagesh@tarento.com";
-		updateLinkSentDate(formData.getFormData());
-		SendMail.sendMail(new String[] { receipientEmail, secondaryEmail, data.getEmailId() },
-				"Requesting your feedback", context, "email_template.vm");
-		return Boolean.TRUE;
-	}
-
-	private void updateLinkSentDate(String formData) throws IOException {
-		SearchRequest searchRequest = buildQueryForInteractionsFromFormData(formData);
-		MultiSearchResponse response = formsDao.executeMultiSearchRequest(searchRequest);
-		SearchResponse searchResponse = response.getResponses()[0].getResponse();
-		JsonNode responseNode = null;
-		FormData fData = new FormData();
-		if (searchResponse != null && searchResponse.getHits() != null) {
-			responseNode = new ObjectMapper().convertValue(searchResponse.getHits(), JsonNode.class);
-			if (responseNode.has("hits")) {
-				JsonNode innerHits = responseNode.findValue("hits");
-				for (JsonNode eachInnerHit : innerHits) {
-					String id = eachInnerHit.findValue("id").asText();
-					fData = gson.fromJson(eachInnerHit.findValue("sourceAsMap").toString(), FormData.class);
-					Map<String, Object> jsonMap = new HashMap<>();
-					jsonMap.put("linkSentDate", new Date().getTime());
-					formsDao.updateInteractions(jsonMap, id);
-				}
-			}
-		}
-	}
-
-	private SearchRequest buildQueryForInteractionsFromFormData(String formData) {
-		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
-		BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
-		boolBuilder.must().add(QueryBuilders.matchQuery(Constants.Parameters.FORM_DATA, formData));
-		searchSourceBuilder.query(boolBuilder);
-		return new SearchRequest(interactionIndexName).types("forms").source(searchSourceBuilder);
 	}
 }
