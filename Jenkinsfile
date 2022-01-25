@@ -26,8 +26,6 @@ node() {
                 sh '''
                    commit_id=$(git rev-parse --short HEAD)
                    echo $commit_id> commit_id.txt
-                   cd $docker_file_path
-                   pwd
                    docker build --no-cache -f Dockerfile.igot -t $docker_server/$docker_repo:$commit_id .
                    docker tag $docker_server/$docker_repo:$commit_id $docker_server/$docker_repo:$image_tag
                    '''
