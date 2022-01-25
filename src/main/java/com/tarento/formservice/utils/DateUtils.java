@@ -413,4 +413,8 @@ public class DateUtils {
 		return formatDate;
 	}
 
+	public static long getCurrentTimestamp() {
+		return new Date().getTime();
+	}
+
 }

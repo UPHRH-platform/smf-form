@@ -2,6 +2,9 @@ package com.tarento.formservice.service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+
+import org.springframework.web.multipart.MultipartFile;
 
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.ReplyFeedbackDto;
@@ -42,5 +45,7 @@ public interface FormsService {
 	public List<IncomingData> getFeedbacks(String approved, String challenged, Boolean challengeStatus);
 
 	ResponseData fetchUserInfo(Long userId);
+
+	public Boolean saveFormSubmit(IncomingData incomingData, Map<String, MultipartFile> multipartFiles);
 
 }

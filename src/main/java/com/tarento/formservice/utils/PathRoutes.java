@@ -17,6 +17,7 @@ public interface PathRoutes {
 
 		final String UPLOAD_DATA = "/uploadData";
 		final String SAVE_FORM_SUBMIT = "/saveFormSubmit";
+		final String SAVE_FORM_SUBMIT_V1 = "/v1/saveFormSubmit";
 		final String VERIFY_FEEDBACK = "/verifyFeedback";
 		final String VOTE_FEEDBACK = "/voteFeedback";
 		final String CHALLENGE_FEEDBACK = "/challengeFeedback";

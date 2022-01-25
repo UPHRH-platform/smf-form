@@ -106,6 +106,7 @@ public interface Constants {
 		static final String ERROR_MESSAGE = "Unable to fetch the details. Please try again later!";
 		static final String PACK_HASHCODE_EMPTY = "Hashcode cannot be empty! Please try again with valid hashcode";
 		static final String PACK_DISTRIBUTION_INVALID = "This pack is no longer valid. Please contact admin!";
+		static final String CHECK_REQUEST_PARAMS = "Check your request paramaters.";
 	}
 
 	interface Markers {
@@ -114,4 +115,9 @@ public interface Constants {
 
 	static final String HTTP = "https://";
 	public static final String TIME_ZONE = "UTC";
+
+	// constants
+	public static final String NAME = "name";
+	public static final String URL = "url";
+	public static final String UP_SMF = "up-smf";
 }

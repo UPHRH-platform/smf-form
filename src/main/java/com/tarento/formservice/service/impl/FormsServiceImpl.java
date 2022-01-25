@@ -1,5 +1,7 @@
 package com.tarento.formservice.service.impl;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -59,6 +62,7 @@ import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
 import com.tarento.formservice.repository.ElasticSearchRepository;
 import com.tarento.formservice.service.FormsService;
+import com.tarento.formservice.utils.CloudStorage;
 import com.tarento.formservice.utils.Constants;
 
 @Service(Constants.ServiceRepositories.FORM_SERVICE)
@@ -588,7 +592,6 @@ public class FormsServiceImpl implements FormsService {
 		return formsDao.verifyFeedback(jsonMap, verifyFeedbackDto.getId());
 	}
 
-
 	private String encodeFormsData(FormData fData) {
 		return new String(Base64.encodeBase64(new Gson().toJson(fData).getBytes(Charset.forName(US_ASCII))));
 	}
@@ -753,7 +756,6 @@ public class FormsServiceImpl implements FormsService {
 		return new SearchRequest("fs-forms-data").types("forms").source(searchSourceBuilder);
 	}
 
-
 	@Override
 	public Boolean replyFeedback(UserInfo userInfo, ReplyFeedbackDto replyFeedbackDto) throws IOException {
 		Map<String, Object> jsonMap = new HashMap<>();
@@ -789,5 +791,46 @@ public class FormsServiceImpl implements FormsService {
 			replies.add(replyFeedbackDto);
 		jsonMap.put("replies", replies);
 		return formsDao.replyFeedback(jsonMap, replyFeedbackDto.getRecordId());
+	}
+
+	@Override
+	public Boolean saveFormSubmit(IncomingData incomingData, Map<String, MultipartFile> multipartFiles) {
+		try {
+			// upload the attached files
+			Map<String, List<String>> attachments = new HashMap<>();
+			if (multipartFiles != null) {
+				for (Map.Entry<String, MultipartFile> entry : multipartFiles.entrySet()) {
+					String folderPath = Constants.UP_SMF + "/" + entry.getKey();
+					File file = new File(entry.getValue().getOriginalFilename());
+					file.createNewFile();
+					FileOutputStream fos = new FileOutputStream(file);
+					fos.write(entry.getValue().getBytes());
+					fos.close();
+					Map<String, String> uploadedFile = CloudStorage.uploadFile(folderPath, file);
+					file.delete();
+
+					if (uploadedFile != null) {
+						if (attachments.containsKey(entry.getKey())) {
+							attachments.get(entry.getKey()).add(uploadedFile.get(Constants.NAME));
+						} else {
+							attachments.put(entry.getKey(),
+									new ArrayList<>(Arrays.asList(uploadedFile.get(Constants.NAME))));
+						}
+					} else {
+						LOGGER.info("Uploading " + entry.getValue().getOriginalFilename() + " file got failed");
+					}
+				}
+			} else {
+				LOGGER.info("No attachments found in the form request");
+			}
+
+			incomingData.setAttachments(attachments);
+			formsDao.saveFormSubmit(incomingData, getHttpHeaders());
+			return Boolean.TRUE;
+
+		} catch (Exception e) {
+			LOGGER.error(String.format("Exception in saveFormSubmit: %s", e.getMessage()));
+		}
+		return Boolean.FALSE;
 	}
 }
