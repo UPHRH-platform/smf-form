@@ -20,21 +20,6 @@ public class IncomingData {
 
 	private Long id;
 	private String recordId;
-	private Long customerId;
-	private String customerName;
-	private Long agentId;
-	private String agentName;
-	private String approval;
-	private Long approvedBy;
-	private Long approvedTime;
-	private String challenge;
-	private Long challengeVerifiedBy;
-	private Boolean challengeStatus;
-	private Long challengeVerifiedTime;
-	private String reasonForChallenge;
-	private String reasonForApprovalRejection;
-	private String adminReply;
-	private Long adminReplyTime;
 	private int version;
 	private Long timestamp;
 	private Object dataObject;

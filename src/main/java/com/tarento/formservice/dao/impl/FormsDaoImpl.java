@@ -145,15 +145,6 @@ public class FormsDaoImpl implements FormsDao {
 
 	@Override
 	public Boolean saveFormSubmit(IncomingData incomingData, HttpHeaders httpHeaders) throws IOException {
-		incomingData.setReasonForApprovalRejection("");
-		incomingData.setApprovedTime(0L);
-		incomingData.setApprovedBy(0L);
-		incomingData.setApproval("");
-		incomingData.setChallenge("");
-		incomingData.setChallengeVerifiedBy(0L);
-		incomingData.setChallengeVerifiedTime(0L);
-		incomingData.setChallengeStatus(false);
-		incomingData.setReasonForChallenge("");
 		IndexRequest indexRequest = new IndexRequest().index("fs-forms-data").type(formsDocumentType)
 				.source(new Gson().toJson(incomingData), XContentType.JSON);
 		logger.info("Index Request Description: {} ", indexRequest.getDescription());
