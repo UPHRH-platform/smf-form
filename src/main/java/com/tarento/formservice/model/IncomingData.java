@@ -7,6 +7,7 @@ public class IncomingData {
 
 	private Long id;
 	private Long formId;
+	private String applicationId;
 	private String recordId;
 	private int version;
 	private Long timestamp;
@@ -17,7 +18,7 @@ public class IncomingData {
 	private List<Vote> upvotes;
 	private List<Vote> downvotes;
 	private List<ReplyFeedbackDto> replies;
-	private Map<String, List<String>> attachments;
+	private Map<String, List<Map<String, String>>> attachments;
 
 	public Long getId() {
 		return id;
@@ -115,12 +116,20 @@ public class IncomingData {
 		this.replies = replies;
 	}
 
-	public Map<String, List<String>> getAttachments() {
+	public Map<String, List<Map<String, String>>> getAttachments() {
 		return attachments;
 	}
 
-	public void setAttachments(Map<String, List<String>> attachments) {
+	public void setAttachments(Map<String, List<Map<String, String>>> attachments) {
 		this.attachments = attachments;
+	}
+
+	public String getApplicationId() {
+		return applicationId;
+	}
+
+	public void setApplicationId(String applicationId) {
+		this.applicationId = applicationId;
 	}
 
 }

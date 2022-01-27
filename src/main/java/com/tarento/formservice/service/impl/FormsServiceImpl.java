@@ -797,7 +797,7 @@ public class FormsServiceImpl implements FormsService {
 	public Boolean saveFormSubmit(IncomingData incomingData, Map<String, MultipartFile> multipartFiles) {
 		try {
 			// upload the attached files
-			Map<String, List<String>> attachments = new HashMap<>();
+			Map<String, List<Map<String, String>>> attachments = new HashMap<>();
 			if (multipartFiles != null) {
 				for (Map.Entry<String, MultipartFile> entry : multipartFiles.entrySet()) {
 					String folderPath = Constants.UP_SMF + "/" + entry.getKey();
@@ -811,10 +811,9 @@ public class FormsServiceImpl implements FormsService {
 
 					if (uploadedFile != null) {
 						if (attachments.containsKey(entry.getKey())) {
-							attachments.get(entry.getKey()).add(uploadedFile.get(Constants.NAME));
+							attachments.get(entry.getKey()).add(uploadedFile);
 						} else {
-							attachments.put(entry.getKey(),
-									new ArrayList<>(Arrays.asList(uploadedFile.get(Constants.NAME))));
+							attachments.put(entry.getKey(), new ArrayList<>(Arrays.asList(uploadedFile)));
 						}
 					} else {
 						LOGGER.info("Uploading " + entry.getValue().getOriginalFilename() + " file got failed");
@@ -832,5 +831,36 @@ public class FormsServiceImpl implements FormsService {
 			LOGGER.error(String.format("Exception in saveFormSubmit: %s", e.getMessage()));
 		}
 		return Boolean.FALSE;
+	}
+
+	@Override
+	public List<IncomingData> getApplications(String formId, String applicationId) {
+		try {
+			if (StringUtils.isNotBlank(formId) || StringUtils.isNotBlank(applicationId)) {
+				List<IncomingData> responseData = new ArrayList<>();
+				SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
+				if (StringUtils.isNotBlank(formId)) {
+					searchSourceBuilder.query(QueryBuilders.matchQuery(Constants.FORM_ID, formId));
+				} else if (StringUtils.isNotBlank(applicationId)) {
+					searchSourceBuilder.query(QueryBuilders.matchQuery(Constants._ID, applicationId));
+				}
+				SearchRequest searchRequest = new SearchRequest("fs-forms-data").types("forms")
+						.source(searchSourceBuilder);
+
+				MultiSearchResponse response = formsDao.executeMultiSearchRequest(searchRequest);
+				SearchResponse searchResponse = response.getResponses()[0].getResponse();
+				SearchHit[] hit = searchResponse.getHits().getHits();
+				for (SearchHit hits : hit) {
+					Map<String, Object> sourceAsMap = hits.getSourceAsMap();
+					sourceAsMap.put(Constants.APPLICATION_ID, hits.getId());
+					responseData.add(new ObjectMapper().convertValue(sourceAsMap, IncomingData.class));
+				}
+
+				return responseData;
+			}
+		} catch (Exception e) {
+			LOGGER.error(String.format("Exception in getApplications: %s", e.getMessage()));
+		}
+		return null;
 	}
 }

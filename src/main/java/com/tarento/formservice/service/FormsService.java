@@ -48,4 +48,6 @@ public interface FormsService {
 
 	public Boolean saveFormSubmit(IncomingData incomingData, Map<String, MultipartFile> multipartFiles);
 
+	List<IncomingData> getApplications(String formId, String applicationId);
+
 }

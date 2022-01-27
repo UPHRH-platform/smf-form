@@ -266,4 +266,25 @@ public class FormsController {
 		return fData;
 	}
 
+	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_APPLICATIONS, produces = MediaType.APPLICATION_JSON_VALUE)
+	public String getAllApplications(@RequestParam(value = Constants.FORM_ID, required = false) String formId)
+			throws JsonProcessingException {
+		List<IncomingData> responseData = formsService.getApplications(formId, null);
+		if (responseData != null) {
+			return ResponseGenerator.successResponse(responseData);
+		}
+		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
+	}
+
+	@GetMapping(value = PathRoutes.FormServiceApi.GET_APPLICATIONS_BY_ID, produces = MediaType.APPLICATION_JSON_VALUE)
+	public String getApplicationsById(
+			@RequestParam(value = Constants.APPLICATION_ID, required = false) String applicationId)
+			throws JsonProcessingException {
+		List<IncomingData> responseData = formsService.getApplications(null, applicationId);
+		if (responseData != null) {
+			return ResponseGenerator.successResponse(responseData);
+		}
+		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
+	}
+
 }
