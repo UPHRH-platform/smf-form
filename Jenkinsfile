@@ -27,8 +27,6 @@ node() {
 
            stage('docker-build') {
                 sh '''
-                   commit_id=$(git rev-parse --short HEAD)
-                   echo $commit_id> commit_id.txt
                    docker build --no-cache -f Dockerfile -t $docker_server/$docker_repo:$commit_id .
                    '''
         }
