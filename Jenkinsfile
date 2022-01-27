@@ -33,8 +33,6 @@ node() {
          stage('docker-push') {
 
                sh '''
-                  pwd
-                  commit_id=$(git rev-parse --short HEAD)
                   docker push $docker_server/$docker_repo:$commit_id
                   docker rmi -f $docker_server/$docker_repo:$commit_id
                   '''
