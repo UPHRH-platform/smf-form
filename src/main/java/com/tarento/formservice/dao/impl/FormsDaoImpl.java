@@ -93,7 +93,7 @@ public class FormsDaoImpl implements FormsDao {
 				return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
 			}
 		};
-		return new RestHighLevelClient(RestClient.builder(new HttpHost(elasticHost, elasticPort, "https"))
+		return new RestHighLevelClient(RestClient.builder(new HttpHost(elasticHost, elasticPort))
 				.setHttpClientConfigCallback(httpClientConfigCallback));
 	}
 
