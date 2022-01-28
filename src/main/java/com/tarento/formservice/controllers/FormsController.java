@@ -267,7 +267,7 @@ public class FormsController {
 	}
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_APPLICATIONS, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getAllApplications(@RequestParam(value = Constants.FORM_ID, required = false) String formId)
+	public String getAllApplications(@RequestParam(value = Constants.FORM_ID, required = true) String formId)
 			throws JsonProcessingException {
 		List<IncomingData> responseData = formsService.getApplications(formId, null);
 		if (responseData != null) {
@@ -278,7 +278,7 @@ public class FormsController {
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_APPLICATIONS_BY_ID, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getApplicationsById(
-			@RequestParam(value = Constants.APPLICATION_ID, required = false) String applicationId)
+			@RequestParam(value = Constants.APPLICATION_ID, required = true) String applicationId)
 			throws JsonProcessingException {
 		List<IncomingData> responseData = formsService.getApplications(null, applicationId);
 		if (responseData != null) {
