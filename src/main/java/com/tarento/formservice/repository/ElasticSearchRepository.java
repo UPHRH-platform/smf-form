@@ -79,8 +79,7 @@ public class ElasticSearchRepository {
 				return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
 			}
 		};
-		return new RestHighLevelClient(RestClient.builder(new HttpHost(elasticHost, elasticPort))
-				.setHttpClientConfigCallback(httpClientConfigCallback));
+		return new RestHighLevelClient(RestClient.builder(new HttpHost(elasticHost, elasticPort)));
 	}
 
 	/**
