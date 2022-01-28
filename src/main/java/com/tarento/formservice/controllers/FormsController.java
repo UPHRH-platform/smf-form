@@ -2,6 +2,7 @@ package com.tarento.formservice.controllers;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -141,7 +142,10 @@ public class FormsController {
 			logger.info("Incoming Data : {}", requestMap);
 			try {
 				IncomingData incomingData = new ObjectMapper().readValue(requestMap, IncomingData.class);
-
+				if (StringUtils.isNotBlank(xUserInfo)) {
+					UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+					incomingData.setCreatedBy(userInfo.emailId);
+				}
 				Boolean status = formsService.saveFormSubmit(incomingData, multipartFiles);
 				if (status) {
 					return ResponseGenerator.successResponse(status);
@@ -267,9 +271,16 @@ public class FormsController {
 	}
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_APPLICATIONS, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getAllApplications(@RequestParam(value = Constants.FORM_ID, required = true) String formId)
-			throws JsonProcessingException {
-		List<IncomingData> responseData = formsService.getApplications(formId, null);
+	public String getAllApplications(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+			@RequestParam(value = Constants.FORM_ID, required = false) String formId) throws JsonProcessingException {
+		List<IncomingData> responseData = new ArrayList<>();
+		if (StringUtils.isNotBlank(formId)) {
+			responseData = formsService.getApplications(formId, null, null);
+		} else if (StringUtils.isNotBlank(xUserInfo)) {
+			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+			responseData = formsService.getApplications(null, null, userInfo.getEmailId());
+		}
+
 		if (responseData != null) {
 			return ResponseGenerator.successResponse(responseData);
 		}
@@ -277,10 +288,10 @@ public class FormsController {
 	}
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_APPLICATIONS_BY_ID, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getApplicationsById(
+	public String getApplicationsById(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
 			@RequestParam(value = Constants.APPLICATION_ID, required = true) String applicationId)
 			throws JsonProcessingException {
-		List<IncomingData> responseData = formsService.getApplications(null, applicationId);
+		List<IncomingData> responseData = formsService.getApplications(null, applicationId, null);
 		if (responseData != null) {
 			return ResponseGenerator.successResponse(responseData);
 		}

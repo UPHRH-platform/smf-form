@@ -124,4 +124,9 @@ public interface Constants {
 	public static final String ID = "id";
 	public static final String FORM_ID = "formId";
 	public static final String APPLICATION_ID = "applicationId";
+	public static final String CREATED_BY = "createdBy";
+
+	interface ApplicationStatus {
+		public static final String SUBMITTED = "Submitted";
+	}
 }

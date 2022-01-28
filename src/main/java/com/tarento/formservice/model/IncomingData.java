@@ -19,6 +19,9 @@ public class IncomingData {
 	private List<Vote> downvotes;
 	private List<ReplyFeedbackDto> replies;
 	private Map<String, List<Map<String, String>>> attachments;
+	private String status;
+	private String createdBy;
+	private String createdDate;
 
 	public Long getId() {
 		return id;
@@ -130,6 +133,30 @@ public class IncomingData {
 
 	public void setApplicationId(String applicationId) {
 		this.applicationId = applicationId;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public String getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public String getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(String createdDate) {
+		this.createdDate = createdDate;
 	}
 
 }

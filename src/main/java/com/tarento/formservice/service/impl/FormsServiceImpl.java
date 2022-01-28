@@ -64,6 +64,8 @@ import com.tarento.formservice.repository.ElasticSearchRepository;
 import com.tarento.formservice.service.FormsService;
 import com.tarento.formservice.utils.CloudStorage;
 import com.tarento.formservice.utils.Constants;
+import com.tarento.formservice.utils.DateUtil;
+import com.tarento.formservice.utils.DateUtils;
 
 @Service(Constants.ServiceRepositories.FORM_SERVICE)
 public class FormsServiceImpl implements FormsService {
@@ -824,6 +826,9 @@ public class FormsServiceImpl implements FormsService {
 			}
 
 			incomingData.setAttachments(attachments);
+			incomingData.setStatus(Constants.ApplicationStatus.SUBMITTED);
+			incomingData.setTimestamp(DateUtils.getCurrentTimestamp());
+			incomingData.setCreatedDate(DateUtils.getYyyyMmDdInUTC());
 			formsDao.saveFormSubmit(incomingData, getHttpHeaders());
 			return Boolean.TRUE;
 
@@ -834,19 +839,25 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
-	public List<IncomingData> getApplications(String formId, String applicationId) {
+	public List<IncomingData> getApplications(String formId, String applicationId, String createdBy) {
 		try {
-			if (StringUtils.isNotBlank(formId) || StringUtils.isNotBlank(applicationId)) {
+			if (StringUtils.isNotBlank(formId) || StringUtils.isNotBlank(applicationId)
+					|| StringUtils.isNotBlank(createdBy)) {
 				List<IncomingData> responseData = new ArrayList<>();
+				// query builder
 				SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
+				BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
 				if (StringUtils.isNotBlank(formId)) {
-					searchSourceBuilder.query(QueryBuilders.matchQuery(Constants.FORM_ID, formId));
+					boolBuilder.must().add(QueryBuilders.matchQuery(Constants.FORM_ID, formId));
 				} else if (StringUtils.isNotBlank(applicationId)) {
-					searchSourceBuilder.query(QueryBuilders.matchQuery(Constants._ID, applicationId));
+					boolBuilder.must().add(QueryBuilders.matchQuery(Constants._ID, applicationId));
+				} else if (StringUtils.isNotBlank(createdBy)) {
+					boolBuilder.must().add(QueryBuilders.matchQuery(Constants.CREATED_BY, createdBy));
 				}
+				searchSourceBuilder.query(boolBuilder);
+				// es call
 				SearchRequest searchRequest = new SearchRequest("fs-forms-data").types("forms")
 						.source(searchSourceBuilder);
-
 				MultiSearchResponse response = formsDao.executeMultiSearchRequest(searchRequest);
 				SearchResponse searchResponse = response.getResponses()[0].getResponse();
 				SearchHit[] hit = searchResponse.getHits().getHits();
@@ -859,6 +870,7 @@ public class FormsServiceImpl implements FormsService {
 				return responseData;
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			LOGGER.error(String.format("Exception in getApplications: %s", e.getMessage()));
 		}
 		return null;
