@@ -855,6 +855,7 @@ public class FormsServiceImpl implements FormsService {
 					boolBuilder.must().add(QueryBuilders.matchQuery(Constants.CREATED_BY, createdBy));
 				}
 				searchSourceBuilder.query(boolBuilder);
+				searchSourceBuilder.sort("timestamp", SortOrder.DESC);
 				// es call
 				SearchRequest searchRequest = new SearchRequest("fs-forms-data").types("forms")
 						.source(searchSourceBuilder);
