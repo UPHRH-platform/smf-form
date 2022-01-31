@@ -854,10 +854,12 @@ public class FormsServiceImpl implements FormsService {
 					boolBuilder.must().add(QueryBuilders.matchQuery(Constants._ID, applicationId));
 				}
 				if (StringUtils.isNotBlank(createdBy)) {
-					boolBuilder.must().add(QueryBuilders.matchQuery(Constants.CREATED_BY, createdBy));
+					boolBuilder.must()
+							.add(QueryBuilders.matchQuery(Constants.CREATED_BY + Constants.APPEND_KEYWORD, createdBy));
 				}
 				searchSourceBuilder.query(boolBuilder);
 				searchSourceBuilder.sort("timestamp", SortOrder.DESC);
+				LOGGER.info(String.format("getApplications search query builder: %s", searchSourceBuilder));
 				// es call
 				SearchRequest searchRequest = new SearchRequest("fs-forms-data").types("forms")
 						.source(searchSourceBuilder);

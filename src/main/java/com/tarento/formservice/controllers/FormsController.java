@@ -163,7 +163,7 @@ public class FormsController {
 				return ResponseGenerator.failureResponse(Constants.ResponseMessages.CHECK_REQUEST_PARAMS);
 			}
 		}
-		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
+		return ResponseGenerator.failureResponse(Constants.ResponseMessages.CHECK_REQUEST_PARAMS);
 
 	}
 
@@ -284,6 +284,7 @@ public class FormsController {
 		if (StringUtils.isNotBlank(formId)) {
 			responseData = formsService.getApplications(formId, null, null);
 		} else if (StringUtils.isNotBlank(xUserInfo)) {
+			System.out.println(xUserInfo);
 			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 			responseData = formsService.getApplications(null, null, userInfo.getEmailId());
 		}
