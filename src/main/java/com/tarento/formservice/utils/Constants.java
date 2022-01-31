@@ -132,6 +132,8 @@ public interface Constants {
 	public static final String APPLICATION_ID = "applicationId";
 	public static final String CREATED_BY = "createdBy";
 
+	public static final String APPEND_KEYWORD = ".keyword";
+
 	interface ApplicationStatus {
 		public static final String SUBMITTED = "Submitted";
 	}
