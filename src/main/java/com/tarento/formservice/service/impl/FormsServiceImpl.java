@@ -849,9 +849,11 @@ public class FormsServiceImpl implements FormsService {
 				BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
 				if (StringUtils.isNotBlank(formId)) {
 					boolBuilder.must().add(QueryBuilders.matchQuery(Constants.FORM_ID, formId));
-				} else if (StringUtils.isNotBlank(applicationId)) {
+				}
+				if (StringUtils.isNotBlank(applicationId)) {
 					boolBuilder.must().add(QueryBuilders.matchQuery(Constants._ID, applicationId));
-				} else if (StringUtils.isNotBlank(createdBy)) {
+				}
+				if (StringUtils.isNotBlank(createdBy)) {
 					boolBuilder.must().add(QueryBuilders.matchQuery(Constants.CREATED_BY, createdBy));
 				}
 				searchSourceBuilder.query(boolBuilder);

@@ -7,6 +7,7 @@ public class IncomingData {
 
 	private Long id;
 	private Long formId;
+	private String title;
 	private String applicationId;
 	private String recordId;
 	private int version;
@@ -37,6 +38,22 @@ public class IncomingData {
 
 	public void setFormId(Long formId) {
 		this.formId = formId;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getApplicationId() {
+		return applicationId;
+	}
+
+	public void setApplicationId(String applicationId) {
+		this.applicationId = applicationId;
 	}
 
 	public String getRecordId() {
@@ -125,14 +142,6 @@ public class IncomingData {
 
 	public void setAttachments(Map<String, List<Map<String, String>>> attachments) {
 		this.attachments = attachments;
-	}
-
-	public String getApplicationId() {
-		return applicationId;
-	}
-
-	public void setApplicationId(String applicationId) {
-		this.applicationId = applicationId;
 	}
 
 	public String getStatus() {

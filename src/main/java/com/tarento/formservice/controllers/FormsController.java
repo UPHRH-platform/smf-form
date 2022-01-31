@@ -41,6 +41,7 @@ import com.tarento.formservice.service.JsonFormsService;
 import com.tarento.formservice.utils.Constants;
 import com.tarento.formservice.utils.PathRoutes;
 import com.tarento.formservice.utils.ResponseGenerator;
+import com.tarento.formservice.utils.ValidationService;
 
 /**
  * 
@@ -65,6 +66,9 @@ public class FormsController {
 	@Autowired
 	private JsonFormsService jsonFormsService;
 
+	@Autowired
+	private ValidationService validationService;
+
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_FORMS, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getAllForms(@RequestHeader(value = "x-user-info", required = false) String xUserInfo)
 			throws JsonProcessingException {
@@ -86,12 +90,15 @@ public class FormsController {
 
 	@PostMapping(value = PathRoutes.FormServiceApi.CREATE_FORM)
 	public String createForm(@RequestBody FormDetail form) throws IOException {
-		Form createdForm = formsService.createForm(form);
-		if (createdForm.getId() != null) {
-			return ResponseGenerator.successResponse(form);
-		} else {
+		String validation = validationService.validateCreateForm(form);
+		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
+			Form createdForm = formsService.createForm(form);
+			if (createdForm.getId() != null) {
+				return ResponseGenerator.successResponse(form);
+			}
 			return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
 		}
+		return ResponseGenerator.failureResponse(validation);
 	}
 
 	@PostMapping(value = PathRoutes.FormServiceApi.SAVE_FORM_SUBMIT)

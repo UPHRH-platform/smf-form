@@ -107,6 +107,12 @@ public interface Constants {
 		static final String PACK_HASHCODE_EMPTY = "Hashcode cannot be empty! Please try again with valid hashcode";
 		static final String PACK_DISTRIBUTION_INVALID = "This pack is no longer valid. Please contact admin!";
 		static final String CHECK_REQUEST_PARAMS = "Check your request paramaters.";
+
+		// form Validation
+		static final String TITLE_MISSING = "Form title is missing";
+		static final String FIELD_MISSING = "Form fields is missing";
+		static final String FIELD_NAME_MISSING = "Field name is missing";
+		static final String FIELD_ORDER_MISSING = "Check field order";
 	}
 
 	interface Markers {
@@ -128,5 +134,9 @@ public interface Constants {
 
 	interface ApplicationStatus {
 		public static final String SUBMITTED = "Submitted";
+	}
+
+	interface FormFieldTypes {
+		public static final String TEXT = "text";
 	}
 }
