@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.elasticsearch.action.search.MultiSearchResponse;
@@ -22,6 +23,7 @@ import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
@@ -62,9 +64,9 @@ import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
 import com.tarento.formservice.repository.ElasticSearchRepository;
 import com.tarento.formservice.service.FormsService;
+import com.tarento.formservice.utils.AppConfiguration;
 import com.tarento.formservice.utils.CloudStorage;
 import com.tarento.formservice.utils.Constants;
-import com.tarento.formservice.utils.DateUtil;
 import com.tarento.formservice.utils.DateUtils;
 
 @Service(Constants.ServiceRepositories.FORM_SERVICE)
@@ -83,6 +85,7 @@ public class FormsServiceImpl implements FormsService {
 	@SuppressWarnings("unused")
 	private final String easDocType;
 	Gson gson = new Gson();
+	ObjectMapper objectMapper = new ObjectMapper();
 
 	public FormsServiceImpl(@Value("${services.esindexer.host}") String indexServiceHost,
 			@Value("${services.esindexer.username}") String userName,
@@ -103,6 +106,9 @@ public class FormsServiceImpl implements FormsService {
 
 	@Autowired
 	private FormsDao formsDao;
+
+	@Autowired
+	private AppConfiguration appConfig;
 
 	@SuppressWarnings("unused")
 	private MultiSearchResponse executeElasticSearchQuery(String dataContext, String dataContextVersion,
@@ -255,6 +261,7 @@ public class FormsServiceImpl implements FormsService {
 	private SearchRequest buildQueryForGetAllForms() {
 		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0)
 				.aggregation(AggregationBuilders.terms("UniqueFormId").field("id").size(100)
+						.order(BucketOrder.key(Boolean.TRUE))
 						.subAggregation(AggregationBuilders.topHits("LatestVersion").from(0).size(1)
 								.version(Boolean.FALSE).explain(Boolean.FALSE)
 								.sort(SortBuilders.fieldSort("version").order(SortOrder.DESC))));
@@ -796,49 +803,6 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
-	public Boolean saveFormSubmit(IncomingData incomingData, Map<String, MultipartFile> multipartFiles) {
-		try {
-			// upload the attached files
-			Map<String, List<Map<String, String>>> attachments = new HashMap<>();
-			if (multipartFiles != null) {
-				for (Map.Entry<String, MultipartFile> entry : multipartFiles.entrySet()) {
-					String folderPath = Constants.UP_SMF + "/" + entry.getKey();
-					File file = new File(entry.getValue().getOriginalFilename());
-					file.createNewFile();
-					FileOutputStream fos = new FileOutputStream(file);
-					fos.write(entry.getValue().getBytes());
-					fos.close();
-					Map<String, String> uploadedFile = CloudStorage.uploadFile(folderPath, file);
-					file.delete();
-
-					if (uploadedFile != null) {
-						if (attachments.containsKey(entry.getKey())) {
-							attachments.get(entry.getKey()).add(uploadedFile);
-						} else {
-							attachments.put(entry.getKey(), new ArrayList<>(Arrays.asList(uploadedFile)));
-						}
-					} else {
-						LOGGER.info("Uploading " + entry.getValue().getOriginalFilename() + " file got failed");
-					}
-				}
-			} else {
-				LOGGER.info("No attachments found in the form request");
-			}
-
-			incomingData.setAttachments(attachments);
-			incomingData.setStatus(Constants.ApplicationStatus.SUBMITTED);
-			incomingData.setTimestamp(DateUtils.getCurrentTimestamp());
-			incomingData.setCreatedDate(DateUtils.getYyyyMmDdInUTC());
-			formsDao.saveFormSubmit(incomingData, getHttpHeaders());
-			return Boolean.TRUE;
-
-		} catch (Exception e) {
-			LOGGER.error(String.format("Exception in saveFormSubmit: %s", e.getMessage()));
-		}
-		return Boolean.FALSE;
-	}
-
-	@Override
 	public List<IncomingData> getApplications(String formId, String applicationId, String createdBy) {
 		try {
 			if (StringUtils.isNotBlank(formId) || StringUtils.isNotBlank(applicationId)
@@ -859,7 +823,6 @@ public class FormsServiceImpl implements FormsService {
 				}
 				searchSourceBuilder.query(boolBuilder);
 				searchSourceBuilder.sort("timestamp", SortOrder.DESC);
-				LOGGER.info(String.format("getApplications search query builder: %s", searchSourceBuilder));
 				// es call
 				SearchRequest searchRequest = new SearchRequest("fs-forms-data").types("forms")
 						.source(searchSourceBuilder);
@@ -879,5 +842,66 @@ public class FormsServiceImpl implements FormsService {
 			LOGGER.error(String.format("Exception in getApplications: %s", e.getMessage()));
 		}
 		return null;
+	}
+
+	@Override
+	public Boolean saveFormSubmitv1(IncomingData incomingData) {
+		Boolean indexed = Boolean.FALSE;
+		try {
+			if (StringUtils.isBlank(incomingData.getApplicationId())) {
+				incomingData.setApplicationId(RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE));
+				incomingData.setStatus(Constants.ApplicationStatus.SUBMITTED);
+				incomingData.setTimestamp(DateUtils.getCurrentTimestamp());
+				incomingData.setCreatedDate(DateUtils.getYyyyMmDdInUTC());
+				indexed = elasticRepository.writeDatatoElastic(incomingData, incomingData.getApplicationId(),
+						"fs-forms-data", "forms");
+			} else {
+				incomingData.setUpdatedDate(DateUtils.getYyyyMmDdInUTC());
+				indexed = elasticRepository.updateElasticData(incomingData, incomingData.getApplicationId(),
+						"fs-forms-data", "forms");
+			}
+		} catch (Exception e) {
+			LOGGER.error(String.format("Exception in saveFormSubmitv1: %s", e.getMessage()));
+		}
+		return indexed;
+	}
+
+	@Override
+	public String fileUpload(MultipartFile multipartFile, String folderName) {
+		try {
+			String folderPath = Constants.UP_SMF;
+			if (StringUtils.isNotBlank(folderName)) {
+				folderPath = folderPath + "/" + folderName;
+			}
+			File file = new File(multipartFile.getOriginalFilename());
+			file.createNewFile();
+			FileOutputStream fos = new FileOutputStream(file);
+			fos.write(multipartFile.getBytes());
+			fos.close();
+			Map<String, String> uploadedFile = CloudStorage.uploadFile(folderPath, file);
+			file.delete();
+			return uploadedFile.get(Constants.URL);
+		} catch (Exception e) {
+			LOGGER.error(String.format("Exception in fileUpload: %s", e.getMessage()));
+			return null;
+		}
+	}
+
+	@Override
+	public Boolean deleteCloudFile(List<String> files) {
+		try {
+			for (String file : files) {
+				String fileName = file;
+				String[] nameList = file.split("/" + appConfig.getContainerName() + "/");
+				if (nameList.length > 1) {
+					fileName = nameList[1];
+				}
+				CloudStorage.deleteFile(fileName);
+			}
+			return Boolean.TRUE;
+		} catch (Exception e) {
+			LOGGER.error(String.format("Exception in deleteCloudFile: %s", e.getMessage()));
+		}
+		return Boolean.FALSE;
 	}
 }

@@ -19,10 +19,11 @@ public class IncomingData {
 	private List<Vote> upvotes;
 	private List<Vote> downvotes;
 	private List<ReplyFeedbackDto> replies;
-	private Map<String, List<Map<String, String>>> attachments;
 	private String status;
 	private String createdBy;
 	private String createdDate;
+	private String updatedBy;
+	private String updatedDate;
 
 	public Long getId() {
 		return id;
@@ -136,14 +137,6 @@ public class IncomingData {
 		this.replies = replies;
 	}
 
-	public Map<String, List<Map<String, String>>> getAttachments() {
-		return attachments;
-	}
-
-	public void setAttachments(Map<String, List<Map<String, String>>> attachments) {
-		this.attachments = attachments;
-	}
-
 	public String getStatus() {
 		return status;
 	}
@@ -166,6 +159,22 @@ public class IncomingData {
 
 	public void setCreatedDate(String createdDate) {
 		this.createdDate = createdDate;
+	}
+
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
+	public String getUpdatedDate() {
+		return updatedDate;
+	}
+
+	public void setUpdatedDate(String updatedDate) {
+		this.updatedDate = updatedDate;
 	}
 
 }

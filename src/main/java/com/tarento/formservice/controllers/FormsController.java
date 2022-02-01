@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tomcat.util.codec.binary.Base64;
@@ -13,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -143,17 +143,18 @@ public class FormsController {
 
 	@PostMapping(value = PathRoutes.FormServiceApi.SAVE_FORM_SUBMIT_V1)
 	public String saveFormSubmitv1(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
-			@RequestParam String requestMap, @RequestParam Map<String, MultipartFile> multipartFiles)
-			throws IOException {
-		if (requestMap != null) {
-			logger.info("Incoming Data : {}", requestMap);
+			@RequestBody IncomingData incomingData) throws IOException {
+		if (incomingData != null) {
 			try {
-				IncomingData incomingData = new ObjectMapper().readValue(requestMap, IncomingData.class);
 				if (StringUtils.isNotBlank(xUserInfo)) {
 					UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
-					incomingData.setCreatedBy(userInfo.emailId);
+					if (StringUtils.isBlank(incomingData.getApplicationId())) {
+						incomingData.setCreatedBy(userInfo.getEmailId());
+					} else {
+						incomingData.setUpdatedBy(userInfo.getEmailId());
+					}
 				}
-				Boolean status = formsService.saveFormSubmit(incomingData, multipartFiles);
+				Boolean status = formsService.saveFormSubmitv1(incomingData);
 				if (status) {
 					return ResponseGenerator.successResponse(status);
 				}
@@ -266,9 +267,7 @@ public class FormsController {
 				formsService.saveFormSubmit(incomingData);
 			}
 		}
-
 		return ResponseGenerator.successResponse(Boolean.TRUE);
-
 	}
 
 	private FormData decodeValue(String encodedValue) {
@@ -304,6 +303,33 @@ public class FormsController {
 			return ResponseGenerator.successResponse(responseData);
 		}
 		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
+	}
+
+	@PostMapping(value = PathRoutes.FormServiceApi.FILE_UPLOAD, produces = MediaType.APPLICATION_JSON_VALUE)
+	public String fileUpload(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+			@RequestParam(required = true) MultipartFile[] files,
+			@RequestParam(value = "folderName", required = false) String folderName) throws JsonProcessingException {
+		if (files != null) {
+			List<String> uploadedFiles = new ArrayList<>();
+			for (MultipartFile multipartFile : files) {
+				String url = formsService.fileUpload(multipartFile, folderName);
+				if (StringUtils.isNotBlank(url)) {
+					uploadedFiles.add(url);
+				}
+			}
+			return ResponseGenerator.successResponse(uploadedFiles);
+		}
+		return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
+	}
+
+	@DeleteMapping(value = PathRoutes.FormServiceApi.DELETE_CLOUD_FILE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public String deleteCloudFile(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+			@RequestBody(required = true) List<String> files) throws JsonProcessingException {
+		Boolean status = formsService.deleteCloudFile(files);
+		if (status) {
+			return ResponseGenerator.successResponse(status);
+		}
+		return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
 	}
 
 }

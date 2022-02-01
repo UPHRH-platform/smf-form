@@ -2,7 +2,6 @@ package com.tarento.formservice.service;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -46,8 +45,12 @@ public interface FormsService {
 
 	ResponseData fetchUserInfo(Long userId);
 
-	public Boolean saveFormSubmit(IncomingData incomingData, Map<String, MultipartFile> multipartFiles);
-
 	List<IncomingData> getApplications(String formId, String applicationId, String createdBy);
+
+	public Boolean saveFormSubmitv1(IncomingData incomingData);
+
+	public String fileUpload(MultipartFile multipartFile, String folderName);
+
+	public Boolean deleteCloudFile(List<String> files);
 
 }
