@@ -47,6 +47,7 @@ public interface PathRoutes {
 		final String GET_APPLICATIONS_BY_ID = "/getApplicationsById";
 		final String FILE_UPLOAD = "/fileUpload";
 		final String DELETE_CLOUD_FILE = "/deleteCloudFile";
+		final String REVIEW_APPLICATION = "/reviewApplication";
 	}
 
 	public interface JsonFormServiceApi {

@@ -1,7 +1,6 @@
 package com.tarento.formservice.model;
 
 import java.util.List;
-import java.util.Map;
 
 public class IncomingData {
 
@@ -20,10 +19,13 @@ public class IncomingData {
 	private List<Vote> downvotes;
 	private List<ReplyFeedbackDto> replies;
 	private String status;
+	private String comments;
 	private String createdBy;
 	private String createdDate;
 	private String updatedBy;
 	private String updatedDate;
+	private String reviewedBy;
+	private String reviewedDate;
 
 	public Long getId() {
 		return id;
@@ -145,6 +147,14 @@ public class IncomingData {
 		this.status = status;
 	}
 
+	public String getComments() {
+		return comments;
+	}
+
+	public void setComments(String comments) {
+		this.comments = comments;
+	}
+
 	public String getCreatedBy() {
 		return createdBy;
 	}
@@ -175,6 +185,22 @@ public class IncomingData {
 
 	public void setUpdatedDate(String updatedDate) {
 		this.updatedDate = updatedDate;
+	}
+
+	public String getReviewedBy() {
+		return reviewedBy;
+	}
+
+	public void setReviewedBy(String reviewedBy) {
+		this.reviewedBy = reviewedBy;
+	}
+
+	public String getReviewedDate() {
+		return reviewedDate;
+	}
+
+	public void setReviewedDate(String reviewedDate) {
+		this.reviewedDate = reviewedDate;
 	}
 
 }

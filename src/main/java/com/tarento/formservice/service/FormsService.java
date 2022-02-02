@@ -53,4 +53,6 @@ public interface FormsService {
 
 	public Boolean deleteCloudFile(List<String> files);
 
+	public Boolean reviewApplication(IncomingData incomingData);
+
 }

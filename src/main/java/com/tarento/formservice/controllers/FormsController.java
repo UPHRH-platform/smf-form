@@ -96,7 +96,7 @@ public class FormsController {
 			if (createdForm.getId() != null) {
 				return ResponseGenerator.successResponse(form);
 			}
-			return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
+			return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
 		}
 		return ResponseGenerator.failureResponse(validation);
 	}
@@ -283,7 +283,6 @@ public class FormsController {
 		if (StringUtils.isNotBlank(formId)) {
 			responseData = formsService.getApplications(formId, null, null);
 		} else if (StringUtils.isNotBlank(xUserInfo)) {
-			System.out.println(xUserInfo);
 			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 			responseData = formsService.getApplications(null, null, userInfo.getEmailId());
 		}
@@ -325,11 +324,22 @@ public class FormsController {
 	@DeleteMapping(value = PathRoutes.FormServiceApi.DELETE_CLOUD_FILE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String deleteCloudFile(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
 			@RequestBody(required = true) List<String> files) throws JsonProcessingException {
-		Boolean status = formsService.deleteCloudFile(files);
-		if (status) {
-			return ResponseGenerator.successResponse(status);
+		if (formsService.deleteCloudFile(files)) {
+			return ResponseGenerator.successResponse(Boolean.TRUE);
 		}
 		return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
 	}
 
+	@PostMapping(value = PathRoutes.FormServiceApi.REVIEW_APPLICATION, produces = MediaType.APPLICATION_JSON_VALUE)
+	public String reviewApplication(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+			@RequestBody IncomingData incomingData) throws JsonProcessingException {
+		if (StringUtils.isNotBlank(xUserInfo)) {
+			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+			incomingData.setReviewedBy(userInfo.getEmailId());
+		}
+		if (formsService.reviewApplication(incomingData)) {
+			return ResponseGenerator.successResponse(Boolean.TRUE);
+		}
+		return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
+	}
 }

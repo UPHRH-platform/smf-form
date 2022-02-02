@@ -904,4 +904,20 @@ public class FormsServiceImpl implements FormsService {
 		}
 		return Boolean.FALSE;
 	}
+
+	@Override
+	public Boolean reviewApplication(IncomingData incomingData) {
+		try {
+			IncomingData requestData = new IncomingData();
+			requestData.setStatus(incomingData.getStatus());
+			requestData.setComments(incomingData.getComments());
+			requestData.setReviewedBy(incomingData.getReviewedBy());
+			requestData.setReviewedDate(DateUtils.getYyyyMmDdInUTC());
+			return elasticRepository.updateElasticData(requestData, incomingData.getApplicationId(), "fs-forms-data",
+					"forms");
+		} catch (Exception e) {
+			LOGGER.error(String.format("Exception in reviewApplication: %s", e.getMessage()));
+		}
+		return Boolean.FALSE;
+	}
 }
