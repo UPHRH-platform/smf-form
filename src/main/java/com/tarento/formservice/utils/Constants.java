@@ -96,6 +96,10 @@ public interface Constants {
 		static final String FIELD_MISSING = "Form fields is missing";
 		static final String FIELD_NAME_MISSING = "Field name is missing";
 		static final String FIELD_ORDER_MISSING = "Check field order";
+
+		static final String FORM_ID_MISSING = "Form id is missing";
+		static final String DATA_OBJECT_MISSING = "Data object is missing";
+		static final String APPLICATION_ID_MISSING = "Application id is missing";
 	}
 
 	interface Markers {

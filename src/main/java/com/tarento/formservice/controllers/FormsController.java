@@ -150,7 +150,9 @@ public class FormsController {
 	public String saveFormSubmitv1(
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody IncomingData incomingData) throws IOException {
-		if (incomingData != null) {
+
+		String validation = validationService.validateSubmittedApplication(incomingData);
+		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			try {
 				if (StringUtils.isNotBlank(xUserInfo)) {
 					UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
@@ -167,8 +169,9 @@ public class FormsController {
 				logger.error(String.format(Constants.EXCEPTION, "saveFormSubmitv1", e.getMessage()));
 				return ResponseGenerator.failureResponse(Constants.ResponseMessages.CHECK_REQUEST_PARAMS);
 			}
+			return ResponseGenerator.failureResponse();
 		}
-		return ResponseGenerator.failureResponse(Constants.ResponseMessages.CHECK_REQUEST_PARAMS);
+		return ResponseGenerator.failureResponse(validation);
 
 	}
 
@@ -354,13 +357,17 @@ public class FormsController {
 	public String reviewApplication(
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody IncomingData incomingData) throws JsonProcessingException {
-		if (StringUtils.isNotBlank(xUserInfo)) {
-			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
-			incomingData.setReviewedBy(userInfo.getEmailId());
+		String validation = validationService.validateApplicationReview(incomingData);
+		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
+			if (StringUtils.isNotBlank(xUserInfo)) {
+				UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+				incomingData.setReviewedBy(userInfo.getEmailId());
+			}
+			if (formsService.reviewApplication(incomingData)) {
+				return ResponseGenerator.successResponse(Boolean.TRUE);
+			}
+			return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
 		}
-		if (formsService.reviewApplication(incomingData)) {
-			return ResponseGenerator.successResponse(Boolean.TRUE);
-		}
-		return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
+		return ResponseGenerator.failureResponse(validation);
 	}
 }
