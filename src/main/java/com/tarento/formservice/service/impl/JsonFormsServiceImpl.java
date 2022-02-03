@@ -13,7 +13,6 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -27,10 +26,11 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.tarento.formservice.dao.FormsDao;
 import com.tarento.formservice.models.Form;
+import com.tarento.formservice.repository.ElasticSearchRepository;
 import com.tarento.formservice.service.FormsService;
 import com.tarento.formservice.service.JsonFormsService;
+import com.tarento.formservice.utils.AppConfiguration;
 import com.tarento.formservice.utils.Constants;
 
 @Service(Constants.ServiceRepositories.JSON_FORMS_SERVICE)
@@ -39,37 +39,20 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 	public static final Logger LOGGER = LoggerFactory.getLogger(JsonFormsService.class);
 
 	private static final String AUTHORIZATION = "Authorization";
-	// private static final String US_ASCII = "US-ASCII";
-	// private static final String BASIC_AUTH = "Basic %s";
-	private final String indexServiceHost;
-	private final String userName;
-	private final String password;
-	@SuppressWarnings("unused")
-	private final String easIndexName;
-	@SuppressWarnings("unused")
-	private final String easDocType;
+
 	Gson gson = new Gson();
 
-	public JsonFormsServiceImpl(@Value("${services.esindexer.host}") String indexServiceHost,
-			@Value("${services.esindexer.username}") String userName,
-			@Value("${services.esindexer.password}") String password,
-			@Value("${es.fs.forms.index.name}") String easIndexName,
-			@Value("${es.fs.forms.document.type}") String easDocumentType) {
-		this.indexServiceHost = indexServiceHost;
-		this.userName = userName;
-		this.password = password;
-		this.easIndexName = easIndexName;
-		this.easDocType = easDocumentType;
-	}
+	@Autowired
+	AppConfiguration appConfiguration;
 
 	@Autowired
 	private RestTemplate restTemplate;
 
 	@Autowired
-	private FormsDao formsDao;
+	private FormsService formsService;
 
 	@Autowired
-	private FormsService formsService;
+	private ElasticSearchRepository elasticRepository;
 
 	public static JsonObject convertToJsonObject(Object payload) {
 		GsonBuilder builder = new GsonBuilder();
@@ -89,7 +72,7 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 		SearchRequest searchRequest;
 		searchRequest = new SearchRequest(formDetails.getEsIndexName());
 		HttpHeaders headers = new HttpHeaders();
-		String auth = userName + ":" + password;
+		String auth = appConfiguration.getElasticUsername() + ":" + appConfiguration.getElasticPassword();
 		byte[] bytes = auth.getBytes(StandardCharsets.UTF_8);
 		String base64Encoded = java.util.Base64.getEncoder().encodeToString(bytes);
 		String authHeader = "Basic " + base64Encoded;
@@ -114,7 +97,7 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 						Constants.KronosDashboards.DATE, node.get(Constants.KronosDashboards.DATE).asText()));
 				SearchSourceBuilder ssBuilder = new SearchSourceBuilder().query(queryBuilder);
 				searchRequest.source(ssBuilder);
-				Object searchResponse = formsDao.executeMultiSearchRequest(searchRequest);
+				Object searchResponse = elasticRepository.executeMultiSearchRequest(searchRequest);
 				JsonNode responseJsonNode = mapper.convertValue(searchResponse, JsonNode.class);
 				int hitSize = responseJsonNode.get("responses").get(0).get("response").get("hits").get("hits").size();
 				// // check time stamp ? stored - > Override
@@ -126,8 +109,8 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 					Object res;
 					HttpEntity<Object> entity = new HttpEntity<>(node, headers);
 					res = restTemplate.exchange(
-							Constants.HTTP + this.indexServiceHost + "/" + formDetails.getEsIndexName() + "/"
-									+ formDetails.getEsIndexDocType() + "/" + docId,
+							Constants.HTTP + appConfiguration.getElasticHost() + "/" + formDetails.getEsIndexName()
+									+ "/" + formDetails.getEsIndexDocType() + "/" + docId,
 							HttpMethod.PUT, entity, Object.class).getBody();
 
 				} else {
@@ -139,7 +122,7 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 									formDetails.getEsIndexName()));
 					SearchSourceBuilder sBuilder = new SearchSourceBuilder().query(qBuilder);
 					searchRequest.source(sBuilder);
-					Object sRes = formsDao.executeMultiSearchRequest(searchRequest);
+					Object sRes = elasticRepository.executeMultiSearchRequest(searchRequest);
 					JsonNode resJsonNode = mapper.convertValue(searchResponse, JsonNode.class);
 					int hSize = responseJsonNode.get("responses").get(0).get("response").get("hits").get("hits").size();
 
@@ -157,7 +140,7 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 						SearchSourceBuilder ssb = new SearchSourceBuilder().query(qqBuilder);
 						SearchRequest sRequest = new SearchRequest(formDetails.getEsIndexName());
 						sRequest.source(ssb);
-						Object sResponse = formsDao.executeMultiSearchRequest(sRequest);
+						Object sResponse = elasticRepository.executeMultiSearchRequest(sRequest);
 						JsonNode rJNode = mapper.convertValue(sResponse, JsonNode.class);
 						int hitSizeOfRes = rJNode.get("responses").get(0).get("response").get("hits").get("hits")
 								.size();
@@ -178,8 +161,8 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 													.get("hits").get("hits").get(i), Map.class),
 											headers);
 									restTemplate.exchange(
-											Constants.HTTP + this.indexServiceHost + "/" + formDetails.getAction() + "/"
-													+ formDetails.getEsIndexDocType(),
+											Constants.HTTP + appConfiguration.getElasticHost() + "/"
+													+ formDetails.getAction() + "/" + formDetails.getEsIndexDocType(),
 											HttpMethod.POST, entity, Object.class).getBody();
 									// delete the docs from the index
 									// find the id
@@ -188,24 +171,24 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 											.get(i).get("id").asText();
 									HttpEntity<?> request = new HttpEntity<>(headers);
 									Object res = restTemplate.exchange(
-											Constants.HTTP + this.indexServiceHost + "/" + formDetails.getEsIndexName()
-													+ "/" + formDetails.getEsIndexDocType() + "/" + documentId,
+											Constants.HTTP + appConfiguration.getElasticHost() + "/"
+													+ formDetails.getEsIndexName() + "/"
+													+ formDetails.getEsIndexDocType() + "/" + documentId,
 											HttpMethod.DELETE, request, String.class);
 									HttpEntity<Object> entity1 = new HttpEntity<>(node, headers);
 									Object o = restTemplate.exchange(
-											Constants.HTTP + this.indexServiceHost + "/" + formDetails.getEsIndexName()
-													+ "/" + formDetails.getEsIndexDocType(),
+											Constants.HTTP + appConfiguration.getElasticHost() + "/"
+													+ formDetails.getEsIndexName() + "/"
+													+ formDetails.getEsIndexDocType(),
 											HttpMethod.POST, entity1, Object.class).getBody();
 								}
 							}
 						} else {
 							HttpEntity<Object> entity = new HttpEntity<>(node, headers);
-							Object o = restTemplate
-									.exchange(
-											Constants.HTTP + this.indexServiceHost + "/" + formDetails.getEsIndexName()
-													+ "/" + formDetails.getEsIndexDocType(),
-											HttpMethod.POST, entity, Object.class)
-									.getBody();
+							Object o = restTemplate.exchange(
+									Constants.HTTP + appConfiguration.getElasticHost() + "/"
+											+ formDetails.getEsIndexName() + "/" + formDetails.getEsIndexDocType(),
+									HttpMethod.POST, entity, Object.class).getBody();
 						}
 					}
 				}
@@ -222,7 +205,7 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 								node.get(Constants.KronosDashboards.COUNTRY).asText()));
 				SearchSourceBuilder ssBuilder = new SearchSourceBuilder().query(queryBuilder);
 				searchRequest.source(ssBuilder);
-				Object searchResponse = formsDao.executeMultiSearchRequest(searchRequest);
+				Object searchResponse = elasticRepository.executeMultiSearchRequest(searchRequest);
 				JsonNode responseJsonNode = mapper.convertValue(searchResponse, JsonNode.class);
 				int hitSize = responseJsonNode.get("responses").get(0).get("response").get("hits").get("hits").size();
 				// // check time stamp ? stored - > Override
@@ -234,8 +217,8 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 					Object res;
 					HttpEntity<Object> entity = new HttpEntity<>(node, headers);
 					res = restTemplate.exchange(
-							Constants.HTTP + this.indexServiceHost + "/" + formDetails.getEsIndexName() + "/"
-									+ formDetails.getEsIndexDocType() + "/" + docId,
+							Constants.HTTP + appConfiguration.getElasticHost() + "/" + formDetails.getEsIndexName()
+									+ "/" + formDetails.getEsIndexDocType() + "/" + docId,
 							HttpMethod.PUT, entity, Object.class).getBody();
 				} else {
 					// check time stamp ? stored - > Override IN LOGS index
@@ -250,7 +233,7 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 									formDetails.getEsIndexName()));
 					SearchSourceBuilder sBuilder = new SearchSourceBuilder().query(qBuilder);
 					searchRequest.source(sBuilder);
-					Object sRes = formsDao.executeMultiSearchRequest(searchRequest);
+					Object sRes = elasticRepository.executeMultiSearchRequest(searchRequest);
 					JsonNode resJsonNode = mapper.convertValue(searchResponse, JsonNode.class);
 					int hSize = responseJsonNode.get("responses").get(0).get("response").get("hits").get("hits").size();
 
@@ -273,7 +256,7 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 						SearchSourceBuilder ssb = new SearchSourceBuilder().query(qqBuilder);
 						SearchRequest sRequest = new SearchRequest(formDetails.getEsIndexName());
 						sRequest.source(ssb);
-						Object sResponse = formsDao.executeMultiSearchRequest(sRequest);
+						Object sResponse = elasticRepository.executeMultiSearchRequest(sRequest);
 						JsonNode rJNode = mapper.convertValue(sResponse, JsonNode.class);
 						int hitSizeOfRes = rJNode.get("responses").get(0).get("response").get("hits").get("hits")
 								.size();
@@ -294,8 +277,8 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 													.get("hits").get("hits").get(i), Map.class),
 											headers);
 									restTemplate.exchange(
-											Constants.HTTP + this.indexServiceHost + "/" + formDetails.getAction() + "/"
-													+ formDetails.getEsIndexDocType(),
+											Constants.HTTP + appConfiguration.getElasticHost() + "/"
+													+ formDetails.getAction() + "/" + formDetails.getEsIndexDocType(),
 											HttpMethod.POST, entity, Object.class).getBody();
 									// delete the docs from the index
 									// find the id
@@ -304,24 +287,24 @@ public class JsonFormsServiceImpl implements JsonFormsService {
 											.get(i).get("id").asText();
 									HttpEntity<?> request = new HttpEntity<>(headers);
 									Object res = restTemplate.exchange(
-											Constants.HTTP + this.indexServiceHost + "/" + formDetails.getEsIndexName()
-													+ "/" + formDetails.getEsIndexDocType() + "/" + documentId,
+											Constants.HTTP + appConfiguration.getElasticHost() + "/"
+													+ formDetails.getEsIndexName() + "/"
+													+ formDetails.getEsIndexDocType() + "/" + documentId,
 											HttpMethod.DELETE, request, String.class);
 									HttpEntity<Object> entity1 = new HttpEntity<>(node, headers);
 									Object o = restTemplate.exchange(
-											Constants.HTTP + this.indexServiceHost + "/" + formDetails.getEsIndexName()
-													+ "/" + formDetails.getEsIndexDocType(),
+											Constants.HTTP + appConfiguration.getElasticHost() + "/"
+													+ formDetails.getEsIndexName() + "/"
+													+ formDetails.getEsIndexDocType(),
 											HttpMethod.POST, entity1, Object.class).getBody();
 								}
 							}
 						} else {
 							HttpEntity<Object> entity = new HttpEntity<>(node, headers);
-							Object o = restTemplate
-									.exchange(
-											Constants.HTTP + this.indexServiceHost + "/" + formDetails.getEsIndexName()
-													+ "/" + formDetails.getEsIndexDocType(),
-											HttpMethod.POST, entity, Object.class)
-									.getBody();
+							Object o = restTemplate.exchange(
+									Constants.HTTP + appConfiguration.getElasticHost() + "/"
+											+ formDetails.getEsIndexName() + "/" + formDetails.getEsIndexDocType(),
+									HttpMethod.POST, entity, Object.class).getBody();
 						}
 					}
 				}

@@ -24,9 +24,9 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
-
-import lombok.NoArgsConstructor;
+import org.springframework.stereotype.Service;
 
 /**
  * this api is used to sending mail.
@@ -34,20 +34,25 @@ import lombok.NoArgsConstructor;
  * @author Manzarul.Haque
  *
  */
-@NoArgsConstructor
+@Service
 public class SendMail {
-	private static final String ENCOUNTERED_AN_EXCEPTION = "Encountered an Exception :  %s";
 	private static final String TEXT_HTML = "text/html";
 	private static final String EMAILS = "emails/";
 	public static final Logger LOGGER = LoggerFactory.getLogger(SendMail.class);
 	private static final String CLASSNAME = SendMail.class.getName();
 	private static Properties props = null;
-	static {
+
+	private static AppConfiguration appConfig;
+
+	@Autowired
+	private SendMail(AppConfiguration appConfiguration) {
+		appConfig = appConfiguration;
+
 		props = System.getProperties();
-		props.put("mail.smtp.host", Constants.SMTP.HOST);
-		props.put("mail.smtp.socketFactory.port", Constants.SMTP.PORT);
-		props.put("mail.smtp.auth", Constants.SMTP.SSL);
-		props.put("mail.smtp.port", Constants.SMTP.PORT);
+		props.put("mail.smtp.host", appConfig.getSmtpHost());
+		props.put("mail.smtp.socketFactory.port", appConfig.getSmtpPort());
+		props.put("mail.smtp.auth", appConfig.getSmtpAuth());
+		props.put("mail.smtp.port", appConfig.getSmtpPort());
 	}
 
 	/**
@@ -65,9 +70,10 @@ public class SendMail {
 	@Async
 	public static void sendMail(String[] receipent, String subject, VelocityContext context, String templateName) {
 		try {
-			Session session = Session.getInstance(props, new GMailAuthenticator(Constants.USER, Constants.PSWRD));
+			Session session = Session.getInstance(props,
+					new GMailAuthenticator(appConfig.getSmtpUser(), appConfig.getSmtpPassword()));
 			MimeMessage message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(Constants.FROM, Constants.ALIAS));
+			message.setFrom(new InternetAddress(appConfig.getSmtpEmail()));
 			int size = receipent.length;
 			int i = 0;
 			while (size > 0) {
@@ -85,7 +91,7 @@ public class SendMail {
 			template.merge(context, writer);
 			message.setContent(writer.toString(), TEXT_HTML);
 			Transport transport = session.getTransport("smtp");
-			transport.connect(Constants.HOST, Constants.USER, Constants.PSWRD);
+			transport.connect(appConfig.getSmtpHost(), appConfig.getSmtpUser(), appConfig.getSmtpPassword());
 			transport.sendMessage(message, message.getAllRecipients());
 			transport.close();
 		} catch (Exception e) {
@@ -111,9 +117,10 @@ public class SendMail {
 	public static void sendMail(String[] receipent, String subject, VelocityContext context, String templateName,
 			String[] ccList) {
 		try {
-			Session session = Session.getInstance(props, new GMailAuthenticator(Constants.USER, Constants.PSWRD));
+			Session session = Session.getInstance(props,
+					new GMailAuthenticator(appConfig.getSmtpUser(), appConfig.getSmtpPassword()));
 			MimeMessage message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(Constants.FROM, Constants.ALIAS));
+			message.setFrom(new InternetAddress(appConfig.getSmtpEmail()));
 			int size = receipent.length;
 			int i = 0;
 			while (size > 0) {
@@ -137,11 +144,11 @@ public class SendMail {
 			template.merge(context, writer);
 			message.setContent(writer.toString(), TEXT_HTML);
 			Transport transport = session.getTransport("smtp");
-			transport.connect(Constants.HOST, Constants.USER, Constants.PSWRD);
+			transport.connect(appConfig.getSmtpHost(), appConfig.getSmtpUser(), appConfig.getSmtpPassword());
 			transport.sendMessage(message, message.getAllRecipients());
 			transport.close();
 		} catch (Exception e) {
-			LOGGER.error(String.format(ENCOUNTERED_AN_EXCEPTION, e.getMessage()));
+			LOGGER.error(String.format(Constants.EXCEPTION, "sendMail", e.getMessage()));
 		}
 	}
 
@@ -161,9 +168,9 @@ public class SendMail {
 	public static void sendAttachment(String[] receipent, String mail, String subject, String filePath) {
 		try {
 			Session session = Session.getInstance(props,
-					new GMailAuthenticator(Constants.SMTP.USER, Constants.SMTP.PSWRD));
+					new GMailAuthenticator(appConfig.getSmtpUser(), appConfig.getSmtpPassword()));
 			MimeMessage message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(Constants.SMTP.USER, Constants.SMTP.ALIAS));
+			message.setFrom(new InternetAddress(appConfig.getSmtpEmail()));
 			int size = receipent.length;
 			int i = 0;
 			while (size > 0) {
@@ -185,11 +192,11 @@ public class SendMail {
 			message.setSubject(subject);
 			message.setContent(multipart);
 			Transport transport = session.getTransport("smtp");
-			transport.connect(Constants.SMTP.HOST, Constants.SMTP.USER, Constants.SMTP.PSWRD);
+			transport.connect(appConfig.getSmtpHost(), appConfig.getSmtpUser(), appConfig.getSmtpPassword());
 			transport.sendMessage(message, message.getAllRecipients());
 			transport.close();
 		} catch (Exception e) {
-			LOGGER.error(String.format(ENCOUNTERED_AN_EXCEPTION, e.getMessage()));
+			LOGGER.error(String.format(Constants.EXCEPTION, "sendAttachment", e.getMessage()));
 		}
 	}
 

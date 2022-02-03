@@ -2,25 +2,6 @@ package com.tarento.formservice.utils;
 
 public interface Constants {
 
-	public class SMTP {
-		private SMTP() {
-			super();
-		}
-
-		public static final String HOST = "smtpout.idc.tarento.com";
-		public static final int PORT = 587;
-		public static final boolean SSL = true;
-		public static final String USER = "AKIAJJLLS652M5B32APA";
-		public static final String PSWRD = "AhYkENBNOY9M6Cl29IqETcKIWsP5Z+dUNuigVKglCuU5";
-		public static final String EMAIL = "timetrack@tarento.com";
-		public static final String ALIAS = "aurora-desk.support";
-	}
-
-	public static final String HOST = "smtpout.idc.tarento.com";
-	public static final String FROM = "timetrack@tarento.com";
-	public static final String USER = "AKIAJJLLS652M5B32APA";
-	public static final String PSWRD = "AhYkENBNOY9M6Cl29IqETcKIWsP5Z+dUNuigVKglCuU5";
-	public static final String ALIAS = "pulz.support";
 	public static final String LOGO_URL = "https://cabhound-static.s3.amazonaws.com/insuranceDoc/claim/tarento_logo.png";
 	public static final int MAX_EXECUTOR_THREAD = 10;
 
@@ -29,6 +10,7 @@ public interface Constants {
 		static final String FORM_REPO = "formDao";
 		static final String FORM_SQL_REPO = "formSqlDao";
 		static final String JSON_FORMS_SERVICE = "jsonFormsService";
+		static final String ELASTICSEARCH_REPO = "elasticSearchRepository";
 	}
 
 	interface RequestMethods {
@@ -62,6 +44,7 @@ public interface Constants {
 		static final String CONTEXT_VERSION = "dataContextVersion";
 		static final String VERSION = "version";
 		static final String FORM_DATA = "urlCode";
+		static final String X_USER_INFO = "x-user-info";
 	}
 
 	interface PortfolioConstants {
@@ -131,8 +114,11 @@ public interface Constants {
 	public static final String FORM_ID = "formId";
 	public static final String APPLICATION_ID = "applicationId";
 	public static final String CREATED_BY = "createdBy";
+	public static final String TIMESTAMP = "timestamp";
 
 	public static final String APPEND_KEYWORD = ".keyword";
+
+	public static final String EXCEPTION = "Exception in %s : %s";
 
 	interface ApplicationStatus {
 		public static final String SUBMITTED = "Submitted";
