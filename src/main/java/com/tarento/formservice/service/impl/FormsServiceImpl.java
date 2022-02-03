@@ -572,29 +572,27 @@ public class FormsServiceImpl implements FormsService {
 	@Override
 	public List<Map<String, Object>> getApplications(String formId, String applicationId, String createdBy) {
 		try {
-			if (StringUtils.isNotBlank(formId) || StringUtils.isNotBlank(applicationId)
-					|| StringUtils.isNotBlank(createdBy)) {
-				// query builder
-				SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
-				BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
-				if (StringUtils.isNotBlank(formId)) {
-					boolBuilder.must().add(QueryBuilders.matchQuery(Constants.FORM_ID, formId));
-				}
-				if (StringUtils.isNotBlank(applicationId)) {
-					boolBuilder.must().add(QueryBuilders.matchQuery(Constants._ID, applicationId));
-				}
-				if (StringUtils.isNotBlank(createdBy)) {
-					boolBuilder.must()
-							.add(QueryBuilders.matchQuery(Constants.CREATED_BY + Constants.APPEND_KEYWORD, createdBy));
-				}
-				searchSourceBuilder.query(boolBuilder);
-				searchSourceBuilder.sort(Constants.TIMESTAMP, SortOrder.DESC);
-				// es call
-				SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
-						.types(appConfig.getFormDataIndexType()).source(searchSourceBuilder);
-
-				return formsDao.searchResponse(searchRequest);
+			// query builder
+			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
+			BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
+			if (StringUtils.isNotBlank(formId)) {
+				boolBuilder.must().add(QueryBuilders.matchQuery(Constants.FORM_ID, formId));
 			}
+			if (StringUtils.isNotBlank(applicationId)) {
+				boolBuilder.must().add(QueryBuilders.matchQuery(Constants._ID, applicationId));
+			}
+			if (StringUtils.isNotBlank(createdBy)) {
+				boolBuilder.must()
+						.add(QueryBuilders.matchQuery(Constants.CREATED_BY + Constants.APPEND_KEYWORD, createdBy));
+			}
+			searchSourceBuilder.query(boolBuilder);
+			searchSourceBuilder.sort(Constants.TIMESTAMP, SortOrder.DESC);
+			// es call
+			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
+					.types(appConfig.getFormDataIndexType()).source(searchSourceBuilder);
+
+			return formsDao.searchResponse(searchRequest);
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			LOGGER.error(String.format(Constants.EXCEPTION, "getApplications", e.getMessage()));

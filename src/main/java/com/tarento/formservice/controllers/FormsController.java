@@ -3,6 +3,7 @@ package com.tarento.formservice.controllers;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -288,13 +289,18 @@ public class FormsController {
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_APPLICATIONS, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getAllApplications(
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
-			@RequestParam(value = Constants.FORM_ID, required = false) String formId) throws JsonProcessingException {
+			@RequestParam(value = Constants.FORM_ID, required = false) String formId,
+			@RequestParam(required = false) Boolean myApplication) throws JsonProcessingException {
 		List<Map<String, Object>> responseData = new ArrayList<>();
-		if (StringUtils.isNotBlank(formId)) {
-			responseData = formsService.getApplications(formId, null, null);
-		} else if (StringUtils.isNotBlank(xUserInfo)) {
+		String createdBy = null;
+		if (StringUtils.isNotBlank(xUserInfo)) {
 			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
-			responseData = formsService.getApplications(null, null, userInfo.getEmailId());
+			createdBy = userInfo.getEmailId();
+		}
+		if (myApplication != null && myApplication) {
+			responseData = formsService.getApplications(formId, null, createdBy);
+		} else {
+			responseData = formsService.getApplications(formId, null, null);
 		}
 
 		if (responseData != null) {
@@ -310,7 +316,8 @@ public class FormsController {
 			throws JsonProcessingException {
 		List<Map<String, Object>> responseData = formsService.getApplications(null, applicationId, null);
 		if (responseData != null) {
-			return ResponseGenerator.successResponse(responseData);
+			return (responseData.isEmpty()) ? ResponseGenerator.successResponse(new HashMap<>())
+					: ResponseGenerator.successResponse(responseData.get(0));
 		}
 		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
 	}
