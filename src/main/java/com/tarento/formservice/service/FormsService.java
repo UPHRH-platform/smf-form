@@ -2,6 +2,7 @@ package com.tarento.formservice.service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,10 +31,10 @@ public interface FormsService {
 
 	public Boolean saveFormSubmit(IncomingData incomingData) throws IOException;
 
-	public List<IncomingData> getFeedbacksByFormId(Long id, String approved, String challenged, Long agentId,
+	public List<Map<String, Object>> getFeedbacksByFormId(Long id, String approved, String challenged, Long agentId,
 			Long customerId, UserInfo userInfo, Boolean challengeStatus);
 
-	public List<IncomingData> getFeedbacksByFormId(Long id);
+	public List<Map<String, Object>> getFeedbacksByFormId(Long id);
 
 	public Boolean verifyFeedback(UserInfo userInfo, VerifyFeedbackDto verifyFeedbackDto) throws IOException;
 
@@ -41,11 +42,11 @@ public interface FormsService {
 
 	public Boolean replyFeedback(UserInfo userInfo, ReplyFeedbackDto voteFeedbackDto) throws IOException;
 
-	public List<IncomingData> getFeedbacks(String approved, String challenged, Boolean challengeStatus);
+	public List<Map<String, Object>> getFeedbacks(String approved, String challenged, Boolean challengeStatus);
 
 	ResponseData fetchUserInfo(Long userId);
 
-	List<IncomingData> getApplications(String formId, String applicationId, String createdBy);
+	List<Map<String, Object>> getApplications(String formId, String applicationId, String createdBy);
 
 	public Boolean saveFormSubmitv1(IncomingData incomingData);
 

@@ -3,7 +3,9 @@ package com.tarento.formservice.controllers;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tomcat.util.codec.binary.Base64;
@@ -70,14 +72,16 @@ public class FormsController {
 	private ValidationService validationService;
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_FORMS, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getAllForms(@RequestHeader(value = "x-user-info", required = false) String xUserInfo)
+	public String getAllForms(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
 			throws JsonProcessingException {
 		return ResponseGenerator.successResponse(formsService.getAllForms());
 	}
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_FORM_BY_ID, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getFormById(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
-			@RequestParam(value = "id", required = true) String id) throws JsonProcessingException {
+	public String getFormById(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
+			@RequestParam(value = Constants.ID, required = true) String id) throws JsonProcessingException {
 		Long formId = null;
 		if (id.length() <= 13) {
 			formId = Long.parseLong(id);
@@ -102,7 +106,8 @@ public class FormsController {
 	}
 
 	@PostMapping(value = PathRoutes.FormServiceApi.SAVE_FORM_SUBMIT)
-	public String saveFormSubmit(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+	public String saveFormSubmit(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody IncomingData incomingData) throws IOException {
 		Boolean status = false;
 		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
@@ -142,9 +147,12 @@ public class FormsController {
 	}
 
 	@PostMapping(value = PathRoutes.FormServiceApi.SAVE_FORM_SUBMIT_V1)
-	public String saveFormSubmitv1(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+	public String saveFormSubmitv1(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody IncomingData incomingData) throws IOException {
-		if (incomingData != null) {
+
+		String validation = validationService.validateSubmittedApplication(incomingData);
+		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			try {
 				if (StringUtils.isNotBlank(xUserInfo)) {
 					UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
@@ -154,22 +162,22 @@ public class FormsController {
 						incomingData.setUpdatedBy(userInfo.getEmailId());
 					}
 				}
-				Boolean status = formsService.saveFormSubmitv1(incomingData);
-				if (status) {
-					return ResponseGenerator.successResponse(status);
+				if (formsService.saveFormSubmitv1(incomingData)) {
+					return ResponseGenerator.successResponse(Boolean.TRUE);
 				}
 			} catch (Exception e) {
-				logger.error(String.format("Exception in saveFormSubmitv1 on reading the request data : %s",
-						e.getMessage()));
+				logger.error(String.format(Constants.EXCEPTION, "saveFormSubmitv1", e.getMessage()));
 				return ResponseGenerator.failureResponse(Constants.ResponseMessages.CHECK_REQUEST_PARAMS);
 			}
+			return ResponseGenerator.failureResponse();
 		}
-		return ResponseGenerator.failureResponse(Constants.ResponseMessages.CHECK_REQUEST_PARAMS);
+		return ResponseGenerator.failureResponse(validation);
 
 	}
 
 	@PostMapping(value = PathRoutes.FormServiceApi.VERIFY_FEEDBACK)
-	public String verifyFeedback(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+	public String verifyFeedback(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody VerifyFeedbackDto verifyFeedbackDto) throws IOException {
 		UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		Boolean stat = formsService.verifyFeedback(userInfo, verifyFeedbackDto);
@@ -181,7 +189,8 @@ public class FormsController {
 	}
 
 	@PostMapping(value = PathRoutes.FormServiceApi.VOTE_FEEDBACK)
-	public String voteFeedback(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+	public String voteFeedback(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody VoteFeedbackDto voteFeedbackDto) throws IOException {
 		UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		if (voteFeedbackDto.getCustomerId() == null) {
@@ -196,7 +205,8 @@ public class FormsController {
 	}
 
 	@PostMapping(value = PathRoutes.FormServiceApi.REPLY_FEEDBACK)
-	public String replyFeedback(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+	public String replyFeedback(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody ReplyFeedbackDto replyFeedbackDto) throws IOException {
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
@@ -213,7 +223,8 @@ public class FormsController {
 	}
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_FEEDBACKS, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getFeedbacks(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+	public String getFeedbacks(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestParam(value = "formId", required = false) Long formId,
 			@RequestParam(value = "agentId", required = false) Long agentId,
 			@RequestParam(value = "customerId", required = false) Long customerId,
@@ -225,7 +236,7 @@ public class FormsController {
 		if (xUserInfo != null) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
-		List<IncomingData> formFeedback = null;
+		List<Map<String, Object>> formFeedback = null;
 		formFeedback = formsService.getFeedbacksByFormId(formId, approved, challenged, agentId, customerId, userInfo,
 				challengeStatus);
 		if (formFeedback != null)
@@ -234,9 +245,10 @@ public class FormsController {
 	}
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_FEEDBACK_BY_ID, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getFeedbackById(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
-			@RequestParam(value = "formId", required = false) Long formId) throws JsonProcessingException {
-		List<IncomingData> formFeedback = null;
+	public String getFeedbackById(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
+			@RequestParam(value = Constants.FORM_ID, required = false) Long formId) throws JsonProcessingException {
+		List<Map<String, Object>> formFeedback = null;
 		formFeedback = formsService.getFeedbacksByFormId(formId);
 		if (formFeedback != null)
 			return ResponseGenerator.successResponse(formFeedback);
@@ -244,12 +256,13 @@ public class FormsController {
 	}
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_FEEDBACKS, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getFeedbacks(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+	public String getFeedbacks(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestParam(value = "approved", required = false) String approved,
 			@RequestParam(value = "challenged", required = false) String challenged,
 			@RequestParam(value = "challengeStatus", required = false) Boolean challengeStatus,
 			@RequestParam(value = "count", required = true) Boolean count) throws JsonProcessingException {
-		List<IncomingData> formFeedback = null;
+		List<Map<String, Object>> formFeedback = null;
 		formFeedback = formsService.getFeedbacks(approved, challenged, challengeStatus);
 		if (formFeedback != null) {
 			if (count)
@@ -277,14 +290,20 @@ public class FormsController {
 	}
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_APPLICATIONS, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getAllApplications(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
-			@RequestParam(value = Constants.FORM_ID, required = false) String formId) throws JsonProcessingException {
-		List<IncomingData> responseData = new ArrayList<>();
-		if (StringUtils.isNotBlank(formId)) {
-			responseData = formsService.getApplications(formId, null, null);
-		} else if (StringUtils.isNotBlank(xUserInfo)) {
+	public String getAllApplications(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
+			@RequestParam(value = Constants.FORM_ID, required = false) String formId,
+			@RequestParam(required = false) Boolean myApplication) throws JsonProcessingException {
+		List<Map<String, Object>> responseData = new ArrayList<>();
+		String createdBy = null;
+		if (StringUtils.isNotBlank(xUserInfo)) {
 			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
-			responseData = formsService.getApplications(null, null, userInfo.getEmailId());
+			createdBy = userInfo.getEmailId();
+		}
+		if (myApplication != null && myApplication) {
+			responseData = formsService.getApplications(formId, null, createdBy);
+		} else {
+			responseData = formsService.getApplications(formId, null, null);
 		}
 
 		if (responseData != null) {
@@ -294,18 +313,21 @@ public class FormsController {
 	}
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_APPLICATIONS_BY_ID, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getApplicationsById(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+	public String getApplicationsById(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestParam(value = Constants.APPLICATION_ID, required = true) String applicationId)
 			throws JsonProcessingException {
-		List<IncomingData> responseData = formsService.getApplications(null, applicationId, null);
+		List<Map<String, Object>> responseData = formsService.getApplications(null, applicationId, null);
 		if (responseData != null) {
-			return ResponseGenerator.successResponse(responseData);
+			return (responseData.isEmpty()) ? ResponseGenerator.successResponse(new HashMap<>())
+					: ResponseGenerator.successResponse(responseData.get(0));
 		}
 		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
 	}
 
 	@PostMapping(value = PathRoutes.FormServiceApi.FILE_UPLOAD, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String fileUpload(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+	public String fileUpload(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestParam(required = true) MultipartFile[] files,
 			@RequestParam(value = "folderName", required = false) String folderName) throws JsonProcessingException {
 		if (files != null) {
@@ -322,7 +344,8 @@ public class FormsController {
 	}
 
 	@DeleteMapping(value = PathRoutes.FormServiceApi.DELETE_CLOUD_FILE, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String deleteCloudFile(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+	public String deleteCloudFile(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody(required = true) List<String> files) throws JsonProcessingException {
 		if (formsService.deleteCloudFile(files)) {
 			return ResponseGenerator.successResponse(Boolean.TRUE);
@@ -331,15 +354,20 @@ public class FormsController {
 	}
 
 	@PostMapping(value = PathRoutes.FormServiceApi.REVIEW_APPLICATION, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String reviewApplication(@RequestHeader(value = "x-user-info", required = false) String xUserInfo,
+	public String reviewApplication(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody IncomingData incomingData) throws JsonProcessingException {
-		if (StringUtils.isNotBlank(xUserInfo)) {
-			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
-			incomingData.setReviewedBy(userInfo.getEmailId());
+		String validation = validationService.validateApplicationReview(incomingData);
+		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
+			if (StringUtils.isNotBlank(xUserInfo)) {
+				UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+				incomingData.setReviewedBy(userInfo.getEmailId());
+			}
+			if (formsService.reviewApplication(incomingData)) {
+				return ResponseGenerator.successResponse(Boolean.TRUE);
+			}
+			return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
 		}
-		if (formsService.reviewApplication(incomingData)) {
-			return ResponseGenerator.successResponse(Boolean.TRUE);
-		}
-		return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
+		return ResponseGenerator.failureResponse(validation);
 	}
 }
