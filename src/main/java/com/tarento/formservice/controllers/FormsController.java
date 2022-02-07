@@ -325,6 +325,9 @@ public class FormsController {
 		SearchObject sObject = new SearchObject(); 
 		sObject.setKey(Constants.APPLICATION_ID);
 		sObject.setValues(applicationId);
+		List<SearchObject> searchObjectList = new ArrayList<SearchObject>(); 
+		searchObjectList.add(sObject);
+		searchRequestDto.setSearchObjects(searchObjectList);
 		List<Map<String, Object>> responseData = formsService.getApplications(userInfo, searchRequestDto);
 		if (responseData != null) {
 			return (responseData.isEmpty()) ? ResponseGenerator.successResponse(new HashMap<>())

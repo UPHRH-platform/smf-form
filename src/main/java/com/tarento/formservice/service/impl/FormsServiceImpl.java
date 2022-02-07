@@ -585,7 +585,14 @@ public class FormsServiceImpl implements FormsService {
 						SearchObject roleBasedSearch = new SearchObject();
 						roleBasedSearch.setKey(Constants.CREATED_BY);
 						roleBasedSearch.setValues(userInfo.getEmailId());
-						searchRequestDto.getSearchObjects().add(roleBasedSearch);
+						if(searchRequestDto.getSearchObjects() != null) { 
+							searchRequestDto.getSearchObjects().add(roleBasedSearch);
+						} else { 
+							List<SearchObject> searchObjectList = new ArrayList<>();
+							searchObjectList.add(roleBasedSearch);
+							searchRequestDto.setSearchObjects(searchObjectList);
+						}
+						
 					}
 				}
 			}
