@@ -599,6 +599,7 @@ public class FormsServiceImpl implements FormsService {
 					} else {
 						// In the case where UI tries to send random values which are not configured in
 						// our ES Mapping, the API should send empty set as a response.
+						// So here, we just query as empty set and we know that we will get empty set as a response 
 						boolBuilder.must().add(QueryBuilders.matchQuery(Constants.EMPTY_SET, Constants.EMPTY_SET));
 					}
 				}
@@ -608,6 +609,7 @@ public class FormsServiceImpl implements FormsService {
 			// es call
 			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
 					.types(appConfig.getFormDataIndexType()).source(searchSourceBuilder);
+			LOGGER.info("Search Request : " + searchRequest);
 			return formsDao.searchResponse(searchRequest);
 
 		} catch (Exception e) {
