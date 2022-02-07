@@ -595,7 +595,12 @@ public class FormsServiceImpl implements FormsService {
 					Object values = objects.getValues();
 					if (Constants.ElasticSearchFields.MAPPING.containsKey(key)) {
 						boolBuilder.must()
-								.add(QueryBuilders.matchQuery(Constants.ElasticSearchFields.MAPPING.get(key), values));
+						.add(QueryBuilders.termsQuery(Constants.ElasticSearchFields.MAPPING.get(key), values));
+						/*
+						 * boolBuilder.must()
+						 * .add(QueryBuilders.matchQuery(Constants.ElasticSearchFields.MAPPING.get(key),
+						 * values));
+						 */
 					} else {
 						// In the case where UI tries to send random values which are not configured in
 						// our ES Mapping, the API should send empty set as a response.
