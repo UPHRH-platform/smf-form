@@ -1,5 +1,8 @@
 package com.tarento.formservice.utils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public interface Constants {
 
 	public static final String LOGO_URL = "https://cabhound-static.s3.amazonaws.com/insuranceDoc/claim/tarento_logo.png";
@@ -117,8 +120,10 @@ public interface Constants {
 	public static final String ID = "id";
 	public static final String FORM_ID = "formId";
 	public static final String APPLICATION_ID = "applicationId";
+	public static final String STATUS = "status";
 	public static final String CREATED_BY = "createdBy";
 	public static final String TIMESTAMP = "timestamp";
+	public static final String EMPTY_SET = "emptySet";
 
 	public static final String APPEND_KEYWORD = ".keyword";
 
@@ -130,6 +135,15 @@ public interface Constants {
 
 	interface FormFieldTypes {
 		public static final String TEXT = "text";
+	}
+	
+	interface ElasticSearchFields {
+		public static final Map<String, String> MAPPING  = new HashMap<String, String>() {{
+			put("formId", "id");
+		    put("applicationId", "_id");
+		    put("status", "status.keyword");
+		    put("createdBy", "createdBy.keyword");
+		}};
 	}
 
 }

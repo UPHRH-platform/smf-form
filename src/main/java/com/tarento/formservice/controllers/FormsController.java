@@ -33,6 +33,8 @@ import com.tarento.formservice.model.FormModel;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.Role;
+import com.tarento.formservice.model.SearchObject;
+import com.tarento.formservice.model.SearchRequestDto;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.VoteFeedbackDto;
@@ -262,6 +264,11 @@ public class FormsController {
 			@RequestParam(value = "challenged", required = false) String challenged,
 			@RequestParam(value = "challengeStatus", required = false) Boolean challengeStatus,
 			@RequestParam(value = "count", required = true) Boolean count) throws JsonProcessingException {
+		UserInfo userInfo = null; 
+		if (StringUtils.isNotBlank(xUserInfo)) {
+			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+		}
+		System.out.println(userInfo.toString());
 		List<Map<String, Object>> formFeedback = null;
 		formFeedback = formsService.getFeedbacks(approved, challenged, challengeStatus);
 		if (formFeedback != null) {
@@ -289,23 +296,16 @@ public class FormsController {
 		return fData;
 	}
 
-	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_APPLICATIONS, produces = MediaType.APPLICATION_JSON_VALUE)
+	@PostMapping(value = PathRoutes.FormServiceApi.GET_ALL_APPLICATIONS, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getAllApplications(
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
-			@RequestParam(value = Constants.FORM_ID, required = false) String formId,
-			@RequestParam(required = false) Boolean myApplication) throws JsonProcessingException {
+			@RequestBody SearchRequestDto searchRequestDto)  throws JsonProcessingException {
 		List<Map<String, Object>> responseData = new ArrayList<>();
-		String createdBy = null;
+		UserInfo userInfo = null; 
 		if (StringUtils.isNotBlank(xUserInfo)) {
-			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
-			createdBy = userInfo.getEmailId();
+			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
-		if (myApplication != null && myApplication) {
-			responseData = formsService.getApplications(formId, null, createdBy);
-		} else {
-			responseData = formsService.getApplications(formId, null, null);
-		}
-
+		responseData = formsService.getApplications(userInfo, searchRequestDto);
 		if (responseData != null) {
 			return ResponseGenerator.successResponse(responseData);
 		}
@@ -317,7 +317,15 @@ public class FormsController {
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestParam(value = Constants.APPLICATION_ID, required = true) String applicationId)
 			throws JsonProcessingException {
-		List<Map<String, Object>> responseData = formsService.getApplications(null, applicationId, null);
+		UserInfo userInfo = null; 
+		if (StringUtils.isNotBlank(xUserInfo)) {
+			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+		}
+		SearchRequestDto searchRequestDto = new SearchRequestDto(); 
+		SearchObject sObject = new SearchObject(); 
+		sObject.setKey(Constants.APPLICATION_ID);
+		sObject.setValues(applicationId);
+		List<Map<String, Object>> responseData = formsService.getApplications(userInfo, searchRequestDto);
 		if (responseData != null) {
 			return (responseData.isEmpty()) ? ResponseGenerator.successResponse(new HashMap<>())
 					: ResponseGenerator.successResponse(responseData.get(0));

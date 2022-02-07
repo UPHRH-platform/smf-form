@@ -47,6 +47,9 @@ import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.ResponseData;
 import com.tarento.formservice.model.Result;
 import com.tarento.formservice.model.Role;
+import com.tarento.formservice.model.Roles;
+import com.tarento.formservice.model.SearchObject;
+import com.tarento.formservice.model.SearchRequestDto;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.Vote;
@@ -570,31 +573,44 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
-	public List<Map<String, Object>> getApplications(String formId, String applicationId, String createdBy) {
+	public List<Map<String, Object>> getApplications(UserInfo userInfo, SearchRequestDto searchRequestDto) {
 		try {
 			// query builder
 			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
 			BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
-			if (StringUtils.isNotBlank(formId)) {
-				boolBuilder.must().add(QueryBuilders.matchQuery(Constants.FORM_ID, formId));
+
+			if (userInfo != null && userInfo.getRoles() != null) {
+				for (Role role : userInfo.getRoles()) {
+					if (role.getName().equals(Roles.Institution.name())) {
+						SearchObject roleBasedSearch = new SearchObject();
+						roleBasedSearch.setKey(Constants.CREATED_BY);
+						roleBasedSearch.setValues(userInfo.getEmailId());
+						searchRequestDto.getSearchObjects().add(roleBasedSearch);
+					}
+				}
 			}
-			if (StringUtils.isNotBlank(applicationId)) {
-				boolBuilder.must().add(QueryBuilders.matchQuery(Constants._ID, applicationId));
-			}
-			if (StringUtils.isNotBlank(createdBy)) {
-				boolBuilder.must()
-						.add(QueryBuilders.matchQuery(Constants.CREATED_BY + Constants.APPEND_KEYWORD, createdBy));
+			if (searchRequestDto != null && searchRequestDto.getSearchObjects() != null) {
+				for (SearchObject objects : searchRequestDto.getSearchObjects()) {
+					String key = objects.getKey();
+					Object values = objects.getValues();
+					if (Constants.ElasticSearchFields.MAPPING.containsKey(key)) {
+						boolBuilder.must()
+								.add(QueryBuilders.matchQuery(Constants.ElasticSearchFields.MAPPING.get(key), values));
+					} else {
+						// In the case where UI tries to send random values which are not configured in
+						// our ES Mapping, the API should send empty set as a response.
+						boolBuilder.must().add(QueryBuilders.matchQuery(Constants.EMPTY_SET, Constants.EMPTY_SET));
+					}
+				}
 			}
 			searchSourceBuilder.query(boolBuilder);
 			searchSourceBuilder.sort(Constants.TIMESTAMP, SortOrder.DESC);
 			// es call
 			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
 					.types(appConfig.getFormDataIndexType()).source(searchSourceBuilder);
-
 			return formsDao.searchResponse(searchRequest);
 
 		} catch (Exception e) {
-			e.printStackTrace();
 			LOGGER.error(String.format(Constants.EXCEPTION, "getApplications", e.getMessage()));
 		}
 		return null;
