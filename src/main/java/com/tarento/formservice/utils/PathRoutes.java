@@ -45,6 +45,7 @@ public interface PathRoutes {
 
 		final String GET_ALL_APPLICATIONS = "/getAllApplications";
 		final String GET_APPLICATIONS_BY_ID = "/getApplicationsById";
+		final String GET_APPLICATIONS_STATUS_COUNT = "/getApplicationsStatusCount";
 		final String FILE_UPLOAD = "/fileUpload";
 		final String DELETE_CLOUD_FILE = "/deleteCloudFile";
 		final String REVIEW_APPLICATION = "/reviewApplication";

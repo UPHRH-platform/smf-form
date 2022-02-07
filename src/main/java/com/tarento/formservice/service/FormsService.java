@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.tarento.formservice.model.IncomingData;
+import com.tarento.formservice.model.KeyValueList;
 import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.ResponseData;
 import com.tarento.formservice.model.SearchRequestDto;
@@ -48,6 +49,8 @@ public interface FormsService {
 	ResponseData fetchUserInfo(Long userId);
 
 	List<Map<String, Object>> getApplications(UserInfo userInfo, SearchRequestDto searchRequestDto);
+	
+	KeyValueList getApplicationsStatusCount();
 
 	public Boolean saveFormSubmitv1(IncomingData incomingData);
 

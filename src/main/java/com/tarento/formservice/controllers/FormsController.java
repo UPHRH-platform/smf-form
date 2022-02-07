@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import com.tarento.formservice.model.FormData;
 import com.tarento.formservice.model.FormModel;
 import com.tarento.formservice.model.IncomingData;
+import com.tarento.formservice.model.KeyValueList;
 import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.Role;
 import com.tarento.formservice.model.SearchObject;
@@ -306,6 +307,21 @@ public class FormsController {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
 		responseData = formsService.getApplications(userInfo, searchRequestDto);
+		if (responseData != null) {
+			return ResponseGenerator.successResponse(responseData);
+		}
+		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
+	}
+	
+	@GetMapping(value = PathRoutes.FormServiceApi.GET_APPLICATIONS_STATUS_COUNT, produces = MediaType.APPLICATION_JSON_VALUE)
+	public String getApplicationsStatusCount(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
+			throws JsonProcessingException {
+		UserInfo userInfo = null; 
+		if (StringUtils.isNotBlank(xUserInfo)) {
+			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+		}
+		KeyValueList responseData = formsService.getApplicationsStatusCount();
 		if (responseData != null) {
 			return ResponseGenerator.successResponse(responseData);
 		}

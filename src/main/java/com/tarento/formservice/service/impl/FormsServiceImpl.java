@@ -6,9 +6,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.search.MultiSearchResponse;
@@ -43,6 +46,8 @@ import com.google.gson.Gson;
 import com.tarento.formservice.dao.FormsDao;
 import com.tarento.formservice.executor.MasterDataManager;
 import com.tarento.formservice.model.IncomingData;
+import com.tarento.formservice.model.KeyValue;
+import com.tarento.formservice.model.KeyValueList;
 import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.ResponseData;
 import com.tarento.formservice.model.Result;
@@ -629,6 +634,37 @@ public class FormsServiceImpl implements FormsService {
 		}
 		return null;
 	}
+	
+	@Override
+	public KeyValueList getApplicationsStatusCount() {
+		try {
+			// query builder
+			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0);
+			searchSourceBuilder.aggregation(AggregationBuilders.terms("Total Pending").field("status.keyword"));
+			
+			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex()).types(appConfig.getFormIndexType()).source(searchSourceBuilder);
+			LOGGER.info("Search Request : " + searchRequest);
+			List<Map<String, Object>> responseNode = formsDao.searchAggregationResponse(searchRequest);
+			return translateResponse(responseNode); 
+		} catch(Exception ex) { 
+			LOGGER.error(String.format(Constants.EXCEPTION, "getApplicationsStatusCount", ex.getMessage()));
+		}
+		return null;
+	}
+	
+	KeyValueList translateResponse(List<Map<String, Object>> responseNode) { 
+		KeyValueList list = new KeyValueList(); 
+		List<KeyValue> listOfKeyValuePairs = new ArrayList<KeyValue>();
+		for(Map<String, Object> eachMap : responseNode) { 
+			List<KeyValue> keyValueList = eachMap.entrySet().stream().map(
+					entry -> 
+					new KeyValue(entry.getKey().equals("Submitted")? "Total Pending" : entry.getKey(), entry.getValue()))
+		            .collect(Collectors.toList());
+			listOfKeyValuePairs.addAll(keyValueList); 
+		}
+		list.setKeyValues(listOfKeyValuePairs);
+		return list; 
+	}
 
 	@Override
 	public Boolean saveFormSubmitv1(IncomingData incomingData) {
@@ -704,4 +740,6 @@ public class FormsServiceImpl implements FormsService {
 		}
 
 	}
+
+	
 }

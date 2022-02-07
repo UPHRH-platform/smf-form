@@ -32,5 +32,7 @@ public interface FormsDao {
 	public Boolean updateInteractions(Map<String, Object> jsonMap, String id);
 
 	List<Map<String, Object>> searchResponse(SearchRequest searchRequest);
+	
+	List<Map<String, Object>> searchAggregationResponse(SearchRequest searchRequest);
 
 }
