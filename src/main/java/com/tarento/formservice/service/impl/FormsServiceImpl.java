@@ -613,7 +613,7 @@ public class FormsServiceImpl implements FormsService {
 			searchSourceBuilder.sort(Constants.TIMESTAMP, SortOrder.DESC);
 			// es call
 			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
-					.types(appConfig.getFormDataIndexType()).source(searchSourceBuilder);
+					.types("forms-data").source(searchSourceBuilder);
 			LOGGER.info("Search Request : " + searchRequest);
 			return formsDao.searchResponse(searchRequest);
 
