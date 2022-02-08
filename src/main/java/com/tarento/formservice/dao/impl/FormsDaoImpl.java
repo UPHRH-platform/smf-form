@@ -48,7 +48,7 @@ public class FormsDaoImpl implements FormsDao {
 	public Boolean addFormData(IncomingData incomingData) {
 		return elasticsearchRepo.writeDatatoElastic(incomingData,
 				RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE), appConfig.getFormDataIndex(),
-				appConfig.getFormDataIndexType());
+				appConfig.getFormIndexType());
 
 	}
 
