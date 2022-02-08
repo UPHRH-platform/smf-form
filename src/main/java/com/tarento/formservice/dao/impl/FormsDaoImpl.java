@@ -55,13 +55,13 @@ public class FormsDaoImpl implements FormsDao {
 	@Override
 	public Boolean updateFormData(Map<String, Object> jsonMap, String id) {
 		return elasticsearchRepo.updateElasticData(jsonMap, id, appConfig.getFormDataIndex(),
-				appConfig.getFormDataIndexType());
+				appConfig.getFormIndexType());
 	}
 
 	@Override
 	public Boolean updateFormData(Object object, String id) {
 		return elasticsearchRepo.updateElasticData(object, id, appConfig.getFormDataIndex(),
-				appConfig.getFormDataIndexType());
+				appConfig.getFormIndexType());
 	}
 
 	@Override
