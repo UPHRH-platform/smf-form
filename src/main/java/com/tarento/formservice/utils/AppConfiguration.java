@@ -75,4 +75,7 @@ public class AppConfiguration {
 	@Value("${es.fs.statematrix.index.name}")
 	private String formStateMatrixIndex; 
 
+	@Value("${es.fs.workflowlog.index.name}")
+	private String workflowLogIndex; 
+	
 }
