@@ -2,12 +2,15 @@ package com.tarento.formservice.dao;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 import org.elasticsearch.action.search.SearchRequest;
 import org.springframework.http.HttpHeaders;
 
 import com.tarento.formservice.model.FormData;
 import com.tarento.formservice.model.IncomingData;
+import com.tarento.formservice.model.State;
+import com.tarento.formservice.model.StateMatrix;
 import com.tarento.formservice.models.FormDetail;
 
 /**
@@ -34,5 +37,9 @@ public interface FormsDao {
 	List<Map<String, Object>> searchResponse(SearchRequest searchRequest);
 	
 	List<Map<String, Object>> searchAggregationResponse(SearchRequest searchRequest);
+	
+	ConcurrentMap<Long, State> fetchAllStates(SearchRequest searchRequest); 
+	
+	ConcurrentMap<String, StateMatrix> fetchAllStateMatrix(SearchRequest searchRequest);
 
 }

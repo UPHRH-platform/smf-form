@@ -68,5 +68,11 @@ public class AppConfiguration {
 
 	@Value("${mail.smtp.email}")
 	private String smtpEmail;
+	
+	@Value("${es.fs.state.index.name}")
+	private String formStateIndex; 
+	
+	@Value("${es.fs.statematrix.index.name}")
+	private String formStateMatrixIndex; 
 
 }

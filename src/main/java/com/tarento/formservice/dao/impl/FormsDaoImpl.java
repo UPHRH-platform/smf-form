@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.elasticsearch.action.search.MultiSearchResponse;
@@ -19,9 +21,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Repository;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tarento.formservice.dao.FormsDao;
 import com.tarento.formservice.model.FormData;
 import com.tarento.formservice.model.IncomingData;
+import com.tarento.formservice.model.State;
+import com.tarento.formservice.model.StateMatrix;
 import com.tarento.formservice.models.FormDetail;
 import com.tarento.formservice.repository.ElasticSearchRepository;
 import com.tarento.formservice.utils.AppConfiguration;
@@ -115,6 +120,44 @@ public class FormsDaoImpl implements FormsDao {
 			LOGGER.error(String.format(Constants.EXCEPTION, "searchResponse", e.getMessage()));
 			return null;
 		}
+	}
+
+	@Override
+	public ConcurrentMap<Long, State> fetchAllStates(SearchRequest searchRequest) {
+		ConcurrentMap<Long, State> stateMap = new ConcurrentHashMap<Long, State>();
+		try {
+			MultiSearchResponse response = elasticsearchRepo.executeMultiSearchRequest(searchRequest);
+			SearchResponse searchResponse = response.getResponses()[0].getResponse();
+			SearchHit[] hit = searchResponse.getHits().getHits();
+			for (SearchHit hits : hit) {	
+				Map<String, Object> sourceAsMap = hits.getSourceAsMap();
+				State eachState = new ObjectMapper().convertValue(sourceAsMap, State.class); 
+				stateMap.put(eachState.getId(), eachState);
+			}
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "fetchAllStates : Not able to load states !!! ", e.getMessage()));
+			return null;
+		}
+		return stateMap;
+	}
+
+	@Override
+	public ConcurrentMap<String, StateMatrix> fetchAllStateMatrix(SearchRequest searchRequest) {
+		ConcurrentMap<String, StateMatrix> stateMatrixMap = new ConcurrentHashMap<String, StateMatrix>();
+		try {
+			MultiSearchResponse response = elasticsearchRepo.executeMultiSearchRequest(searchRequest);
+			SearchResponse searchResponse = response.getResponses()[0].getResponse();
+			SearchHit[] hit = searchResponse.getHits().getHits();
+			for (SearchHit hits : hit) {	
+				Map<String, Object> sourceAsMap = hits.getSourceAsMap();
+				StateMatrix eachStateMatrix = new ObjectMapper().convertValue(sourceAsMap, StateMatrix.class); 
+				stateMatrixMap.put(eachStateMatrix.getAction(), eachStateMatrix);
+			}
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "fetchAllStateMatrix : Not able to load state matrices !!! ", e.getMessage()));
+			return null;
+		}
+		return stateMatrixMap;
 	}
 
 }

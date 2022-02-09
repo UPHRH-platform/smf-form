@@ -6,11 +6,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -44,7 +43,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.tarento.formservice.dao.FormsDao;
-import com.tarento.formservice.executor.MasterDataManager;
+import com.tarento.formservice.executor.StateMatrixManager;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.KeyValue;
 import com.tarento.formservice.model.KeyValueList;
@@ -55,6 +54,8 @@ import com.tarento.formservice.model.Role;
 import com.tarento.formservice.model.Roles;
 import com.tarento.formservice.model.SearchObject;
 import com.tarento.formservice.model.SearchRequestDto;
+import com.tarento.formservice.model.State;
+import com.tarento.formservice.model.StateMatrix;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.Vote;
@@ -543,13 +544,13 @@ public class FormsServiceImpl implements FormsService {
 	public Boolean replyFeedback(UserInfo userInfo, ReplyFeedbackDto replyFeedbackDto) throws IOException {
 		Map<String, Object> jsonMap = new HashMap<>();
 		replyFeedbackDto.setUserId(userInfo.getId());
-		if (MasterDataManager.getUserData().get(userInfo.getId()) != null) {
+		if (StateMatrixManager.getUserData().get(userInfo.getId()) != null) {
 			replyFeedbackDto
-					.setUsername(MasterDataManager.getUserData().get(userInfo.getId()).getUsername().toString());
+					.setUsername(StateMatrixManager.getUserData().get(userInfo.getId()).getUsername().toString());
 		} else {
 			ResponseData data = fetchUserInfo(userInfo.getId());
 			if (data != null) {
-				MasterDataManager.getUserData().put(userInfo.getId(), data);
+				StateMatrixManager.getUserData().put(userInfo.getId(), data);
 				replyFeedbackDto.setUsername(data.getUsername().toString());
 			}
 		}
@@ -640,7 +641,7 @@ public class FormsServiceImpl implements FormsService {
 		try {
 			// query builder
 			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0);
-			searchSourceBuilder.aggregation(AggregationBuilders.terms("Total Pending").field("status.keyword"));
+			searchSourceBuilder.aggregation(AggregationBuilders.terms("Total Pending").field(Constants.ElasticSearchFields.MAPPING.get(Constants.STATUS)));
 			
 			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex()).types(appConfig.getFormIndexType()).source(searchSourceBuilder);
 			LOGGER.info("Search Request : " + searchRequest);
@@ -658,7 +659,7 @@ public class FormsServiceImpl implements FormsService {
 		for(Map<String, Object> eachMap : responseNode) { 
 			List<KeyValue> keyValueList = eachMap.entrySet().stream().map(
 					entry -> 
-					new KeyValue(entry.getKey().equals("Submitted")? "Total Pending" : entry.getKey(), entry.getValue()))
+					new KeyValue(entry.getKey().equals("New")? "Total Pending" : entry.getKey(), entry.getValue()))
 		            .collect(Collectors.toList());
 			listOfKeyValuePairs.addAll(keyValueList); 
 		}
@@ -739,6 +740,26 @@ public class FormsServiceImpl implements FormsService {
 			return Boolean.FALSE;
 		}
 
+	}
+
+	@Override
+	public ConcurrentMap<Long, State> fetchAllStates() {
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
+		// es call
+		SearchRequest searchRequest = new SearchRequest(appConfig.getFormStateIndex())
+				.types(appConfig.getFormIndexType()).source(searchSourceBuilder);
+		LOGGER.info("Search Request : " + searchRequest);
+		return formsDao.fetchAllStates(searchRequest);
+	}
+
+	@Override
+	public ConcurrentMap<String, StateMatrix> fetchAllStateMatrix() {
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
+		// es call
+		SearchRequest searchRequest = new SearchRequest(appConfig.getFormStateMatrixIndex())
+				.types(appConfig.getFormIndexType()).source(searchSourceBuilder);
+		LOGGER.info("Search Request : " + searchRequest);
+		return formsDao.fetchAllStateMatrix(searchRequest);
 	}
 
 	
