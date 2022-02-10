@@ -83,8 +83,8 @@ public class ElasticSearchRepository {
 			}
 		};
 		return new RestHighLevelClient(
-				RestClient.builder(new HttpHost(appConfig.getElasticHost(), appConfig.getElasticPort(), "https"))
-				.setHttpClientConfigCallback(httpClientConfigCallback));
+				RestClient.builder(new HttpHost(appConfig.getElasticHost(), appConfig.getElasticPort())));
+
 	}
 
 	/**
