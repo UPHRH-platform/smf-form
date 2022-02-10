@@ -53,7 +53,7 @@ public interface FormsService {
 	ResponseData fetchUserInfo(Long userId);
 
 	List<Map<String, Object>> getApplications(UserInfo userInfo, SearchRequestDto searchRequestDto);
-	
+
 	KeyValueList getApplicationsStatusCount();
 
 	public Boolean saveFormSubmitv1(IncomingData incomingData);
@@ -63,11 +63,11 @@ public interface FormsService {
 	public Boolean deleteCloudFile(List<String> files);
 
 	public Boolean reviewApplication(IncomingData incomingData);
-	
-	public ConcurrentMap<Long, State> fetchAllStates(); 
-	
-	public ConcurrentMap<String, StateMatrix> fetchAllStateMatrix(); 
 
-	public Boolean assignApplication(AssignApplication assign);
+	public ConcurrentMap<Long, State> fetchAllStates();
+
+	public ConcurrentMap<String, StateMatrix> fetchAllStateMatrix();
+
+	Boolean assignApplication(UserInfo userinfo, AssignApplication assign);
 
 }

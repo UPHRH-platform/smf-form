@@ -48,6 +48,16 @@ public interface Constants {
 		static final String VERSION = "version";
 		static final String FORM_DATA = "urlCode";
 		static final String X_USER_INFO = "x-user-info";
+		static final String USER_ID = "userId";
+		static final String ORG_ID = "orgId";
+		static final String EMAIL_ID = "emailId";
+		static final String FIRST_NAME = "firstName";
+		static final String LAST_NAME = "lastName";
+		static final String SEARCH = "search";
+		static final String RESPONSE_DATA = "responseData";
+
+		static final String AUTHORIZATION = "Authorization";
+		static final String BEARER = "Bearer ";
 	}
 
 	interface PortfolioConstants {

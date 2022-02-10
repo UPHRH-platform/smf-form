@@ -68,14 +68,20 @@ public class AppConfiguration {
 
 	@Value("${mail.smtp.email}")
 	private String smtpEmail;
-	
+
 	@Value("${es.fs.state.index.name}")
-	private String formStateIndex; 
-	
+	private String formStateIndex;
+
 	@Value("${es.fs.statematrix.index.name}")
-	private String formStateMatrixIndex; 
+	private String formStateMatrixIndex;
 
 	@Value("${es.fs.workflowlog.index.name}")
-	private String workflowLogIndex; 
-	
+	private String workflowLogIndex;
+
+	@Value("${user.routes.host.url}")
+	private String userServiceHost;
+
+	@Value("${user.routes.getAllUser.url}")
+	private String getAllUserApiPath;
+
 }

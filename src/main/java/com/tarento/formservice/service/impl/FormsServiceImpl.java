@@ -39,6 +39,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -58,12 +59,14 @@ import com.tarento.formservice.model.SearchRequestDto;
 import com.tarento.formservice.model.State;
 import com.tarento.formservice.model.StateMatrix;
 import com.tarento.formservice.model.UserInfo;
+import com.tarento.formservice.model.UserProfile;
 import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.Vote;
 import com.tarento.formservice.model.VoteFeedbackDto;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
 import com.tarento.formservice.repository.ElasticSearchRepository;
+import com.tarento.formservice.repository.RestService;
 import com.tarento.formservice.service.FormsService;
 import com.tarento.formservice.utils.AppConfiguration;
 import com.tarento.formservice.utils.CloudStorage;
@@ -751,18 +754,72 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
-	public Boolean assignApplication(AssignApplication assign) {
+	public Boolean assignApplication(UserInfo userinfo, AssignApplication assign) {
 		try {
-			IncomingData requestData = new IncomingData();
-			assign.setAssignedDate(DateUtils.getYyyyMmDdInUTC());
-			requestData.setInspection(assign);
-			requestData.setStatus(assign.getStatus());
+			if (assign.getUserId() != null && assign.getUserId().size() > 0) {
+				Map<String, Map<String, Object>> userMap = getUserDetails(assign.getUserId(), userinfo.getOrgId(),
+						userinfo.getAuthToken());
+				// set assigned user meta data
+				assign.setAssignedTo(new ArrayList<>());
+				for (Long userId : assign.getUserId()) {
+					UserProfile userProfile = new UserProfile();
+					userProfile.setId(userId);
+					String key = String.valueOf(userId);
+					if (userMap.containsKey(key)) {
+						userProfile.setEmailId((String) userMap.get(key).get(Constants.Parameters.EMAIL_ID));
+						userProfile.setFirstName((String) userMap.get(key).get(Constants.Parameters.FIRST_NAME));
+						userProfile.setLastName((String) userMap.get(key).get(Constants.Parameters.LAST_NAME));
+					}
+					assign.getAssignedTo().add(userProfile);
+				}
 
-			return formsDao.updateFormData(requestData, assign.getApplicationId());
+				IncomingData requestData = new IncomingData();
+				assign.setAssignedDate(DateUtils.getYyyyMmDdInUTC());
+				requestData.setInspection(assign);
+				requestData.setStatus(assign.getStatus());
+
+				return formsDao.updateFormData(requestData, assign.getApplicationId());
+			}
+			return Boolean.TRUE;
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "assignApplication", e.getMessage()));
 			return Boolean.FALSE;
 		}
+	}
+
+	/**
+	 * Makes rest call with user service to fetch the user details
+	 * 
+	 * @param userId
+	 *            Object
+	 * @param authToken
+	 *            String
+	 * @return
+	 */
+	private Map<String, Map<String, Object>> getUserDetails(Object userId, Object orgId, String authToken)
+			throws Exception {
+		Map<String, Object> requestBody = new HashMap<>();
+		requestBody.put(Constants.Parameters.ORG_ID, orgId);
+		requestBody.put(Constants.Parameters.SEARCH, new HashMap<String, Object>() {
+			{
+				put(Constants.Parameters.USER_ID, userId);
+			}
+		});
+		if (!authToken.toUpperCase().contains((Constants.Parameters.BEARER).toUpperCase())) {
+			authToken = Constants.Parameters.BEARER + authToken;
+		}
+		HttpHeaders headers = new HttpHeaders();
+		headers.add(Constants.Parameters.AUTHORIZATION, authToken);
+		Object response = RestService.postRequest(headers,
+				appConfig.getUserServiceHost() + appConfig.getGetAllUserApiPath(), requestBody);
+		if (response != null) {
+			List<Map<String, Object>> userList = objectMapper.convertValue(response,
+					new TypeReference<List<Map<String, Object>>>() {
+					});
+			return userList.stream()
+					.collect(Collectors.toMap(obj -> String.valueOf(obj.get(Constants.Parameters.ID)), obj -> obj));
+		}
+		return null;
 	}
 
 	public ConcurrentMap<Long, State> fetchAllStates() {

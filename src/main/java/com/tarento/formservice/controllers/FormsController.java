@@ -406,11 +406,12 @@ public class FormsController {
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 			assign.setAssignedBy(userInfo.getId());
+			Boolean status = formsService.assignApplication(userInfo, assign);
+			if (status) {
+				return ResponseGenerator.successResponse(status);
+			}
 		}
-		Boolean status = formsService.assignApplication(assign);
-		if (status) {
-			return ResponseGenerator.successResponse(status);
-		}
+		
 		return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
 	}
 }
