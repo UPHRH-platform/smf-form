@@ -3,6 +3,7 @@ package com.tarento.formservice.service;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,6 +13,8 @@ import com.tarento.formservice.model.KeyValueList;
 import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.ResponseData;
 import com.tarento.formservice.model.SearchRequestDto;
+import com.tarento.formservice.model.State;
+import com.tarento.formservice.model.StateMatrix;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.VoteFeedbackDto;
@@ -60,6 +63,10 @@ public interface FormsService {
 	public Boolean deleteCloudFile(List<String> files);
 
 	public Boolean reviewApplication(IncomingData incomingData);
+	
+	public ConcurrentMap<Long, State> fetchAllStates(); 
+	
+	public ConcurrentMap<String, StateMatrix> fetchAllStateMatrix(); 
 
 	public Boolean assignApplication(AssignApplication assign);
 
