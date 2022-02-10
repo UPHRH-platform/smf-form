@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.tarento.formservice.model.IncomingData;
+import com.tarento.formservice.model.Status;
 import com.tarento.formservice.models.Field;
 import com.tarento.formservice.models.FormDetail;
 
@@ -63,6 +64,22 @@ public class ValidationService {
 			return Constants.ResponseMessages.APPLICATION_ID_MISSING;
 		}
 		return Constants.ResponseCodes.SUCCESS;
+	}
+
+	/**
+	 * Validates the status in the request and sets default status for in the
+	 * invalid value
+	 * 
+	 * @param incomingData
+	 *            IncomingData
+	 */
+	public void validateApplicationStatus(IncomingData incomingData) {
+		if (StringUtils.isNotBlank(incomingData.getStatus())
+				&& incomingData.getStatus().equalsIgnoreCase(Status.DRAFT.name())) {
+			incomingData.setStatus(Status.DRAFT.name());
+		} else {
+			incomingData.setStatus(Status.NEW.name());
+		}
 	}
 
 }

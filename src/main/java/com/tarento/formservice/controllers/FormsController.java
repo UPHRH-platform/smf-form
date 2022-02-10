@@ -158,6 +158,7 @@ public class FormsController {
 		String validation = validationService.validateSubmittedApplication(incomingData);
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			try {
+				validationService.validateApplicationStatus(incomingData);
 				if (StringUtils.isNotBlank(xUserInfo)) {
 					UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 					if (StringUtils.isBlank(incomingData.getApplicationId())) {
@@ -411,7 +412,7 @@ public class FormsController {
 				return ResponseGenerator.successResponse(status);
 			}
 		}
-		
+
 		return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
 	}
 }
