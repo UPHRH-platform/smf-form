@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum Roles {
 
-	Institution("Institution"), Regulator("Regulator"), Admin("Admin");
+	Institution("Institution"), Regulator("Regulator"), Inspector("Inspector");
 
 	private String value;
 

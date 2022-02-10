@@ -3,6 +3,9 @@ package com.tarento.formservice.model;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,6 +17,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@JsonInclude(Include.NON_NULL)
 public class UserProfile extends User {
 	private Long profileId;
 	private String firstName;
@@ -21,7 +25,6 @@ public class UserProfile extends User {
 	private int age;
 	private String dob;
 	private String gender;
-	private String avatarUrl;
 	private Date startDate;
 	private Date endDate;
 	private Long salary;
@@ -33,6 +36,5 @@ public class UserProfile extends User {
 	private Date updatedDate;
 	private Long updatedBy;
 	private List<Role> roles;
-	private String countryCode;
 	private Long countryId;
 }

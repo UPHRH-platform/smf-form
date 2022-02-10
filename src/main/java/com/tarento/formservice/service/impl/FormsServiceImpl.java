@@ -6,10 +6,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -45,6 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.tarento.formservice.dao.FormsDao;
 import com.tarento.formservice.executor.MasterDataManager;
+import com.tarento.formservice.model.AssignApplication;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.KeyValue;
 import com.tarento.formservice.model.KeyValueList;
@@ -72,9 +71,6 @@ import com.tarento.formservice.utils.DateUtils;
 public class FormsServiceImpl implements FormsService {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(FormsServiceImpl.class);
-	private static final String AUTHORIZATION = "Authorization";
-	private static final String US_ASCII = "US-ASCII";
-	private static final String BASIC_AUTH = "Basic %s";
 
 	Gson gson = new Gson();
 	ObjectMapper objectMapper = new ObjectMapper();
@@ -583,31 +579,14 @@ public class FormsServiceImpl implements FormsService {
 			// query builder
 			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
 			BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
-
-			if (userInfo != null && userInfo.getRoles() != null) {
-				for (Role role : userInfo.getRoles()) {
-					if (role.getName().equals(Roles.Institution.name())) {
-						SearchObject roleBasedSearch = new SearchObject();
-						roleBasedSearch.setKey(Constants.CREATED_BY);
-						roleBasedSearch.setValues(userInfo.getEmailId());
-						if(searchRequestDto.getSearchObjects() != null) { 
-							searchRequestDto.getSearchObjects().add(roleBasedSearch);
-						} else { 
-							List<SearchObject> searchObjectList = new ArrayList<>();
-							searchObjectList.add(roleBasedSearch);
-							searchRequestDto.setSearchObjects(searchObjectList);
-						}
-						
-					}
-				}
-			}
+			setRoleBasedSearchObject(userInfo, searchRequestDto);
 			if (searchRequestDto != null && searchRequestDto.getSearchObjects() != null) {
 				for (SearchObject objects : searchRequestDto.getSearchObjects()) {
 					String key = objects.getKey();
 					Object values = objects.getValues();
 					if (Constants.ElasticSearchFields.MAPPING.containsKey(key)) {
 						boolBuilder.must()
-						.add(QueryBuilders.termsQuery(Constants.ElasticSearchFields.MAPPING.get(key), values));
+								.add(QueryBuilders.termsQuery(Constants.ElasticSearchFields.MAPPING.get(key), values));
 						/*
 						 * boolBuilder.must()
 						 * .add(QueryBuilders.matchQuery(Constants.ElasticSearchFields.MAPPING.get(key),
@@ -616,13 +595,15 @@ public class FormsServiceImpl implements FormsService {
 					} else {
 						// In the case where UI tries to send random values which are not configured in
 						// our ES Mapping, the API should send empty set as a response.
-						// So here, we just query as empty set and we know that we will get empty set as a response 
+						// So here, we just query as empty set and we know that we will get empty set as
+						// a response
 						boolBuilder.must().add(QueryBuilders.matchQuery(Constants.EMPTY_SET, Constants.EMPTY_SET));
 					}
 				}
 			}
 			searchSourceBuilder.query(boolBuilder);
 			searchSourceBuilder.sort(Constants.TIMESTAMP, SortOrder.DESC);
+			System.out.println(searchSourceBuilder);
 			// es call
 			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
 					.types(appConfig.getFormIndexType()).source(searchSourceBuilder);
@@ -634,36 +615,59 @@ public class FormsServiceImpl implements FormsService {
 		}
 		return null;
 	}
-	
+
+	private void setRoleBasedSearchObject(UserInfo userInfo, SearchRequestDto searchRequestDto) {
+		if (userInfo != null && userInfo.getRoles() != null) {
+			for (Role role : userInfo.getRoles()) {
+				SearchObject roleBasedSearch = new SearchObject();
+				if (role.getName().equals(Roles.Institution.name())) {
+					roleBasedSearch.setKey(Constants.CREATED_BY);
+					roleBasedSearch.setValues(userInfo.getEmailId());
+				} else if (role.getName().equals(Roles.Inspector.name())) {
+					roleBasedSearch.setKey(Constants.ASSIGNED_TO);
+					roleBasedSearch.setValues(userInfo.getId());
+				}
+				if (searchRequestDto.getSearchObjects() != null && StringUtils.isNotBlank(roleBasedSearch.getKey())) {
+					searchRequestDto.getSearchObjects().add(roleBasedSearch);
+				} else if (StringUtils.isNotBlank(roleBasedSearch.getKey())) {
+					List<SearchObject> searchObjectList = new ArrayList<>();
+					searchObjectList.add(roleBasedSearch);
+					searchRequestDto.setSearchObjects(searchObjectList);
+				}
+			}
+		}
+	}
+
 	@Override
 	public KeyValueList getApplicationsStatusCount() {
 		try {
 			// query builder
 			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0);
 			searchSourceBuilder.aggregation(AggregationBuilders.terms("Total Pending").field("status.keyword"));
-			
-			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex()).types(appConfig.getFormIndexType()).source(searchSourceBuilder);
+
+			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
+					.types(appConfig.getFormIndexType()).source(searchSourceBuilder);
 			LOGGER.info("Search Request : " + searchRequest);
 			List<Map<String, Object>> responseNode = formsDao.searchAggregationResponse(searchRequest);
-			return translateResponse(responseNode); 
-		} catch(Exception ex) { 
+			return translateResponse(responseNode);
+		} catch (Exception ex) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "getApplicationsStatusCount", ex.getMessage()));
 		}
 		return null;
 	}
-	
-	KeyValueList translateResponse(List<Map<String, Object>> responseNode) { 
-		KeyValueList list = new KeyValueList(); 
+
+	KeyValueList translateResponse(List<Map<String, Object>> responseNode) {
+		KeyValueList list = new KeyValueList();
 		List<KeyValue> listOfKeyValuePairs = new ArrayList<KeyValue>();
-		for(Map<String, Object> eachMap : responseNode) { 
-			List<KeyValue> keyValueList = eachMap.entrySet().stream().map(
-					entry -> 
-					new KeyValue(entry.getKey().equals("Submitted")? "Total Pending" : entry.getKey(), entry.getValue()))
-		            .collect(Collectors.toList());
-			listOfKeyValuePairs.addAll(keyValueList); 
+		for (Map<String, Object> eachMap : responseNode) {
+			List<KeyValue> keyValueList = eachMap.entrySet().stream()
+					.map(entry -> new KeyValue(entry.getKey().equals("Submitted") ? "Total Pending" : entry.getKey(),
+							entry.getValue()))
+					.collect(Collectors.toList());
+			listOfKeyValuePairs.addAll(keyValueList);
 		}
 		list.setKeyValues(listOfKeyValuePairs);
-		return list; 
+		return list;
 	}
 
 	@Override
@@ -733,7 +737,7 @@ public class FormsServiceImpl implements FormsService {
 			requestData.setReviewedBy(incomingData.getReviewedBy());
 			requestData.setReviewedDate(DateUtils.getYyyyMmDdInUTC());
 
-			return formsDao.updateFormData(incomingData, incomingData.getApplicationId());
+			return formsDao.updateFormData(requestData, incomingData.getApplicationId());
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "reviewApplication", e.getMessage()));
 			return Boolean.FALSE;
@@ -741,5 +745,19 @@ public class FormsServiceImpl implements FormsService {
 
 	}
 
-	
+	@Override
+	public Boolean assignApplication(AssignApplication assign) {
+		try {
+			IncomingData requestData = new IncomingData();
+			assign.setAssignedDate(DateUtils.getYyyyMmDdInUTC());
+			requestData.setInspection(assign);
+			requestData.setStatus(assign.getStatus());
+
+			return formsDao.updateFormData(requestData, assign.getApplicationId());
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "assignApplication", e.getMessage()));
+			return Boolean.FALSE;
+		}
+	}
+
 }

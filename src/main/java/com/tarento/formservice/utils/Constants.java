@@ -122,6 +122,7 @@ public interface Constants {
 	public static final String APPLICATION_ID = "applicationId";
 	public static final String STATUS = "status";
 	public static final String CREATED_BY = "createdBy";
+	public static final String ASSIGNED_TO = "assignedTo";
 	public static final String TIMESTAMP = "timestamp";
 	public static final String EMPTY_SET = "emptySet";
 
@@ -136,14 +137,17 @@ public interface Constants {
 	interface FormFieldTypes {
 		public static final String TEXT = "text";
 	}
-	
+
 	interface ElasticSearchFields {
-		public static final Map<String, String> MAPPING  = new HashMap<String, String>() {{
-			put("formId", "id");
-		    put("applicationId", "_id");
-		    put("status", "status.keyword");
-		    put("createdBy", "createdBy.keyword");
-		}};
+		public static final Map<String, String> MAPPING = new HashMap<String, String>() {
+			{
+				put("formId", "id");
+				put("applicationId", "_id");
+				put("status", "status.keyword");
+				put("createdBy", "createdBy.keyword");
+				put("assignedTo", "inspection.assignTo.id");
+			}
+		};
 	}
 
 }

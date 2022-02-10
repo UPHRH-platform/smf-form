@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import com.tarento.formservice.model.FormData;
 import com.tarento.formservice.model.FormModel;
 import com.tarento.formservice.model.IncomingData;
+import com.tarento.formservice.model.AssignApplication;
 import com.tarento.formservice.model.KeyValueList;
 import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.Role;
@@ -265,7 +266,7 @@ public class FormsController {
 			@RequestParam(value = "challenged", required = false) String challenged,
 			@RequestParam(value = "challengeStatus", required = false) Boolean challengeStatus,
 			@RequestParam(value = "count", required = true) Boolean count) throws JsonProcessingException {
-		UserInfo userInfo = null; 
+		UserInfo userInfo = null;
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
@@ -300,9 +301,9 @@ public class FormsController {
 	@PostMapping(value = PathRoutes.FormServiceApi.GET_ALL_APPLICATIONS, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getAllApplications(
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
-			@RequestBody SearchRequestDto searchRequestDto)  throws JsonProcessingException {
+			@RequestBody SearchRequestDto searchRequestDto) throws JsonProcessingException {
 		List<Map<String, Object>> responseData = new ArrayList<>();
-		UserInfo userInfo = null; 
+		UserInfo userInfo = null;
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
@@ -312,12 +313,12 @@ public class FormsController {
 		}
 		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
 	}
-	
+
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_APPLICATIONS_STATUS_COUNT, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getApplicationsStatusCount(
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
 			throws JsonProcessingException {
-		UserInfo userInfo = null; 
+		UserInfo userInfo = null;
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
@@ -333,15 +334,15 @@ public class FormsController {
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestParam(value = Constants.APPLICATION_ID, required = true) String applicationId)
 			throws JsonProcessingException {
-		UserInfo userInfo = null; 
+		UserInfo userInfo = null;
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
-		SearchRequestDto searchRequestDto = new SearchRequestDto(); 
-		SearchObject sObject = new SearchObject(); 
+		SearchRequestDto searchRequestDto = new SearchRequestDto();
+		SearchObject sObject = new SearchObject();
 		sObject.setKey(Constants.APPLICATION_ID);
 		sObject.setValues(applicationId);
-		List<SearchObject> searchObjectList = new ArrayList<SearchObject>(); 
+		List<SearchObject> searchObjectList = new ArrayList<SearchObject>();
 		searchObjectList.add(sObject);
 		searchRequestDto.setSearchObjects(searchObjectList);
 		List<Map<String, Object>> responseData = formsService.getApplications(userInfo, searchRequestDto);
@@ -388,7 +389,7 @@ public class FormsController {
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			if (StringUtils.isNotBlank(xUserInfo)) {
 				UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
-				incomingData.setReviewedBy(userInfo.getEmailId());
+				incomingData.setReviewedBy(userInfo.getId());
 			}
 			if (formsService.reviewApplication(incomingData)) {
 				return ResponseGenerator.successResponse(Boolean.TRUE);
@@ -396,5 +397,20 @@ public class FormsController {
 			return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
 		}
 		return ResponseGenerator.failureResponse(validation);
+	}
+
+	@PostMapping(value = PathRoutes.FormServiceApi.ASSIGN)
+	public String assignApplication(@RequestBody AssignApplication assign,
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
+			throws JsonProcessingException {
+		if (StringUtils.isNotBlank(xUserInfo)) {
+			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+			assign.setAssignedBy(userInfo.getId());
+		}
+		Boolean status = formsService.assignApplication(assign);
+		if (status) {
+			return ResponseGenerator.successResponse(status);
+		}
+		return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
 	}
 }

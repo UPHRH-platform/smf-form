@@ -4,6 +4,7 @@ public interface PathRoutes {
 
 	public interface FormServiceApi {
 		final String FORMS_ROOT = "/forms";
+		final String APPLICATION_ROOT = "/application";
 
 		final String GET_ALL_FORMS = "/getAllForms";
 		final String GET_FORM_BY_ID = "/getFormById";
@@ -49,6 +50,7 @@ public interface PathRoutes {
 		final String FILE_UPLOAD = "/fileUpload";
 		final String DELETE_CLOUD_FILE = "/deleteCloudFile";
 		final String REVIEW_APPLICATION = "/reviewApplication";
+		final String ASSIGN = "/assign";
 	}
 
 	public interface JsonFormServiceApi {

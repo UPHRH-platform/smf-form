@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.tarento.formservice.model.AssignApplication;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.KeyValueList;
 import com.tarento.formservice.model.ReplyFeedbackDto;
@@ -59,5 +60,7 @@ public interface FormsService {
 	public Boolean deleteCloudFile(List<String> files);
 
 	public Boolean reviewApplication(IncomingData incomingData);
+
+	public Boolean assignApplication(AssignApplication assign);
 
 }
