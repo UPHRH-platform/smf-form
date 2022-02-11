@@ -55,6 +55,14 @@ public interface Constants {
 		static final String LAST_NAME = "lastName";
 		static final String SEARCH = "search";
 		static final String RESPONSE_DATA = "responseData";
+		static final String STATUS = "Status";
+		static final String DATA_OBJECT = "dataObject";
+		static final String INSPECTION = "inspection";
+
+		static final String ACTION = "action";
+		static final String FIELD = "field";
+		static final String CHANGED_FROM = "ChangedFrom";
+		static final String CHANGED_TO = "ChangedTo";
 
 		static final String AUTHORIZATION = "Authorization";
 		static final String BEARER = "Bearer ";
@@ -140,8 +148,14 @@ public interface Constants {
 
 	public static final String EXCEPTION = "Exception in %s : %s";
 
-	interface ApplicationStatus {
-		public static final String SUBMITTED = "Submitted";
+	interface ServiceTypes {
+		public static final String APPLICATION = "Application";
+	}
+
+	interface Operations {
+		public static final String CREATE = "Created";
+		public static final String UPDATE = "Updated";
+		public static final String REMOVE = "Removed";
 	}
 
 	interface FormFieldTypes {

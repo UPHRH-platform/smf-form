@@ -23,6 +23,7 @@ import org.springframework.stereotype.Repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tarento.formservice.dao.FormsDao;
+import com.tarento.formservice.model.ActivityLogs;
 import com.tarento.formservice.model.FormData;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.State;
@@ -88,7 +89,7 @@ public class FormsDaoImpl implements FormsDao {
 			MultiSearchResponse response = elasticsearchRepo.executeMultiSearchRequest(searchRequest);
 			SearchResponse searchResponse = response.getResponses()[0].getResponse();
 			SearchHit[] hit = searchResponse.getHits().getHits();
-			for (SearchHit hits : hit) {	
+			for (SearchHit hits : hit) {
 				Map<String, Object> sourceAsMap = hits.getSourceAsMap();
 				sourceAsMap.put(Constants.APPLICATION_ID, hits.getId());
 				responseData.add(sourceAsMap);
@@ -99,21 +100,21 @@ public class FormsDaoImpl implements FormsDao {
 			return null;
 		}
 	}
-	
+
 	@Override
-	public List<Map<String, Object>> searchAggregationResponse(SearchRequest searchRequest) { 
+	public List<Map<String, Object>> searchAggregationResponse(SearchRequest searchRequest) {
 		try {
 			List<Map<String, Object>> responseData = new ArrayList<>();
 			MultiSearchResponse response = elasticsearchRepo.executeMultiSearchRequest(searchRequest);
 			SearchResponse searchResponse = response.getResponses()[0].getResponse();
 			Aggregations aggregations = searchResponse.getAggregations();
-			ParsedStringTerms subjects = aggregations.get("Total Pending"); 
+			ParsedStringTerms subjects = aggregations.get("Total Pending");
 			for (Terms.Bucket bucket : subjects.getBuckets()) {
-			    String key = (String) bucket.getKey();
-			    long docCount = bucket.getDocCount();
-			    Map<String, Object> eachRecordMap = new HashMap<String, Object>(); 
-			    eachRecordMap.put(key, docCount); 
-			    responseData.add(eachRecordMap); 
+				String key = (String) bucket.getKey();
+				long docCount = bucket.getDocCount();
+				Map<String, Object> eachRecordMap = new HashMap<String, Object>();
+				eachRecordMap.put(key, docCount);
+				responseData.add(eachRecordMap);
 			}
 			return responseData;
 		} catch (Exception e) {
@@ -129,13 +130,14 @@ public class FormsDaoImpl implements FormsDao {
 			MultiSearchResponse response = elasticsearchRepo.executeMultiSearchRequest(searchRequest);
 			SearchResponse searchResponse = response.getResponses()[0].getResponse();
 			SearchHit[] hit = searchResponse.getHits().getHits();
-			for (SearchHit hits : hit) {	
+			for (SearchHit hits : hit) {
 				Map<String, Object> sourceAsMap = hits.getSourceAsMap();
-				State eachState = new ObjectMapper().convertValue(sourceAsMap, State.class); 
+				State eachState = new ObjectMapper().convertValue(sourceAsMap, State.class);
 				stateMap.put(eachState.getId(), eachState);
 			}
 		} catch (Exception e) {
-			LOGGER.error(String.format(Constants.EXCEPTION, "fetchAllStates : Not able to load states !!! ", e.getMessage()));
+			LOGGER.error(String.format(Constants.EXCEPTION, "fetchAllStates : Not able to load states !!! ",
+					e.getMessage()));
 			return null;
 		}
 		return stateMap;
@@ -148,16 +150,24 @@ public class FormsDaoImpl implements FormsDao {
 			MultiSearchResponse response = elasticsearchRepo.executeMultiSearchRequest(searchRequest);
 			SearchResponse searchResponse = response.getResponses()[0].getResponse();
 			SearchHit[] hit = searchResponse.getHits().getHits();
-			for (SearchHit hits : hit) {	
+			for (SearchHit hits : hit) {
 				Map<String, Object> sourceAsMap = hits.getSourceAsMap();
-				StateMatrix eachStateMatrix = new ObjectMapper().convertValue(sourceAsMap, StateMatrix.class); 
+				StateMatrix eachStateMatrix = new ObjectMapper().convertValue(sourceAsMap, StateMatrix.class);
 				stateMatrixMap.put(eachStateMatrix.getAction(), eachStateMatrix);
 			}
 		} catch (Exception e) {
-			LOGGER.error(String.format(Constants.EXCEPTION, "fetchAllStateMatrix : Not able to load state matrices !!! ", e.getMessage()));
+			LOGGER.error(String.format(Constants.EXCEPTION,
+					"fetchAllStateMatrix : Not able to load state matrices !!! ", e.getMessage()));
 			return null;
 		}
 		return stateMatrixMap;
+	}
+
+	@Override
+	public Boolean addLogs(ActivityLogs activityLogs) {
+		return elasticsearchRepo.writeDatatoElastic(activityLogs,
+				RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE), appConfig.getActivityLogIndex(),
+				appConfig.getActivityLogIndexType());
 	}
 
 }

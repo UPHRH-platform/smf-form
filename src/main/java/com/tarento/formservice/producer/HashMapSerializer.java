@@ -3,12 +3,17 @@ package com.tarento.formservice.producer;
 import java.util.Map;
 
 import org.apache.kafka.common.serialization.Serializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SuppressWarnings("rawtypes")
 public class HashMapSerializer implements Serializer<Map> {
+
+	public static final Logger LOGGER = LoggerFactory.getLogger(HashMapSerializer.class);
+
 	@Override
 	public void close() {
 		//
@@ -26,7 +31,7 @@ public class HashMapSerializer implements Serializer<Map> {
 		try {
 			value = objectMapper.writeValueAsString(data).getBytes();
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			LOGGER.error("Exception in serialize : " + e.getMessage());
 		}
 		return value;
 	}

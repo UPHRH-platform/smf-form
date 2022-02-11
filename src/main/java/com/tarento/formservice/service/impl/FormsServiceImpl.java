@@ -674,7 +674,7 @@ public class FormsServiceImpl implements FormsService {
 			for (Role role : userInfo.getRoles()) {
 				if (role.getName().equals(Roles.Regulator.name()) || role.getName().equals(Roles.Inspector.name())) {
 					SearchObject roleBasedSearch = new SearchObject();
-					roleBasedSearch.setKey("status");
+					roleBasedSearch.setKey(Constants.STATUS);
 					roleBasedSearch.setValues(Status.DRAFT.name());
 					if (searchRequestDto.getExcludeObject() != null) {
 						searchRequestDto.getExcludeObject().add(roleBasedSearch);

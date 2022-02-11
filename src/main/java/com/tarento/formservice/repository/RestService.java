@@ -38,7 +38,6 @@ public class RestService {
 				return response.get(Constants.Parameters.RESPONSE_DATA);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error(String.format(Constants.EXCEPTION, "getResponse", e.getMessage()));
 		}
 		return null;

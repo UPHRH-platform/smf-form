@@ -81,7 +81,13 @@ public class AppConfiguration {
 	@Value("${user.routes.host.url}")
 	private String userServiceHost;
 
-	@Value("${user.routes.getAllUser.url}")
+	@Value("${user.routes.getalluser.url}")
 	private String getAllUserApiPath;
+
+	@Value("${es.fs.activitylog.index.name}")
+	private String activityLogIndex;
+	
+	@Value("${es.fs.activitylog.index.type}")
+	private String activityLogIndexType;
 
 }
