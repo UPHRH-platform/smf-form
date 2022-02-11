@@ -58,6 +58,7 @@ import com.tarento.formservice.model.SearchObject;
 import com.tarento.formservice.model.SearchRequestDto;
 import com.tarento.formservice.model.State;
 import com.tarento.formservice.model.StateMatrix;
+import com.tarento.formservice.model.Status;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.UserProfile;
 import com.tarento.formservice.model.VerifyFeedbackDto;
@@ -586,24 +587,48 @@ public class FormsServiceImpl implements FormsService {
 			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
 			BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
 			setRoleBasedSearchObject(userInfo, searchRequestDto);
-			if (searchRequestDto != null && searchRequestDto.getSearchObjects() != null) {
-				for (SearchObject objects : searchRequestDto.getSearchObjects()) {
-					String key = objects.getKey();
-					Object values = objects.getValues();
-					if (Constants.ElasticSearchFields.MAPPING.containsKey(key)) {
-						boolBuilder.must()
-								.add(QueryBuilders.termsQuery(Constants.ElasticSearchFields.MAPPING.get(key), values));
-						/*
-						 * boolBuilder.must()
-						 * .add(QueryBuilders.matchQuery(Constants.ElasticSearchFields.MAPPING.get(key),
-						 * values));
-						 */
-					} else {
-						// In the case where UI tries to send random values which are not configured in
-						// our ES Mapping, the API should send empty set as a response.
-						// So here, we just query as empty set and we know that we will get empty set as
-						// a response
-						boolBuilder.must().add(QueryBuilders.matchQuery(Constants.EMPTY_SET, Constants.EMPTY_SET));
+			setRoleBasedExcludeSearchObject(userInfo, searchRequestDto);
+			if (searchRequestDto != null) {
+				if (searchRequestDto.getSearchObjects() != null) {
+					for (SearchObject objects : searchRequestDto.getSearchObjects()) {
+						String key = objects.getKey();
+						Object values = objects.getValues();
+						if (Constants.ElasticSearchFields.MAPPING.containsKey(key)) {
+							boolBuilder.must().add(
+									QueryBuilders.termsQuery(Constants.ElasticSearchFields.MAPPING.get(key), values));
+							/*
+							 * boolBuilder.must()
+							 * .add(QueryBuilders.matchQuery(Constants.ElasticSearchFields.MAPPING.get(key),
+							 * values));
+							 */
+						} else {
+							// In the case where UI tries to send random values which are not configured in
+							// our ES Mapping, the API should send empty set as a response.
+							// So here, we just query as empty set and we know that we will get empty set as
+							// a response
+							boolBuilder.must().add(QueryBuilders.matchQuery(Constants.EMPTY_SET, Constants.EMPTY_SET));
+						}
+					}
+				}
+				if (searchRequestDto.getExcludeObject() != null) {
+					for (SearchObject objects : searchRequestDto.getExcludeObject()) {
+						String key = objects.getKey();
+						Object values = objects.getValues();
+						if (Constants.ElasticSearchFields.MAPPING.containsKey(key)) {
+							boolBuilder.mustNot().add(
+									QueryBuilders.termsQuery(Constants.ElasticSearchFields.MAPPING.get(key), values));
+							/*
+							 * boolBuilder.must()
+							 * .add(QueryBuilders.matchQuery(Constants.ElasticSearchFields.MAPPING.get(key),
+							 * values));
+							 */
+						} else {
+							// In the case where UI tries to send random values which are not configured in
+							// our ES Mapping, the API should send empty set as a response.
+							// So here, we just query as empty set and we know that we will get empty set as
+							// a response
+							boolBuilder.must().add(QueryBuilders.matchQuery(Constants.EMPTY_SET, Constants.EMPTY_SET));
+						}
 					}
 				}
 			}
@@ -640,6 +665,26 @@ public class FormsServiceImpl implements FormsService {
 					searchObjectList.add(roleBasedSearch);
 					searchRequestDto.setSearchObjects(searchObjectList);
 				}
+			}
+		}
+	}
+
+	private void setRoleBasedExcludeSearchObject(UserInfo userInfo, SearchRequestDto searchRequestDto) {
+		if (userInfo != null && userInfo.getRoles() != null) {
+			for (Role role : userInfo.getRoles()) {
+				if (role.getName().equals(Roles.Regulator.name()) || role.getName().equals(Roles.Inspector.name())) {
+					SearchObject roleBasedSearch = new SearchObject();
+					roleBasedSearch.setKey("status");
+					roleBasedSearch.setValues(Status.DRAFT.name());
+					if (searchRequestDto.getExcludeObject() != null) {
+						searchRequestDto.getExcludeObject().add(roleBasedSearch);
+					} else if (StringUtils.isNotBlank(roleBasedSearch.getKey())) {
+						List<SearchObject> searchObjectList = new ArrayList<>();
+						searchObjectList.add(roleBasedSearch);
+						searchRequestDto.setExcludeObject(searchObjectList);
+					}
+				}
+
 			}
 		}
 	}
