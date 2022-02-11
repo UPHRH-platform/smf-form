@@ -683,7 +683,6 @@ public class FormsServiceImpl implements FormsService {
 		Boolean indexed = Boolean.FALSE;
 		try {
 			if (StringUtils.isBlank(incomingData.getApplicationId())) {
-				incomingData.setStatus(Constants.ApplicationStatus.SUBMITTED);
 				incomingData.setTimestamp(DateUtils.getCurrentTimestamp());
 				incomingData.setCreatedDate(DateUtils.getYyyyMmDdInUTC());
 				indexed = formsDao.addFormData(incomingData);
