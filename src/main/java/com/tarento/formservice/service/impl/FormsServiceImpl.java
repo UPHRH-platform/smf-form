@@ -714,7 +714,8 @@ public class FormsServiceImpl implements FormsService {
 		List<KeyValue> listOfKeyValuePairs = new ArrayList<KeyValue>();
 		for (Map<String, Object> eachMap : responseNode) {
 			List<KeyValue> keyValueList = eachMap.entrySet().stream()
-					.map(entry -> new KeyValue(entry.getKey().equals("New") ? "Total Pending" : entry.getKey(),
+					.filter(entry -> !"DRAFT".equals(entry.getKey()))
+					.map(entry -> new KeyValue(entry.getKey().equals("NEW") ? "Total Pending" : entry.getKey(),
 							entry.getValue()))
 					.collect(Collectors.toList());
 			listOfKeyValuePairs.addAll(keyValueList);
