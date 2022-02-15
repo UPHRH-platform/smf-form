@@ -51,6 +51,7 @@ public interface PathRoutes {
 		final String DELETE_CLOUD_FILE = "/deleteCloudFile";
 		final String REVIEW_APPLICATION = "/reviewApplication";
 		final String ASSIGN = "/assign";
+		final String SUBMIT_INSPECTION = "/submitInspection";
 	}
 
 	public interface JsonFormServiceApi {

@@ -153,7 +153,7 @@ public interface Constants {
 	}
 
 	interface Operations {
-		public static final String CREATE = "Created";
+		public static final String ADDED = "Added";
 		public static final String UPDATE = "Updated";
 		public static final String REMOVE = "Removed";
 	}

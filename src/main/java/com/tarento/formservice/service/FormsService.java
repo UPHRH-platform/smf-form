@@ -56,7 +56,7 @@ public interface FormsService {
 
 	KeyValueList getApplicationsStatusCount();
 
-	public Boolean saveFormSubmitv1(IncomingData incomingData);
+	public Boolean saveFormSubmitv1(IncomingData incomingData, UserInfo userInfo);
 
 	public String fileUpload(MultipartFile multipartFile, String folderName);
 
@@ -69,5 +69,7 @@ public interface FormsService {
 	public ConcurrentMap<String, StateMatrix> fetchAllStateMatrix();
 
 	Boolean assignApplication(UserInfo userinfo, AssignApplication assign);
+
+	Map<String, Object> getApplicationById(String applicationId, UserInfo userInfo);
 
 }

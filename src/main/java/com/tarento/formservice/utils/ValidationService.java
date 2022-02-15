@@ -82,4 +82,17 @@ public class ValidationService {
 		}
 	}
 
+	public String validateInspectionObject(IncomingData incomingData) {
+		if (incomingData == null) {
+			return Constants.ResponseMessages.CHECK_REQUEST_PARAMS;
+		}
+		if (StringUtils.isBlank(incomingData.getApplicationId())) {
+			return Constants.ResponseMessages.APPLICATION_ID_MISSING;
+		}
+		if (incomingData.getDataObject() == null) {
+			return Constants.ResponseMessages.DATA_OBJECT_MISSING;
+		}
+		return Constants.ResponseCodes.SUCCESS;
+	}
+
 }

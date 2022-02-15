@@ -45,15 +45,15 @@ public class ActivityServiceImpl implements ActivityService {
 				activityLogs.setUpdatedByEmail(userInfo.getEmailId());
 				activityLogs.setUser(String.valueOf(userInfo.getName()));
 			}
-			if (oldObj != null && updatedObj != null) {
-				activityLogs.setObject(oldObj);
-				activityLogs.setUpdatedObject(updatedObj);
-				Map<String, Map<String, Object>> changes = getUpdatedFields(oldObj, updatedObj);
-				if (changes != null && changes.size() > 0) {
-					activityLogs.setChanges(changes);
-					formsDao.addLogs(activityLogs);
-				}
+			// if (oldObj != null && updatedObj != null) {
+			activityLogs.setObject(oldObj);
+			activityLogs.setUpdatedObject(updatedObj);
+			Map<String, Map<String, Object>> changes = getUpdatedFields(oldObj, updatedObj);
+			if (changes != null && changes.size() > 0) {
+				activityLogs.setChanges(changes);
+				formsDao.addLogs(activityLogs);
 			}
+			// }
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -64,15 +64,31 @@ public class ActivityServiceImpl implements ActivityService {
 	private Map<String, Map<String, Object>> getUpdatedFields(IncomingData oldObj, IncomingData updatedObj)
 			throws Exception {
 		Map<String, Map<String, Object>> changes = new HashMap<>();
-		// status
-		getStatement(oldObj.getStatus(), updatedObj.getStatus(), Constants.Parameters.STATUS,
-				Constants.Parameters.STATUS, changes);
-		// dataObject
-		getStatement(oldObj.getDataObject(), updatedObj.getDataObject(), Constants.Parameters.DATA_OBJECT,
-				Constants.Parameters.DATA_OBJECT, changes);
-		// inspection
-		getStatement(oldObj.getInspection(), updatedObj.getInspection(), Constants.Parameters.INSPECTION,
-				Constants.Parameters.INSPECTION, changes);
+		if (oldObj != null && updatedObj != null) {
+			// status
+			getStatement(oldObj.getStatus(), updatedObj.getStatus(), Constants.Parameters.STATUS,
+					Constants.Parameters.STATUS, changes);
+			// dataObject
+			getStatement(oldObj.getDataObject(), updatedObj.getDataObject(), Constants.Parameters.DATA_OBJECT,
+					Constants.Parameters.DATA_OBJECT, changes);
+			// inspection
+			getStatement(oldObj.getInspection(), updatedObj.getInspection(), Constants.Parameters.INSPECTION,
+					Constants.Parameters.INSPECTION, changes);
+		} else if (oldObj == null && updatedObj != null) {
+			getStatement(null, updatedObj.getStatus(), Constants.Parameters.STATUS, Constants.Parameters.STATUS,
+					changes);
+			getStatement(null, updatedObj.getDataObject(), Constants.Parameters.DATA_OBJECT,
+					Constants.Parameters.DATA_OBJECT, changes);
+			getStatement(null, updatedObj.getInspection(), Constants.Parameters.INSPECTION,
+					Constants.Parameters.INSPECTION, changes);
+		} else if (oldObj != null && updatedObj == null) {
+			getStatement(oldObj.getStatus(), null, Constants.Parameters.STATUS, Constants.Parameters.STATUS, changes);
+			getStatement(oldObj.getDataObject(), null, Constants.Parameters.DATA_OBJECT,
+					Constants.Parameters.DATA_OBJECT, changes);
+			getStatement(oldObj.getInspection(), null, Constants.Parameters.INSPECTION, Constants.Parameters.INSPECTION,
+					changes);
+		}
+
 		return changes;
 	}
 
@@ -86,27 +102,24 @@ public class ActivityServiceImpl implements ActivityService {
 	private void getStatement(Object oldObj, Object updatedObj, String fieldName, String fieldPath,
 			Map<String, Map<String, Object>> changes) throws Exception {
 		Map<String, Object> logStatement = new HashMap<>();
-		String changedFromKey = fieldName + Constants.Parameters.CHANGED_FROM;
-		String changedToKey = fieldName + Constants.Parameters.CHANGED_TO;
 
 		if (oldObj == null && updatedObj != null) {
-			logStatement.put(Constants.Parameters.ACTION, Constants.Operations.CREATE);
-			logStatement.put(changedToKey, updatedObj);
+			logStatement.put(Constants.Parameters.ACTION, Constants.Operations.ADDED);
+			logStatement.put(Constants.Parameters.CHANGED_TO, updatedObj);
 		} else if (oldObj != null && updatedObj == null) {
 			logStatement.put(Constants.Parameters.ACTION, Constants.Operations.REMOVE);
-			logStatement.put(changedFromKey, oldObj);
+			logStatement.put(Constants.Parameters.CHANGED_FROM, oldObj);
 		} else if (oldObj != null && updatedObj != null && !oldObj.equals(updatedObj)) {
 			logStatement.put(Constants.Parameters.ACTION, Constants.Operations.UPDATE);
 			if (oldObj instanceof Map && updatedObj instanceof Map) {
 				getMapFields(oldObj, updatedObj, changes, fieldPath);
-			} else if (oldObj instanceof List && updatedObj instanceof List) {
-				getListFields(oldObj, updatedObj, changes, fieldName, fieldPath);
 			} else {
-				logStatement.put(changedFromKey, oldObj);
-				logStatement.put(changedToKey, updatedObj);
+				logStatement.put(Constants.Parameters.CHANGED_FROM, oldObj);
+				logStatement.put(Constants.Parameters.CHANGED_TO, updatedObj);
 			}
 		}
-		if (logStatement.get(changedFromKey) != null || logStatement.get(changedToKey) != null) {
+		if (logStatement.get(Constants.Parameters.CHANGED_FROM) != null
+				|| logStatement.get(Constants.Parameters.CHANGED_TO) != null) {
 			logStatement.put(Constants.Parameters.FIELD, fieldName);
 			changes.put(fieldPath, logStatement);
 		}

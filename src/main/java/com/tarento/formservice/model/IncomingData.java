@@ -17,6 +17,7 @@ public class IncomingData {
 	private int version;
 	private Long timestamp;
 	private Object dataObject;
+	private Object inspectorDataObject;
 	private String formData;
 	private Long upvoteCount;
 	private Long downvoteCount;

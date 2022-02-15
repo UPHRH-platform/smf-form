@@ -68,6 +68,7 @@ import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
 import com.tarento.formservice.repository.ElasticSearchRepository;
 import com.tarento.formservice.repository.RestService;
+import com.tarento.formservice.service.ActivityService;
 import com.tarento.formservice.service.FormsService;
 import com.tarento.formservice.utils.AppConfiguration;
 import com.tarento.formservice.utils.CloudStorage;
@@ -90,6 +91,9 @@ public class FormsServiceImpl implements FormsService {
 
 	@Autowired
 	private AppConfiguration appConfig;
+
+	@Autowired
+	private ActivityService activityService;
 
 	@Override
 	public Form createForm(FormDetail newForm) throws IOException {
@@ -724,21 +728,46 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
-	public Boolean saveFormSubmitv1(IncomingData incomingData) {
+	public Boolean saveFormSubmitv1(IncomingData incomingData, UserInfo userInfo) {
 		Boolean indexed = Boolean.FALSE;
+		IncomingData oldDataObject = null;
 		try {
 			if (StringUtils.isBlank(incomingData.getApplicationId())) {
 				incomingData.setTimestamp(DateUtils.getCurrentTimestamp());
 				incomingData.setCreatedDate(DateUtils.getYyyyMmDdInUTC());
 				indexed = formsDao.addFormData(incomingData);
 			} else {
+				Map<String, Object> applicationObject = getApplicationById(incomingData.getApplicationId(), userInfo);
+				if (applicationObject != null) {
+					oldDataObject = objectMapper.convertValue(applicationObject, IncomingData.class);
+				}
 				incomingData.setUpdatedDate(DateUtils.getYyyyMmDdInUTC());
 				indexed = formsDao.updateFormData(incomingData, incomingData.getApplicationId());
 			}
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "saveFormSubmitv1", e.getMessage()));
 		}
+		// if (indexed != null && indexed) {
+		// activityService.createUpdateApplication(oldDataObject, incomingData,
+		// userInfo);
+		// }
 		return indexed;
+	}
+
+	@Override
+	public Map<String, Object> getApplicationById(String applicationId, UserInfo userInfo) {
+		SearchRequestDto searchRequestDto = new SearchRequestDto();
+		SearchObject sObject = new SearchObject();
+		sObject.setKey(Constants.APPLICATION_ID);
+		sObject.setValues(applicationId);
+		List<SearchObject> searchObjectList = new ArrayList<SearchObject>();
+		searchObjectList.add(sObject);
+		searchRequestDto.setSearchObjects(searchObjectList);
+		List<Map<String, Object>> responseData = getApplications(userInfo, searchRequestDto);
+		if (responseData != null) {
+			return (responseData.isEmpty()) ? new HashMap<>() : responseData.get(0);
+		}
+		return null;
 	}
 
 	@Override
