@@ -11,9 +11,34 @@ public class WorkflowDto {
 	private String actionStatement;
 	private String nextState; 
 	private String applicationId;
-	private String formId;
-	private String changedBy;
-	private Long changedDate;
+	private Long formId;
+	private Long changedBy;
+	private String changedDate;
+	
+	public WorkflowDto() {} 
+	public WorkflowDto(IncomingData data, UserInfo userInfo, String actionStatement) { 
+		this.currentState = data.getStatus();
+		for(Role role : userInfo.getRoles()) { 
+			this.role = role.getName();
+		}
+		this.actionStatement = actionStatement; 
+		this.applicationId = data.getApplicationId();
+		this.formId = data.getFormId(); 
+		this.changedBy = data.getReviewedBy(); 
+		this.changedDate = data.getReviewedDate();
+	}
+	
+	public WorkflowDto(AssignApplication assign, UserInfo userInfo, String actionStatement) { 
+		this.currentState = assign.getStatus();
+		for(Role role : userInfo.getRoles()) { 
+			this.role = role.getName();
+		}
+		this.actionStatement = actionStatement; 
+		this.applicationId = assign.getApplicationId();
+		this.formId = assign.getFormId(); 
+		this.changedBy = assign.getAssignedBy(); 
+		this.changedDate = assign.getAssignedDate();
+	}
 	
 	public String getCurrentState() {
 		return currentState;
@@ -39,28 +64,29 @@ public class WorkflowDto {
 	public void setApplicationId(String applicationId) {
 		this.applicationId = applicationId;
 	}
-	public String getFormId() {
-		return formId;
-	}
-	public void setFormId(String formId) {
-		this.formId = formId;
-	}
-	public String getChangedBy() {
-		return changedBy;
-	}
-	public void setChangedBy(String changedBy) {
-		this.changedBy = changedBy;
-	}
-	public Long getChangedDate() {
-		return changedDate;
-	}
-	public void setChangedDate(Long changedDate) {
-		this.changedDate = changedDate;
-	}
 	public String getNextState() {
 		return nextState;
 	}
 	public void setNextState(String nextState) {
 		this.nextState = nextState;
 	}
+	public Long getFormId() {
+		return formId;
+	}
+	public void setFormId(Long formId) {
+		this.formId = formId;
+	}
+	public Long getChangedBy() {
+		return changedBy;
+	}
+	public void setChangedBy(Long changedBy) {
+		this.changedBy = changedBy;
+	}
+	public String getChangedDate() {
+		return changedDate;
+	}
+	public void setChangedDate(String changedDate) {
+		this.changedDate = changedDate;
+	}
+	
 }

@@ -67,6 +67,11 @@ public interface Constants {
 		static final String AUTHORIZATION = "Authorization";
 		static final String BEARER = "Bearer ";
 	}
+	
+	interface WorkflowActions {
+		static final String SAVE_FORM_NOTES = "Save Form Notes";
+		static final String ASSIGN_INSPECTOR = "Assign Inspector"; 
+	}
 
 	interface PortfolioConstants {
 		static final String FEATURED = "Featured";

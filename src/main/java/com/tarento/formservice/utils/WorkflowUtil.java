@@ -1,14 +1,18 @@
 package com.tarento.formservice.utils;
 
+import java.util.Date;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.tarento.formservice.executor.StateMatrixManager;
 import com.tarento.formservice.model.StateMatrix;
 import com.tarento.formservice.model.WorkflowDto;
 import com.tarento.formservice.repository.ElasticSearchRepository;
 
+@Component
 public class WorkflowUtil {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(WorkflowUtil.class);
@@ -18,21 +22,15 @@ public class WorkflowUtil {
 	static ElasticSearchRepository elasticsearchRepo;
 	
 	@Autowired
-	public void setElasticSearchRepo(ElasticSearchRepository elasticsearchRepo) {
-		this.elasticsearchRepo = elasticsearchRepo;
+	public void setFormService(ElasticSearchRepository elasticsearchRepo) {
+		WorkflowUtil.elasticsearchRepo = elasticsearchRepo;
 	}
-
+	
 	@Autowired
 	public void setAppConfig(AppConfiguration appConfig) {
-		this.appConfig = appConfig;
+		WorkflowUtil.appConfig = appConfig;
 	}
-
 	
-	public static Boolean updateWorkflow(WorkflowDto workflowDto) {
-		return elasticsearchRepo.writeDatatoElastic(workflowDto, workflowDto.getChangedDate().toString(), appConfig.getWorkflowLogIndex(),
-				appConfig.getFormIndexType());
-	}
-
 	public static void getNextStateForMyRequest(WorkflowDto workflowDto) {
 		StateMatrix matrix = StateMatrixManager.getStateMatrixMap().get(workflowDto.getActionStatement());
 		String nextState = ""; 
@@ -40,11 +38,12 @@ public class WorkflowUtil {
 			nextState = matrix.getNextState();
 			workflowDto.setNextState(nextState);
 		}
+		
 		Runnable task1 = new Runnable() {
 			@Override
 			public void run() {
 				try {
-					updateWorkflow(workflowDto); 
+					updateWorkflow(workflowDto);
 				} catch (Exception e) {
 					LOGGER.error(e.getMessage());
 				}
@@ -53,5 +52,10 @@ public class WorkflowUtil {
 		Thread thread1 = new Thread(task1);
 		thread1.start();
 
+	}
+	
+	public static Boolean updateWorkflow(WorkflowDto workflowDto) {
+		return elasticsearchRepo.writeDatatoElastic(workflowDto, String.valueOf(new Date().getTime()), appConfig.getWorkflowLogIndex(),
+				appConfig.getFormIndexType());
 	}
 }
