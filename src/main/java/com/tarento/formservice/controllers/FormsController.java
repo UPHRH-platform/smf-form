@@ -437,7 +437,7 @@ public class FormsController {
 				userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 				inspectionData.setUpdatedBy(userInfo.getEmailId());
 			}
-			if (formsService.saveFormSubmitv1(inspectionData, userInfo)) {
+			if (formsService.submitInspection(inspectionData, userInfo)) {
 				return ResponseGenerator.successResponse(Boolean.TRUE);
 			}
 		}

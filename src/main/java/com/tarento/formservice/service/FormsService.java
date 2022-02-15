@@ -73,5 +73,7 @@ public interface FormsService {
 	Map<String, Object> getApplicationById(String applicationId, UserInfo userInfo);
 	
 	public Boolean returnApplication(IncomingData incomingData, UserInfo userInfo);
+	
+	public Boolean submitInspection(IncomingData incomingData, UserInfo userInfo);
 
 }

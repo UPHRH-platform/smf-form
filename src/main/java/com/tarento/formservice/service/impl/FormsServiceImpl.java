@@ -963,4 +963,19 @@ public class FormsServiceImpl implements FormsService {
 		}
 
 	}
+
+	@Override
+	public Boolean submitInspection(IncomingData incomingData, UserInfo userInfo) {
+		SearchRequestDto srd = createSearchRequestObject(incomingData.getApplicationId());
+		List<Map<String, Object>> applicationMap = getApplications(userInfo,srd); 
+		for(Map<String, Object> innerMap : applicationMap) { 
+			if(innerMap.containsKey(Constants.STATUS)) {
+				incomingData.setStatus(innerMap.get(Constants.STATUS).toString());
+			}
+		}
+		WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo, Constants.WorkflowActions.COMPLETED_INSPECTION); 
+		WorkflowUtil.getNextStateForMyRequest(workflowDto);
+		incomingData.setStatus(workflowDto.getNextState());
+		return saveFormSubmitv1(incomingData, userInfo);
+	}
 }
