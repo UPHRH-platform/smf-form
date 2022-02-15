@@ -3,6 +3,7 @@ package com.tarento.formservice.controllers;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,13 +35,13 @@ import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.KeyValueList;
 import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.Role;
+import com.tarento.formservice.model.SearchObject;
 import com.tarento.formservice.model.SearchRequestDto;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.VoteFeedbackDto;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
-import com.tarento.formservice.service.ActivityService;
 import com.tarento.formservice.service.FormsService;
 import com.tarento.formservice.service.JsonFormsService;
 import com.tarento.formservice.utils.Constants;
@@ -339,12 +340,23 @@ public class FormsController {
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
-
-		Map<String, Object> responseData = formsService.getApplicationById(applicationId, userInfo);
+		List<Map<String, Object>> responseData = formsService.getApplications(userInfo, createSearchRequestObject(applicationId));
 		if (responseData != null) {
-			return ResponseGenerator.successResponse(responseData);
+			return (responseData.isEmpty()) ? ResponseGenerator.successResponse(new HashMap<>())
+					: ResponseGenerator.successResponse(responseData.get(0));
 		}
 		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
+	}
+	
+	public SearchRequestDto createSearchRequestObject(String applicationId) { 
+		SearchRequestDto searchRequestDto = new SearchRequestDto();
+		SearchObject sObject = new SearchObject();
+		sObject.setKey(Constants.APPLICATION_ID);
+		sObject.setValues(applicationId);
+		List<SearchObject> searchObjectList = new ArrayList<SearchObject>();
+		searchObjectList.add(sObject);
+		searchRequestDto.setSearchObjects(searchObjectList);
+		return searchRequestDto; 
 	}
 
 	@PostMapping(value = PathRoutes.FormServiceApi.FILE_UPLOAD, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -380,12 +392,13 @@ public class FormsController {
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody IncomingData incomingData) throws JsonProcessingException {
 		String validation = validationService.validateApplicationReview(incomingData);
+		UserInfo userInfo = null; 
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			if (StringUtils.isNotBlank(xUserInfo)) {
-				UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+				userInfo= new Gson().fromJson(xUserInfo, UserInfo.class);
 				incomingData.setReviewedBy(userInfo.getId());
 			}
-			if (formsService.reviewApplication(incomingData)) {
+			if (formsService.reviewApplication(incomingData, userInfo)) {
 				return ResponseGenerator.successResponse(Boolean.TRUE);
 			}
 			return ResponseGenerator.failureResponse(Constants.ResponseCodes.PROCESS_FAIL);
@@ -397,8 +410,9 @@ public class FormsController {
 	public String assignApplication(@RequestBody AssignApplication assign,
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
 			throws JsonProcessingException {
+		UserInfo userInfo = null; 
 		if (StringUtils.isNotBlank(xUserInfo)) {
-			UserInfo userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 			assign.setAssignedBy(userInfo.getId());
 			Boolean status = formsService.assignApplication(userInfo, assign);
 			if (status) {

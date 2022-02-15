@@ -44,8 +44,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.tarento.formservice.dao.FormsDao;
-import com.tarento.formservice.model.AssignApplication;
 import com.tarento.formservice.executor.StateMatrixManager;
+import com.tarento.formservice.model.AssignApplication;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.KeyValue;
 import com.tarento.formservice.model.KeyValueList;
@@ -64,16 +64,17 @@ import com.tarento.formservice.model.UserProfile;
 import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.Vote;
 import com.tarento.formservice.model.VoteFeedbackDto;
+import com.tarento.formservice.model.WorkflowDto;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
 import com.tarento.formservice.repository.ElasticSearchRepository;
 import com.tarento.formservice.repository.RestService;
-import com.tarento.formservice.service.ActivityService;
 import com.tarento.formservice.service.FormsService;
 import com.tarento.formservice.utils.AppConfiguration;
 import com.tarento.formservice.utils.CloudStorage;
 import com.tarento.formservice.utils.Constants;
 import com.tarento.formservice.utils.DateUtils;
+import com.tarento.formservice.utils.WorkflowUtil;
 
 @Service(Constants.ServiceRepositories.FORM_SERVICE)
 public class FormsServiceImpl implements FormsService {
@@ -91,9 +92,6 @@ public class FormsServiceImpl implements FormsService {
 
 	@Autowired
 	private AppConfiguration appConfig;
-
-	@Autowired
-	private ActivityService activityService;
 
 	@Override
 	public Form createForm(FormDetail newForm) throws IOException {
@@ -811,28 +809,57 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
-	public Boolean reviewApplication(IncomingData incomingData) {
+	public Boolean reviewApplication(IncomingData incomingData, UserInfo userInfo) {
 		try {
-			IncomingData requestData = new IncomingData();
-			requestData.setStatus(incomingData.getStatus());
-			requestData.setComments(incomingData.getComments());
-			requestData.setReviewedBy(incomingData.getReviewedBy());
-			requestData.setReviewedDate(DateUtils.getYyyyMmDdInUTC());
-
-			return formsDao.updateFormData(requestData, incomingData.getApplicationId());
+			SearchRequestDto srd = createSearchRequestObject(incomingData.getApplicationId());
+			List<Map<String, Object>> applicationMap = getApplications(userInfo,srd); 
+			for(Map<String, Object> innerMap : applicationMap) { 
+				if(innerMap.containsKey(Constants.STATUS)) {
+					incomingData.setStatus(innerMap.get(Constants.STATUS).toString());
+				}
+			}
+			incomingData.setReviewedDate(DateUtils.getYyyyMmDdInUTC());
+			WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo, Constants.WorkflowActions.SAVE_FORM_NOTES); 
+			WorkflowUtil.getNextStateForMyRequest(workflowDto);
+			incomingData.setStatus(workflowDto.getNextState());
+			return formsDao.updateFormData(incomingData, incomingData.getApplicationId());
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "reviewApplication", e.getMessage()));
 			return Boolean.FALSE;
 		}
 
 	}
+	
+	public SearchRequestDto createSearchRequestObject(String applicationId) { 
+		SearchRequestDto searchRequestDto = new SearchRequestDto();
+		SearchObject sObject = new SearchObject();
+		sObject.setKey(Constants.APPLICATION_ID);
+		sObject.setValues(applicationId);
+		List<SearchObject> searchObjectList = new ArrayList<SearchObject>();
+		searchObjectList.add(sObject);
+		searchRequestDto.setSearchObjects(searchObjectList);
+		return searchRequestDto; 
+	}
 
 	@Override
-	public Boolean assignApplication(UserInfo userinfo, AssignApplication assign) {
+	public Boolean assignApplication(UserInfo userInfo, AssignApplication assign) {
 		try {
+			SearchRequestDto srd = createSearchRequestObject(assign.getApplicationId());
+			List<Map<String, Object>> applicationMap = getApplications(userInfo,srd); 
+			for(Map<String, Object>	 innerMap : applicationMap) { 
+				if(innerMap.containsKey(Constants.STATUS)) {
+					assign.setStatus(innerMap.get(Constants.STATUS).toString());
+				}
+				if(innerMap.containsKey(Constants.FORM_ID)) {
+					assign.setFormId(Long.parseLong(innerMap.get(Constants.FORM_ID).toString()));
+				}
+			}
+			WorkflowDto workflowDto = new WorkflowDto(assign, userInfo, Constants.WorkflowActions.ASSIGN_INSPECTOR);
+			WorkflowUtil.getNextStateForMyRequest(workflowDto);
+			assign.setStatus(workflowDto.getNextState());
 			if (assign.getUserId() != null && assign.getUserId().size() > 0) {
-				Map<String, Map<String, Object>> userMap = getUserDetails(assign.getUserId(), userinfo.getOrgId(),
-						userinfo.getAuthToken());
+				Map<String, Map<String, Object>> userMap = getUserDetails(assign.getUserId(), userInfo.getOrgId(),
+						userInfo.getAuthToken());
 				// set assigned user meta data
 				assign.setAssignedTo(new ArrayList<>());
 				for (Long userId : assign.getUserId()) {
@@ -914,5 +941,4 @@ public class FormsServiceImpl implements FormsService {
 		LOGGER.info("Search Request : " + searchRequest);
 		return formsDao.fetchAllStateMatrix(searchRequest);
 	}
-
 }

@@ -90,4 +90,213 @@ public class AppConfiguration {
 	@Value("${es.fs.activitylog.index.type}")
 	private String activityLogIndexType;
 
+	public String getElasticHost() {
+		return elasticHost;
+	}
+
+	public void setElasticHost(String elasticHost) {
+		this.elasticHost = elasticHost;
+	}
+
+	public int getElasticPort() {
+		return elasticPort;
+	}
+
+	public void setElasticPort(int elasticPort) {
+		this.elasticPort = elasticPort;
+	}
+
+	public String getElasticUsername() {
+		return elasticUsername;
+	}
+
+	public void setElasticUsername(String elasticUsername) {
+		this.elasticUsername = elasticUsername;
+	}
+
+	public String getElasticPassword() {
+		return elasticPassword;
+	}
+
+	public void setElasticPassword(String elasticPassword) {
+		this.elasticPassword = elasticPassword;
+	}
+
+	public String getFormIndex() {
+		return formIndex;
+	}
+
+	public void setFormIndex(String formIndex) {
+		this.formIndex = formIndex;
+	}
+
+	public String getFormIndexType() {
+		return formIndexType;
+	}
+
+	public void setFormIndexType(String formIndexType) {
+		this.formIndexType = formIndexType;
+	}
+
+	public String getFormDataIndex() {
+		return formDataIndex;
+	}
+
+	public void setFormDataIndex(String formDataIndex) {
+		this.formDataIndex = formDataIndex;
+	}
+
+	public String getFormDataIndexType() {
+		return formDataIndexType;
+	}
+
+	public void setFormDataIndexType(String formDataIndexType) {
+		this.formDataIndexType = formDataIndexType;
+	}
+
+	public String getFormInteractionIndex() {
+		return formInteractionIndex;
+	}
+
+	public void setFormInteractionIndex(String formInteractionIndex) {
+		this.formInteractionIndex = formInteractionIndex;
+	}
+
+	public String getProvider() {
+		return provider;
+	}
+
+	public void setProvider(String provider) {
+		this.provider = provider;
+	}
+
+	public String getContainerName() {
+		return containerName;
+	}
+
+	public void setContainerName(String containerName) {
+		this.containerName = containerName;
+	}
+
+	public String getIdentity() {
+		return identity;
+	}
+
+	public void setIdentity(String identity) {
+		this.identity = identity;
+	}
+
+	public String getCredential() {
+		return credential;
+	}
+
+	public void setCredential(String credential) {
+		this.credential = credential;
+	}
+
+	public String getSmtpHost() {
+		return smtpHost;
+	}
+
+	public void setSmtpHost(String smtpHost) {
+		this.smtpHost = smtpHost;
+	}
+
+	public String getSmtpAuth() {
+		return smtpAuth;
+	}
+
+	public void setSmtpAuth(String smtpAuth) {
+		this.smtpAuth = smtpAuth;
+	}
+
+	public String getSmtpPort() {
+		return smtpPort;
+	}
+
+	public void setSmtpPort(String smtpPort) {
+		this.smtpPort = smtpPort;
+	}
+
+	public String getSmtpUser() {
+		return smtpUser;
+	}
+
+	public void setSmtpUser(String smtpUser) {
+		this.smtpUser = smtpUser;
+	}
+
+	public String getSmtpPassword() {
+		return smtpPassword;
+	}
+
+	public void setSmtpPassword(String smtpPassword) {
+		this.smtpPassword = smtpPassword;
+	}
+
+	public String getSmtpEmail() {
+		return smtpEmail;
+	}
+
+	public void setSmtpEmail(String smtpEmail) {
+		this.smtpEmail = smtpEmail;
+	}
+
+	public String getFormStateIndex() {
+		return formStateIndex;
+	}
+
+	public void setFormStateIndex(String formStateIndex) {
+		this.formStateIndex = formStateIndex;
+	}
+
+	public String getFormStateMatrixIndex() {
+		return formStateMatrixIndex;
+	}
+
+	public void setFormStateMatrixIndex(String formStateMatrixIndex) {
+		this.formStateMatrixIndex = formStateMatrixIndex;
+	}
+
+	public String getWorkflowLogIndex() {
+		return workflowLogIndex;
+	}
+
+	public void setWorkflowLogIndex(String workflowLogIndex) {
+		this.workflowLogIndex = workflowLogIndex;
+	}
+
+	public String getUserServiceHost() {
+		return userServiceHost;
+	}
+
+	public void setUserServiceHost(String userServiceHost) {
+		this.userServiceHost = userServiceHost;
+	}
+
+	public String getGetAllUserApiPath() {
+		return getAllUserApiPath;
+	}
+
+	public void setGetAllUserApiPath(String getAllUserApiPath) {
+		this.getAllUserApiPath = getAllUserApiPath;
+	}
+
+	public String getActivityLogIndex() {
+		return activityLogIndex;
+	}
+
+	public void setActivityLogIndex(String activityLogIndex) {
+		this.activityLogIndex = activityLogIndex;
+	}
+
+	public String getActivityLogIndexType() {
+		return activityLogIndexType;
+	}
+
+	public void setActivityLogIndexType(String activityLogIndexType) {
+		this.activityLogIndexType = activityLogIndexType;
+	}
+
+	
 }
