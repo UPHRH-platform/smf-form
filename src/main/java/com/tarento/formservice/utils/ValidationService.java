@@ -94,5 +94,15 @@ public class ValidationService {
 		}
 		return Constants.ResponseCodes.SUCCESS;
 	}
+	
+	public String validateApplicationReturn(IncomingData incomingData) {
+		if (incomingData == null) {
+			return Constants.ResponseMessages.CHECK_REQUEST_PARAMS;
+		}
+		if (StringUtils.isBlank(incomingData.getApplicationId())) {
+			return Constants.ResponseMessages.APPLICATION_ID_MISSING;
+		}
+		return Constants.ResponseCodes.SUCCESS;
+	}
 
 }

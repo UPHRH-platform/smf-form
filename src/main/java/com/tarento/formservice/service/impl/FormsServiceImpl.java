@@ -941,4 +941,26 @@ public class FormsServiceImpl implements FormsService {
 		LOGGER.info("Search Request : " + searchRequest);
 		return formsDao.fetchAllStateMatrix(searchRequest);
 	}
+
+	@Override
+	public Boolean returnApplication(IncomingData incomingData, UserInfo userInfo) {
+		try {
+			SearchRequestDto srd = createSearchRequestObject(incomingData.getApplicationId());
+			List<Map<String, Object>> applicationMap = getApplications(userInfo,srd); 
+			for(Map<String, Object> innerMap : applicationMap) { 
+				if(innerMap.containsKey(Constants.STATUS)) {
+					incomingData.setStatus(innerMap.get(Constants.STATUS).toString());
+				}
+			}
+			incomingData.setReviewedDate(DateUtils.getYyyyMmDdInUTC());
+			WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo, Constants.WorkflowActions.RETURN_APPLICATION); 
+			WorkflowUtil.getNextStateForMyRequest(workflowDto);
+			incomingData.setStatus(workflowDto.getNextState());
+			return formsDao.updateFormData(incomingData, incomingData.getApplicationId());
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "returnApplication", e.getMessage()));
+			return Boolean.FALSE;
+		}
+
+	}
 }

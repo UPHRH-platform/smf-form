@@ -71,6 +71,10 @@ public interface Constants {
 	interface WorkflowActions {
 		static final String SAVE_FORM_NOTES = "Save Form Notes";
 		static final String ASSIGN_INSPECTOR = "Assign Inspector"; 
+		static final String RETURN_APPLICATION = "Return Application";
+		static final String COMPLETED_INSPECTION = "Complete Inspection";
+		static final String APPROVE_APPLICATION = "Approve Application";
+		static final String REJECT_APPLICATION = "Reject Application"; 
 	}
 
 	interface PortfolioConstants {

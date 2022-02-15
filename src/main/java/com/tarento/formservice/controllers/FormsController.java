@@ -443,5 +443,25 @@ public class FormsController {
 		}
 		return ResponseGenerator.failureResponse(validation);
 	}
+	
+	@PostMapping(value = PathRoutes.FormServiceApi.RETURN_APPLICATION)
+	public String returnApplication(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
+			@RequestBody IncomingData incomingData) throws IOException {
+		String validation = validationService.validateApplicationReturn(incomingData);
+		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
+			IncomingData applicationReturn = new IncomingData();
+			applicationReturn.setApplicationId(incomingData.getApplicationId());
+			UserInfo userInfo = null;
+			if (StringUtils.isNotBlank(xUserInfo)) {
+				userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+				applicationReturn.setUpdatedBy(userInfo.getEmailId());
+			}
+			if (formsService.returnApplication(incomingData, userInfo)) {
+				return ResponseGenerator.successResponse(Boolean.TRUE);
+			}
+		}
+		return ResponseGenerator.failureResponse(validation);
+	}
 
 }

@@ -52,6 +52,7 @@ public interface PathRoutes {
 		final String REVIEW_APPLICATION = "/reviewApplication";
 		final String ASSIGN = "/assign";
 		final String SUBMIT_INSPECTION = "/submitInspection";
+		final String RETURN_APPLICATION = "/returnApplication";
 	}
 
 	public interface JsonFormServiceApi {
