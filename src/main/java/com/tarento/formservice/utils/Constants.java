@@ -169,7 +169,7 @@ public interface Constants {
 				put("applicationId", "_id");
 				put("status", "status.keyword");
 				put("createdBy", "createdBy.keyword");
-				put("assignedTo", "inspection.assignTo.id");
+				put("assignedTo", "inspection.assignedTo.id");
 			}
 		};
 	}
