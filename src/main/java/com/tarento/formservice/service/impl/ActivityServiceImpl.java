@@ -134,7 +134,7 @@ public class ActivityServiceImpl implements ActivityService {
 		});
 
 		Set<String> keySet = new HashSet<>();
-		keySet.addAll(oldObjMap.keySet());
+		// keySet.addAll(oldObjMap.keySet());
 		keySet.addAll(updatedObjMap.keySet());
 		for (String key : keySet) {
 			getStatement(oldObjMap.get(key), updatedObjMap.get(key), key, fieldPath + "." + key, changes);

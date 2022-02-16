@@ -69,6 +69,7 @@ import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
 import com.tarento.formservice.repository.ElasticSearchRepository;
 import com.tarento.formservice.repository.RestService;
+import com.tarento.formservice.service.ActivityService;
 import com.tarento.formservice.service.FormsService;
 import com.tarento.formservice.utils.AppConfiguration;
 import com.tarento.formservice.utils.CloudStorage;
@@ -92,6 +93,9 @@ public class FormsServiceImpl implements FormsService {
 
 	@Autowired
 	private AppConfiguration appConfig;
+
+	@Autowired
+	private ActivityService activityService;
 
 	@Override
 	public Form createForm(FormDetail newForm) throws IOException {
@@ -715,8 +719,7 @@ public class FormsServiceImpl implements FormsService {
 		KeyValueList list = new KeyValueList();
 		List<KeyValue> listOfKeyValuePairs = new ArrayList<KeyValue>();
 		for (Map<String, Object> eachMap : responseNode) {
-			List<KeyValue> keyValueList = eachMap.entrySet().stream()
-					.filter(entry -> !"DRAFT".equals(entry.getKey()))
+			List<KeyValue> keyValueList = eachMap.entrySet().stream().filter(entry -> !"DRAFT".equals(entry.getKey()))
 					.map(entry -> new KeyValue(entry.getKey().equals("NEW") ? "Total Pending" : entry.getKey(),
 							entry.getValue()))
 					.collect(Collectors.toList());
@@ -746,10 +749,9 @@ public class FormsServiceImpl implements FormsService {
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "saveFormSubmitv1", e.getMessage()));
 		}
-		// if (indexed != null && indexed) {
-		// activityService.createUpdateApplication(oldDataObject, incomingData,
-		// userInfo);
-		// }
+		if (indexed != null && indexed) {
+			activityService.createUpdateApplication(oldDataObject, incomingData, userInfo);
+		}
 		return indexed;
 	}
 
@@ -812,14 +814,15 @@ public class FormsServiceImpl implements FormsService {
 	public Boolean reviewApplication(IncomingData incomingData, UserInfo userInfo) {
 		try {
 			SearchRequestDto srd = createSearchRequestObject(incomingData.getApplicationId());
-			List<Map<String, Object>> applicationMap = getApplications(userInfo,srd); 
-			for(Map<String, Object> innerMap : applicationMap) { 
-				if(innerMap.containsKey(Constants.STATUS)) {
+			List<Map<String, Object>> applicationMap = getApplications(userInfo, srd);
+			for (Map<String, Object> innerMap : applicationMap) {
+				if (innerMap.containsKey(Constants.STATUS)) {
 					incomingData.setStatus(innerMap.get(Constants.STATUS).toString());
 				}
 			}
 			incomingData.setReviewedDate(DateUtils.getYyyyMmDdInUTC());
-			WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo, Constants.WorkflowActions.SAVE_FORM_NOTES); 
+			WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo,
+					Constants.WorkflowActions.SAVE_FORM_NOTES);
 			WorkflowUtil.getNextStateForMyRequest(workflowDto);
 			incomingData.setStatus(workflowDto.getNextState());
 			return formsDao.updateFormData(incomingData, incomingData.getApplicationId());
@@ -829,8 +832,8 @@ public class FormsServiceImpl implements FormsService {
 		}
 
 	}
-	
-	public SearchRequestDto createSearchRequestObject(String applicationId) { 
+
+	public SearchRequestDto createSearchRequestObject(String applicationId) {
 		SearchRequestDto searchRequestDto = new SearchRequestDto();
 		SearchObject sObject = new SearchObject();
 		sObject.setKey(Constants.APPLICATION_ID);
@@ -838,19 +841,19 @@ public class FormsServiceImpl implements FormsService {
 		List<SearchObject> searchObjectList = new ArrayList<SearchObject>();
 		searchObjectList.add(sObject);
 		searchRequestDto.setSearchObjects(searchObjectList);
-		return searchRequestDto; 
+		return searchRequestDto;
 	}
 
 	@Override
 	public Boolean assignApplication(UserInfo userInfo, AssignApplication assign) {
 		try {
 			SearchRequestDto srd = createSearchRequestObject(assign.getApplicationId());
-			List<Map<String, Object>> applicationMap = getApplications(userInfo,srd); 
-			for(Map<String, Object>	 innerMap : applicationMap) { 
-				if(innerMap.containsKey(Constants.STATUS)) {
+			List<Map<String, Object>> applicationMap = getApplications(userInfo, srd);
+			for (Map<String, Object> innerMap : applicationMap) {
+				if (innerMap.containsKey(Constants.STATUS)) {
 					assign.setStatus(innerMap.get(Constants.STATUS).toString());
 				}
-				if(innerMap.containsKey(Constants.FORM_ID)) {
+				if (innerMap.containsKey(Constants.FORM_ID)) {
 					assign.setFormId(Long.parseLong(innerMap.get(Constants.FORM_ID).toString()));
 				}
 			}
@@ -946,14 +949,15 @@ public class FormsServiceImpl implements FormsService {
 	public Boolean returnApplication(IncomingData incomingData, UserInfo userInfo) {
 		try {
 			SearchRequestDto srd = createSearchRequestObject(incomingData.getApplicationId());
-			List<Map<String, Object>> applicationMap = getApplications(userInfo,srd); 
-			for(Map<String, Object> innerMap : applicationMap) { 
-				if(innerMap.containsKey(Constants.STATUS)) {
+			List<Map<String, Object>> applicationMap = getApplications(userInfo, srd);
+			for (Map<String, Object> innerMap : applicationMap) {
+				if (innerMap.containsKey(Constants.STATUS)) {
 					incomingData.setStatus(innerMap.get(Constants.STATUS).toString());
 				}
 			}
 			incomingData.setReviewedDate(DateUtils.getYyyyMmDdInUTC());
-			WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo, Constants.WorkflowActions.RETURN_APPLICATION); 
+			WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo,
+					Constants.WorkflowActions.RETURN_APPLICATION);
 			WorkflowUtil.getNextStateForMyRequest(workflowDto);
 			incomingData.setStatus(workflowDto.getNextState());
 			return formsDao.updateFormData(incomingData, incomingData.getApplicationId());
