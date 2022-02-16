@@ -43,4 +43,16 @@ public class RestService {
 		return null;
 	}
 
+	public static Object getRequest(String url) {
+		try {
+			Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+			if (response.containsKey(Constants.Parameters.RESPONSE_DATA)) {
+				return response.get(Constants.Parameters.RESPONSE_DATA);
+			}
+		} catch (Exception e) {
+			logger.error(String.format(Constants.EXCEPTION, "getResponse", e.getMessage()));
+		}
+		return null;
+	}
+
 }

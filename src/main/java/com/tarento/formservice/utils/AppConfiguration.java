@@ -86,9 +86,12 @@ public class AppConfiguration {
 
 	@Value("${es.fs.activitylog.index.name}")
 	private String activityLogIndex;
-	
+
 	@Value("${es.fs.activitylog.index.type}")
 	private String activityLogIndexType;
+
+	@Value("{user.routes.getuserbyid.url}")
+	private String getUserByIdAPI;
 
 	public String getElasticHost() {
 		return elasticHost;
@@ -298,5 +301,4 @@ public class AppConfiguration {
 		this.activityLogIndexType = activityLogIndexType;
 	}
 
-	
 }

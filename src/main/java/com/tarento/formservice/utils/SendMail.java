@@ -68,16 +68,16 @@ public class SendMail {
 	 *            subject
 	 */
 	@Async
-	public static void sendMail(String[] receipent, String subject, VelocityContext context, String templateName) {
+	public static void sendMail(String[] recipient, String subject, VelocityContext context, String templateName) {
 		try {
 			Session session = Session.getInstance(props,
 					new GMailAuthenticator(appConfig.getSmtpUser(), appConfig.getSmtpPassword()));
 			MimeMessage message = new MimeMessage(session);
 			message.setFrom(new InternetAddress(appConfig.getSmtpEmail()));
-			int size = receipent.length;
+			int size = recipient.length;
 			int i = 0;
 			while (size > 0) {
-				message.addRecipient(Message.RecipientType.TO, new InternetAddress(receipent[i]));
+				message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient[i]));
 				i++;
 				size--;
 			}
