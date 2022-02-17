@@ -8,7 +8,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -43,14 +45,17 @@ public class RestService {
 		return null;
 	}
 
-	public static Object getRequest(String url) {
+	public static Object getRequestWithHeaders(HttpHeaders headers, String url) {
 		try {
-			Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-			if (response.containsKey(Constants.Parameters.RESPONSE_DATA)) {
-				return response.get(Constants.Parameters.RESPONSE_DATA);
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+			HttpEntity<Object> httpEntity = new HttpEntity<>(headers);
+			ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, httpEntity, Map.class);
+			if (response.getBody() != null && response.getBody().containsKey(Constants.Parameters.RESPONSE_DATA)) {
+				return response.getBody().get(Constants.Parameters.RESPONSE_DATA);
 			}
 		} catch (Exception e) {
-			logger.error(String.format(Constants.EXCEPTION, "getResponse", e.getMessage()));
+			logger.error(String.format(Constants.EXCEPTION, "getRequest", e.getMessage()));
 		}
 		return null;
 	}

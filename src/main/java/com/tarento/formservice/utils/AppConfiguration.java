@@ -90,7 +90,7 @@ public class AppConfiguration {
 	@Value("${es.fs.activitylog.index.type}")
 	private String activityLogIndexType;
 
-	@Value("{user.routes.getuserbyid.url}")
+	@Value("${user.routes.getuserbyid.url}")
 	private String getUserByIdAPI;
 
 	public String getElasticHost() {

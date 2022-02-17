@@ -10,10 +10,12 @@ import org.apache.velocity.VelocityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import com.tarento.formservice.model.AssignApplication;
 import com.tarento.formservice.model.IncomingData;
+import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.UserProfile;
 import com.tarento.formservice.repository.RestService;
 
@@ -59,80 +61,76 @@ public class NotificationUtil {
 	/**
 	 * Handles every request workflow actions
 	 * 
-	 * @param applicationMap
-	 *            Map<String, Object>
+	 * @param applicationData
+	 *            IncomingData
 	 * @param action
 	 *            String
+	 * @param UserInfo
+	 *            userInfo
 	 */
-	public static void SendNotification(Map<String, Object> applicationMap, String action) {
-		new Thread(() -> {
-			try {
-				IncomingData applicationData = mapper.convertValue(applicationMap, IncomingData.class);
+	public static void SendNotification(IncomingData applicationData, String action, UserInfo userInfo) {
+		try {
+			VelocityContext context = new VelocityContext();
+			List<String> recipient = new ArrayList<>();
 
-				VelocityContext context = new VelocityContext();
-				List<String> recipient = new ArrayList<>();
+			switch (action) {
 
-				switch (action) {
+			case Constants.WorkflowActions.RETURN_APPLICATION:
+				recipient.add(applicationData.getCreatedBy());
+				context.put(body, returnBody.replace(formName, applicationData.getTitle()));
+				SendMail.sendMail(recipient.toArray(new String[recipient.size()]), returnSubject, context,
+						templateName);
+				break;
 
-				case Constants.WorkflowActions.RETURN_APPLICATION:
-					recipient.add(applicationData.getCreatedBy());
-					context.put(body, returnBody.replace(formName, applicationData.getTitle()));
-					SendMail.sendMail(recipient.toArray(new String[recipient.size()]), returnSubject, context,
-							templateName);
-					break;
+			case Constants.WorkflowActions.APPROVE_APPLICATION:
+				recipient.add(applicationData.getCreatedBy());
+				context.put(body, approveBody.replace(formName, applicationData.getTitle()));
+				SendMail.sendMail(recipient.toArray(new String[recipient.size()]), approveSubject, context,
+						templateName);
+				break;
 
-				case Constants.WorkflowActions.APPROVE_APPLICATION:
-					recipient.add(applicationData.getCreatedBy());
-					context.put(body, approveBody.replace(formName, applicationData.getTitle()));
-					SendMail.sendMail(recipient.toArray(new String[recipient.size()]), approveSubject, context,
-							templateName);
-					break;
+			case Constants.WorkflowActions.REJECT_APPLICATION:
+				recipient.add(applicationData.getCreatedBy());
+				context.put(body, rejectBody.replace(formName, applicationData.getTitle()));
+				SendMail.sendMail(recipient.toArray(new String[recipient.size()]), rejectSubject, context,
+						templateName);
+				break;
 
-				case Constants.WorkflowActions.REJECT_APPLICATION:
-					recipient.add(applicationData.getCreatedBy());
-					context.put(body, rejectBody.replace(formName, applicationData.getTitle()));
-					SendMail.sendMail(recipient.toArray(new String[recipient.size()]), rejectSubject, context,
-							templateName);
-					break;
+			case Constants.WorkflowActions.ASSIGN_INSPECTOR:
+				recipient.add(applicationData.getCreatedBy());
+				context.put(body, sentInspectionBody.replace(formName, applicationData.getTitle()));
+				SendMail.sendMail(recipient.toArray(new String[recipient.size()]), sentInspectionSubject, context,
+						templateName);
 
-				case Constants.WorkflowActions.ASSIGN_INSPECTOR:
-					recipient.add(applicationData.getCreatedBy());
-					context.put(body, sentInspectionBody.replace(formName, applicationData.getTitle()));
-					SendMail.sendMail(recipient.toArray(new String[recipient.size()]), sentInspectionSubject, context,
-							templateName);
-
-					List<String> inspectorEmail = getAssigneeEmail(applicationData.getInspection());
-					if (!inspectorEmail.isEmpty()) {
-						String[] inspectorId = inspectorEmail.toArray(new String[inspectorEmail.size()]);
-						context.put(body, assignedInspectionBody.replace(formName, applicationData.getTitle())
-								.replace("{{date}}", applicationData.getInspection().getAssignedDate()));
-						SendMail.sendMail(inspectorId, assignedInspectionSubject, context, templateName);
-					}
-					break;
-
-				case Constants.WorkflowActions.COMPLETED_INSPECTION:
-					recipient.add(applicationData.getCreatedBy());
-					context.put(body, inspectionCompletedBody.replace(formName, applicationData.getTitle()));
-					SendMail.sendMail(recipient.toArray(new String[recipient.size()]), inspectionCompletedSubject,
-							context, templateName);
-
-					String regulatorEmail = getRegulatorEmail(applicationData.getInspection().getAssignedBy());
-					if (StringUtils.isNotBlank(regulatorEmail)) {
-						context.put(body, inspectionCompletedBody.replace(formName, applicationData.getTitle()));
-						String[] regulatorId = { regulatorEmail };
-						SendMail.sendMail(regulatorId, inspectionCompletedSubject, context, templateName);
-
-					}
-					break;
-
-				default:
-					break;
+				List<String> inspectorEmail = getAssigneeEmail(applicationData.getInspection());
+				if (!inspectorEmail.isEmpty()) {
+					String[] inspectorId = inspectorEmail.toArray(new String[inspectorEmail.size()]);
+					context.put(body, assignedInspectionBody.replace(formName, applicationData.getTitle())
+							.replace("{{date}}", applicationData.getInspection().getAssignedDate()));
+					SendMail.sendMail(inspectorId, assignedInspectionSubject, context, templateName);
 				}
-			} catch (Exception e) {
-				logger.error(String.format(Constants.EXCEPTION, "SendNotification", e.getMessage()));
-			}
-		}).start();
+				break;
 
+			case Constants.WorkflowActions.COMPLETED_INSPECTION:
+				recipient.add(applicationData.getCreatedBy());
+				context.put(body, inspectionCompletedBody.replace(formName, applicationData.getTitle()));
+				SendMail.sendMail(recipient.toArray(new String[recipient.size()]), inspectionCompletedSubject, context,
+						templateName);
+
+				String regulatorEmail = getRegulatorEmail(applicationData.getInspection().getAssignedBy(), userInfo);
+				if (StringUtils.isNotBlank(regulatorEmail)) {
+					context.put(body, inspectionCompletedBody.replace(formName, applicationData.getTitle()));
+					String[] regulatorId = { regulatorEmail };
+					SendMail.sendMail(regulatorId, inspectionCompletedSubject, context, templateName);
+				}
+				break;
+
+			default:
+				break;
+			}
+		} catch (Exception e) {
+			logger.error(String.format(Constants.EXCEPTION, "SendNotification", e.getMessage()));
+		}
 	}
 
 	/**
@@ -154,14 +152,30 @@ public class NotificationUtil {
 		return assignee;
 	}
 
-	private static String getRegulatorEmail(Long userId) {
+	/**
+	 * User service call to get user info by their id
+	 * 
+	 * @param userId
+	 *            Long
+	 * @param userinfo
+	 *            UserInfo
+	 * @return String
+	 */
+	private static String getRegulatorEmail(Long userId, UserInfo userinfo) {
 		try {
-			String url = appConfig.getUserServiceHost() + appConfig.getGetUserByIdAPI();
-			Object response = RestService.getRequest(url);
+			if (userinfo != null) {
+				String url = appConfig.getUserServiceHost() + appConfig.getGetUserByIdAPI() + "?id=" + userId;
+				if (userinfo.getOrgId() != null) {
+					url = url + "&orgId=" + userinfo.getOrgId();
+				}
+				HttpHeaders headers = new HttpHeaders();
+				headers.add(Constants.Parameters.AUTHORIZATION, userinfo.getAuthToken());
+				Object response = RestService.getRequestWithHeaders(headers, url);
 
-			if (response != null) {
-				Map<String, Object> userList = mapper.convertValue(response, Map.class);
-				return (String) userList.get(Constants.Parameters.EMAIL_ID);
+				if (response != null) {
+					Map<String, Object> userList = mapper.convertValue(response, Map.class);
+					return (String) userList.get(Constants.Parameters.EMAIL_ID);
+				}
 			}
 		} catch (Exception e) {
 			logger.error(String.format(Constants.EXCEPTION, "getRegulatorEmail", e.getMessage()));

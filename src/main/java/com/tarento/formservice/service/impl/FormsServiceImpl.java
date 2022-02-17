@@ -75,6 +75,7 @@ import com.tarento.formservice.utils.AppConfiguration;
 import com.tarento.formservice.utils.CloudStorage;
 import com.tarento.formservice.utils.Constants;
 import com.tarento.formservice.utils.DateUtils;
+import com.tarento.formservice.utils.NotificationUtil;
 import com.tarento.formservice.utils.WorkflowUtil;
 
 @Service(Constants.ServiceRepositories.FORM_SERVICE)
@@ -881,8 +882,10 @@ public class FormsServiceImpl implements FormsService {
 				assign.setAssignedDate(DateUtils.getYyyyMmDdInUTC());
 				requestData.setInspection(assign);
 				requestData.setStatus(assign.getStatus());
-
-				return formsDao.updateFormData(requestData, assign.getApplicationId());
+				Boolean response = formsDao.updateFormData(requestData, assign.getApplicationId());
+				sendNotification(response, assign.getApplicationId(), Constants.WorkflowActions.ASSIGN_INSPECTOR,
+						userInfo);
+				return response;
 			}
 			return Boolean.TRUE;
 		} catch (Exception e) {
@@ -960,7 +963,10 @@ public class FormsServiceImpl implements FormsService {
 					Constants.WorkflowActions.RETURN_APPLICATION);
 			WorkflowUtil.getNextStateForMyRequest(workflowDto);
 			incomingData.setStatus(workflowDto.getNextState());
-			return formsDao.updateFormData(incomingData, incomingData.getApplicationId());
+			Boolean response = formsDao.updateFormData(incomingData, incomingData.getApplicationId());
+			sendNotification(response, incomingData.getApplicationId(), Constants.WorkflowActions.RETURN_APPLICATION,
+					userInfo);
+			return response;
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "returnApplication", e.getMessage()));
 			return Boolean.FALSE;
@@ -971,15 +977,34 @@ public class FormsServiceImpl implements FormsService {
 	@Override
 	public Boolean submitInspection(IncomingData incomingData, UserInfo userInfo) {
 		SearchRequestDto srd = createSearchRequestObject(incomingData.getApplicationId());
-		List<Map<String, Object>> applicationMap = getApplications(userInfo,srd); 
-		for(Map<String, Object> innerMap : applicationMap) { 
-			if(innerMap.containsKey(Constants.STATUS)) {
+		List<Map<String, Object>> applicationMap = getApplications(userInfo, srd);
+		for (Map<String, Object> innerMap : applicationMap) {
+			if (innerMap.containsKey(Constants.STATUS)) {
 				incomingData.setStatus(innerMap.get(Constants.STATUS).toString());
 			}
 		}
-		WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo, Constants.WorkflowActions.COMPLETED_INSPECTION); 
+		WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo,
+				Constants.WorkflowActions.COMPLETED_INSPECTION);
 		WorkflowUtil.getNextStateForMyRequest(workflowDto);
 		incomingData.setStatus(workflowDto.getNextState());
-		return saveFormSubmitv1(incomingData, userInfo);
+		Boolean response = saveFormSubmitv1(incomingData, userInfo);
+		sendNotification(response, incomingData.getApplicationId(), Constants.WorkflowActions.COMPLETED_INSPECTION,
+				userInfo);
+		return response;
+	}
+
+	/**
+	 * Creates an async operation to send notification on status changes
+	 */
+	private void sendNotification(Boolean response, String applicationId, String action, UserInfo userInfo) {
+		new Thread(() -> {
+			if (response != null && response) {
+				Map<String, Object> applicationMap = getApplicationById(applicationId, userInfo);
+				if (applicationMap != null && applicationMap.size() > 0) {
+					IncomingData applicationData = objectMapper.convertValue(applicationMap, IncomingData.class);
+					NotificationUtil.SendNotification(applicationData, action, userInfo);
+				}
+			}
+		}).start();
 	}
 }
