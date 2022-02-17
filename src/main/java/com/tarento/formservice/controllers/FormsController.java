@@ -508,4 +508,15 @@ public class FormsController {
 		return ResponseGenerator.failureResponse(validation);
 	}
 
+	@GetMapping(value = PathRoutes.FormServiceApi.ACTIVITY_LOGS)
+	public String getActivityLogs(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
+			@RequestParam(required = true) String applicationId) throws IOException {
+		List<Map<String, Object>> response = formsService.getActivityLogs(applicationId);
+		if (response != null) {
+			return ResponseGenerator.successResponse(response);
+		}
+		return ResponseGenerator.failureResponse();
+	}
+
 }

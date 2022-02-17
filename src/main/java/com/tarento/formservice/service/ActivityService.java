@@ -5,6 +5,6 @@ import com.tarento.formservice.model.UserInfo;
 
 public interface ActivityService {
 
-	public void createUpdateApplication(IncomingData oldObj, IncomingData updatedObj, UserInfo userInfo);
+	public void applicationActivity(IncomingData oldObj, IncomingData updatedObj, UserInfo userInfo);
 
 }

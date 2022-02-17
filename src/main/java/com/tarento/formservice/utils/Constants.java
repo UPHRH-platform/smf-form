@@ -58,6 +58,7 @@ public interface Constants {
 		static final String STATUS = "Status";
 		static final String DATA_OBJECT = "dataObject";
 		static final String INSPECTION = "inspection";
+		static final String INSPECTOR_DATA_OBJECT = "inspectorDataObject";
 
 		static final String ACTION = "action";
 		static final String FIELD = "field";
@@ -66,6 +67,10 @@ public interface Constants {
 
 		static final String AUTHORIZATION = "Authorization";
 		static final String BEARER = "Bearer ";
+
+		static final String UPDATED_BY = "updatedBy";
+		static final String UPDATED_DATE = "updatedDate";
+		static final String UPDATED_BY_EMAIL = "updatedByEmail";
 	}
 
 	interface WorkflowActions {
@@ -162,7 +167,7 @@ public interface Constants {
 	}
 
 	interface Operations {
-		public static final String ADDED = "Added";
+		public static final String CREATE = "Created";
 		public static final String UPDATE = "Updated";
 		public static final String REMOVE = "Removed";
 	}

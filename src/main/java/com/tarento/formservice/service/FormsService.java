@@ -76,4 +76,6 @@ public interface FormsService {
 
 	public Boolean submitInspection(IncomingData incomingData, UserInfo userInfo);
 
+	public List<Map<String, Object>> getActivityLogs(String applicationId);
+
 }

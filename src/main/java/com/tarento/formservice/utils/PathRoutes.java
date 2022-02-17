@@ -55,6 +55,7 @@ public interface PathRoutes {
 		final String RETURN_APPLICATION = "/returnApplication";
 		final String APPROVE_APPLICATION = "/approveApplication";
 		final String REJECT_APPLICATION = "/rejectApplication";
+		final String ACTIVITY_LOGS = "/getActivityLogs";
 	}
 
 	public interface JsonFormServiceApi {

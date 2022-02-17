@@ -746,12 +746,10 @@ public class FormsServiceImpl implements FormsService {
 				}
 				incomingData.setUpdatedDate(DateUtils.getYyyyMmDdInUTC());
 				indexed = formsDao.updateFormData(incomingData, incomingData.getApplicationId());
+				appStatusTrack(indexed, applicationObject, null, userInfo);
 			}
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "saveFormSubmitv1", e.getMessage()));
-		}
-		if (indexed != null && indexed) {
-			activityService.createUpdateApplication(oldDataObject, incomingData, userInfo);
 		}
 		return indexed;
 	}
@@ -895,8 +893,9 @@ public class FormsServiceImpl implements FormsService {
 				requestData.setInspection(assign);
 				requestData.setStatus(assign.getStatus());
 				Boolean response = formsDao.updateFormData(requestData, assign.getApplicationId());
-				sendNotification(response, assign.getApplicationId(), Constants.WorkflowActions.ASSIGN_INSPECTOR,
-						userInfo);
+				appStatusTrack(response,
+						(applicationMap != null && applicationMap.size() > 0 ? applicationMap.get(0) : null),
+						Constants.WorkflowActions.ASSIGN_INSPECTOR, userInfo);
 				return response;
 			}
 			return Boolean.TRUE;
@@ -975,7 +974,9 @@ public class FormsServiceImpl implements FormsService {
 			WorkflowUtil.getNextStateForMyRequest(workflowDto);
 			incomingData.setStatus(workflowDto.getNextState());
 			Boolean response = formsDao.updateFormData(incomingData, incomingData.getApplicationId());
-			sendNotification(response, incomingData.getApplicationId(), status, userInfo);
+			appStatusTrack(response,
+					(applicationMap != null && applicationMap.size() > 0 ? applicationMap.get(0) : null), status,
+					userInfo);
 			return response;
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "updateApplicationStatus", e.getMessage()));
@@ -998,23 +999,61 @@ public class FormsServiceImpl implements FormsService {
 		WorkflowUtil.getNextStateForMyRequest(workflowDto);
 		incomingData.setStatus(workflowDto.getNextState());
 		Boolean response = saveFormSubmitv1(incomingData, userInfo);
-		sendNotification(response, incomingData.getApplicationId(), Constants.WorkflowActions.COMPLETED_INSPECTION,
-				userInfo);
+		appStatusTrack(response, (applicationMap != null && applicationMap.size() > 0 ? applicationMap.get(0) : null),
+				Constants.WorkflowActions.COMPLETED_INSPECTION, userInfo);
 		return response;
 	}
 
 	/**
-	 * Creates an async operation to send notification on status changes
+	 * Creates an async operation to send notification & update activity logs on
+	 * application status changes
 	 */
-	private void sendNotification(Boolean response, String applicationId, String action, UserInfo userInfo) {
+	private void appStatusTrack(Boolean response, Map<String, Object> applicationMap, String action,
+			UserInfo userInfo) {
 		new Thread(() -> {
-			if (response != null && response) {
-				Map<String, Object> applicationMap = getApplicationById(applicationId, userInfo);
-				if (applicationMap != null && applicationMap.size() > 0) {
-					IncomingData applicationData = objectMapper.convertValue(applicationMap, IncomingData.class);
-					NotificationUtil.SendNotification(applicationData, action, userInfo);
+			try {
+				if (response != null && response) {
+					if (applicationMap != null && applicationMap.size() > 0) {
+						IncomingData applicationData = objectMapper.convertValue(applicationMap, IncomingData.class);
+						Map<String, Object> updatedAppMap = getApplicationById(applicationData.getApplicationId(),
+								userInfo);
+						IncomingData updatedAppData = objectMapper.convertValue(updatedAppMap, IncomingData.class);
+
+						// send notification
+						if (action.equals(Constants.WorkflowActions.ASSIGN_INSPECTOR)) {
+							NotificationUtil.SendNotification(updatedAppData, action, userInfo);
+						} else {
+							NotificationUtil.SendNotification(applicationData, action, userInfo);
+						}
+						// update activity logs
+						activityService.applicationActivity(applicationData, updatedAppData, userInfo);
+					}
 				}
+			} catch (Exception e) {
+				LOGGER.error(String.format(Constants.EXCEPTION, "appStatusTrack", e.getMessage()));
 			}
 		}).start();
+	}
+
+	@Override
+	public List<Map<String, Object>> getActivityLogs(String applicationId) {
+		try {
+			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
+			BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
+			boolBuilder.must().add(QueryBuilders.matchQuery(Constants.Parameters.ID, applicationId));
+			boolBuilder.must().add(QueryBuilders.existsQuery("changes.status"));
+			searchSourceBuilder.query(boolBuilder).fetchSource(
+					new String[] { Constants.Parameters.ID, Constants.Parameters.UPDATED_BY,
+							Constants.Parameters.UPDATED_DATE, Constants.Parameters.UPDATED_BY_EMAIL,
+							Constants.TIMESTAMP, "changes.status.ChangedTo", "changes.status.action" },
+					new String[] {});
+			searchSourceBuilder.sort(SortBuilders.fieldSort(Constants.TIMESTAMP).order(SortOrder.DESC));
+			SearchRequest searchRequest = new SearchRequest(appConfig.getActivityLogIndex())
+					.types(appConfig.getActivityLogIndexType()).source(searchSourceBuilder);
+			return formsDao.searchResponse(searchRequest);
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "getActivityLogs", e.getMessage()));
+			return null;
+		}
 	}
 }

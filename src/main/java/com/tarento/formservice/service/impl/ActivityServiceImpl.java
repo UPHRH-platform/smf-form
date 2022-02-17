@@ -11,7 +11,6 @@ import org.apache.htrace.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.tarento.formservice.dao.FormsDao;
@@ -33,19 +32,17 @@ public class ActivityServiceImpl implements ActivityService {
 	FormsDao formsDao;
 
 	@Override
-	@Async
-	public void createUpdateApplication(IncomingData oldObj, IncomingData updatedObj, UserInfo userInfo) {
+	public void applicationActivity(IncomingData oldObj, IncomingData updatedObj, UserInfo userInfo) {
 		try {
 			ActivityLogs activityLogs = new ActivityLogs();
 			activityLogs.setId(updatedObj.getApplicationId());
 			activityLogs.setType(Constants.ServiceTypes.APPLICATION);
+			activityLogs.setTimestamp(DateUtils.getCurrentTimestamp());
 			activityLogs.setUpdatedDate(DateUtils.getFormattedDateInUTC(DateUtils.getCurrentDate()));
 			if (userInfo != null) {
 				activityLogs.setUpdatedBy(userInfo.getId());
 				activityLogs.setUpdatedByEmail(userInfo.getEmailId());
-				activityLogs.setUser(String.valueOf(userInfo.getName()));
 			}
-			// if (oldObj != null && updatedObj != null) {
 			activityLogs.setObject(oldObj);
 			activityLogs.setUpdatedObject(updatedObj);
 			Map<String, Map<String, Object>> changes = getUpdatedFields(oldObj, updatedObj);
@@ -53,7 +50,6 @@ public class ActivityServiceImpl implements ActivityService {
 				activityLogs.setChanges(changes);
 				formsDao.addLogs(activityLogs);
 			}
-			// }
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -66,27 +62,32 @@ public class ActivityServiceImpl implements ActivityService {
 		Map<String, Map<String, Object>> changes = new HashMap<>();
 		if (oldObj != null && updatedObj != null) {
 			// status
-			getStatement(oldObj.getStatus(), updatedObj.getStatus(), Constants.Parameters.STATUS,
-					Constants.Parameters.STATUS, changes);
+			getStatement(oldObj.getStatus(), updatedObj.getStatus(), Constants.STATUS, Constants.STATUS, changes);
 			// dataObject
 			getStatement(oldObj.getDataObject(), updatedObj.getDataObject(), Constants.Parameters.DATA_OBJECT,
 					Constants.Parameters.DATA_OBJECT, changes);
 			// inspection
 			getStatement(oldObj.getInspection(), updatedObj.getInspection(), Constants.Parameters.INSPECTION,
 					Constants.Parameters.INSPECTION, changes);
+			// inspector data object
+			getStatement(oldObj.getInspectorDataObject(), updatedObj.getInspectorDataObject(),
+					Constants.Parameters.INSPECTOR_DATA_OBJECT, Constants.Parameters.INSPECTOR_DATA_OBJECT, changes);
 		} else if (oldObj == null && updatedObj != null) {
-			getStatement(null, updatedObj.getStatus(), Constants.Parameters.STATUS, Constants.Parameters.STATUS,
-					changes);
+			getStatement(null, updatedObj.getStatus(), Constants.STATUS, Constants.STATUS, changes);
 			getStatement(null, updatedObj.getDataObject(), Constants.Parameters.DATA_OBJECT,
 					Constants.Parameters.DATA_OBJECT, changes);
 			getStatement(null, updatedObj.getInspection(), Constants.Parameters.INSPECTION,
 					Constants.Parameters.INSPECTION, changes);
+			getStatement(null, updatedObj.getInspectorDataObject(), Constants.Parameters.INSPECTOR_DATA_OBJECT,
+					Constants.Parameters.INSPECTOR_DATA_OBJECT, changes);
 		} else if (oldObj != null && updatedObj == null) {
-			getStatement(oldObj.getStatus(), null, Constants.Parameters.STATUS, Constants.Parameters.STATUS, changes);
+			getStatement(oldObj.getStatus(), null, Constants.STATUS, Constants.STATUS, changes);
 			getStatement(oldObj.getDataObject(), null, Constants.Parameters.DATA_OBJECT,
 					Constants.Parameters.DATA_OBJECT, changes);
 			getStatement(oldObj.getInspection(), null, Constants.Parameters.INSPECTION, Constants.Parameters.INSPECTION,
 					changes);
+			getStatement(oldObj.getInspectorDataObject(), null, Constants.Parameters.INSPECTOR_DATA_OBJECT,
+					Constants.Parameters.INSPECTOR_DATA_OBJECT, changes);
 		}
 
 		return changes;
@@ -104,7 +105,7 @@ public class ActivityServiceImpl implements ActivityService {
 		Map<String, Object> logStatement = new HashMap<>();
 
 		if (oldObj == null && updatedObj != null) {
-			logStatement.put(Constants.Parameters.ACTION, Constants.Operations.ADDED);
+			logStatement.put(Constants.Parameters.ACTION, Constants.Operations.CREATE);
 			logStatement.put(Constants.Parameters.CHANGED_TO, updatedObj);
 		} else if (oldObj != null && updatedObj == null) {
 			logStatement.put(Constants.Parameters.ACTION, Constants.Operations.REMOVE);
@@ -134,7 +135,7 @@ public class ActivityServiceImpl implements ActivityService {
 		});
 
 		Set<String> keySet = new HashSet<>();
-		// keySet.addAll(oldObjMap.keySet());
+		keySet.addAll(oldObjMap.keySet());
 		keySet.addAll(updatedObjMap.keySet());
 		for (String key : keySet) {
 			getStatement(oldObjMap.get(key), updatedObjMap.get(key), key, fieldPath + "." + key, changes);
