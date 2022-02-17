@@ -861,12 +861,21 @@ public class FormsServiceImpl implements FormsService {
 			WorkflowDto workflowDto = new WorkflowDto(assign, userInfo, Constants.WorkflowActions.ASSIGN_INSPECTOR);
 			WorkflowUtil.getNextStateForMyRequest(workflowDto);
 			assign.setStatus(workflowDto.getNextState());
-			if (assign.getUserId() != null && assign.getUserId().size() > 0) {
-				Map<String, Map<String, Object>> userMap = getUserDetails(assign.getUserId(), userInfo.getOrgId(),
+			if (assign.getLeadInspector() == null) {
+				assign.setLeadInspector(new ArrayList<>());
+			}
+			if (assign.getAssistingInspector() == null) {
+				assign.setAssistingInspector(new ArrayList<>());
+			}
+			if (assign.getAssistingInspector().size() > 0 || assign.getLeadInspector().size() > 0) {
+				List<Long> inspectorsId = new ArrayList<>();
+				inspectorsId.addAll(assign.getAssistingInspector());
+				inspectorsId.addAll(assign.getLeadInspector());
+				Map<String, Map<String, Object>> userMap = getUserDetails(inspectorsId, userInfo.getOrgId(),
 						userInfo.getAuthToken());
 				// set assigned user meta data
 				assign.setAssignedTo(new ArrayList<>());
-				for (Long userId : assign.getUserId()) {
+				for (Long userId : inspectorsId) {
 					UserProfile userProfile = new UserProfile();
 					userProfile.setId(userId);
 					String key = String.valueOf(userId);
@@ -874,6 +883,9 @@ public class FormsServiceImpl implements FormsService {
 						userProfile.setEmailId((String) userMap.get(key).get(Constants.Parameters.EMAIL_ID));
 						userProfile.setFirstName((String) userMap.get(key).get(Constants.Parameters.FIRST_NAME));
 						userProfile.setLastName((String) userMap.get(key).get(Constants.Parameters.LAST_NAME));
+						if (assign.getLeadInspector().contains(userId)) {
+							userProfile.setLeadInspector(Boolean.TRUE);
+						}
 					}
 					assign.getAssignedTo().add(userProfile);
 				}
