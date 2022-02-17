@@ -340,15 +340,16 @@ public class FormsController {
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
-		List<Map<String, Object>> responseData = formsService.getApplications(userInfo, createSearchRequestObject(applicationId));
+		List<Map<String, Object>> responseData = formsService.getApplications(userInfo,
+				createSearchRequestObject(applicationId));
 		if (responseData != null) {
 			return (responseData.isEmpty()) ? ResponseGenerator.successResponse(new HashMap<>())
 					: ResponseGenerator.successResponse(responseData.get(0));
 		}
 		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
 	}
-	
-	public SearchRequestDto createSearchRequestObject(String applicationId) { 
+
+	public SearchRequestDto createSearchRequestObject(String applicationId) {
 		SearchRequestDto searchRequestDto = new SearchRequestDto();
 		SearchObject sObject = new SearchObject();
 		sObject.setKey(Constants.APPLICATION_ID);
@@ -356,7 +357,7 @@ public class FormsController {
 		List<SearchObject> searchObjectList = new ArrayList<SearchObject>();
 		searchObjectList.add(sObject);
 		searchRequestDto.setSearchObjects(searchObjectList);
-		return searchRequestDto; 
+		return searchRequestDto;
 	}
 
 	@PostMapping(value = PathRoutes.FormServiceApi.FILE_UPLOAD, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -392,10 +393,10 @@ public class FormsController {
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody IncomingData incomingData) throws JsonProcessingException {
 		String validation = validationService.validateApplicationReview(incomingData);
-		UserInfo userInfo = null; 
+		UserInfo userInfo = null;
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			if (StringUtils.isNotBlank(xUserInfo)) {
-				userInfo= new Gson().fromJson(xUserInfo, UserInfo.class);
+				userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 				incomingData.setReviewedBy(userInfo.getId());
 			}
 			if (formsService.reviewApplication(incomingData, userInfo)) {
@@ -410,7 +411,7 @@ public class FormsController {
 	public String assignApplication(@RequestBody AssignApplication assign,
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
 			throws JsonProcessingException {
-		UserInfo userInfo = null; 
+		UserInfo userInfo = null;
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 			assign.setAssignedBy(userInfo.getId());
@@ -443,7 +444,7 @@ public class FormsController {
 		}
 		return ResponseGenerator.failureResponse(validation);
 	}
-	
+
 	@PostMapping(value = PathRoutes.FormServiceApi.RETURN_APPLICATION)
 	public String returnApplication(
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
@@ -457,7 +458,50 @@ public class FormsController {
 				userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 				applicationReturn.setUpdatedBy(userInfo.getEmailId());
 			}
-			if (formsService.returnApplication(incomingData, userInfo)) {
+			if (formsService.updateApplicationStatus(incomingData, userInfo,
+					Constants.WorkflowActions.RETURN_APPLICATION)) {
+				return ResponseGenerator.successResponse(Boolean.TRUE);
+			}
+		}
+		return ResponseGenerator.failureResponse(validation);
+	}
+
+	@PostMapping(value = PathRoutes.FormServiceApi.APPROVE_APPLICATION)
+	public String approveApplication(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
+			@RequestBody IncomingData incomingData) throws IOException {
+		String validation = validationService.validateApplicationReturn(incomingData);
+		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
+			IncomingData applicationReturn = new IncomingData();
+			applicationReturn.setApplicationId(incomingData.getApplicationId());
+			UserInfo userInfo = null;
+			if (StringUtils.isNotBlank(xUserInfo)) {
+				userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+				applicationReturn.setUpdatedBy(userInfo.getEmailId());
+			}
+			if (formsService.updateApplicationStatus(incomingData, userInfo,
+					Constants.WorkflowActions.APPROVE_APPLICATION)) {
+				return ResponseGenerator.successResponse(Boolean.TRUE);
+			}
+		}
+		return ResponseGenerator.failureResponse(validation);
+	}
+
+	@PostMapping(value = PathRoutes.FormServiceApi.REJECT_APPLICATION)
+	public String rejectApplication(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
+			@RequestBody IncomingData incomingData) throws IOException {
+		String validation = validationService.validateApplicationReturn(incomingData);
+		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
+			IncomingData applicationReturn = new IncomingData();
+			applicationReturn.setApplicationId(incomingData.getApplicationId());
+			UserInfo userInfo = null;
+			if (StringUtils.isNotBlank(xUserInfo)) {
+				userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+				applicationReturn.setUpdatedBy(userInfo.getEmailId());
+			}
+			if (formsService.updateApplicationStatus(incomingData, userInfo,
+					Constants.WorkflowActions.REJECT_APPLICATION)) {
 				return ResponseGenerator.successResponse(Boolean.TRUE);
 			}
 		}

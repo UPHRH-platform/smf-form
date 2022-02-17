@@ -71,9 +71,9 @@ public interface FormsService {
 	Boolean assignApplication(UserInfo userinfo, AssignApplication assign);
 
 	Map<String, Object> getApplicationById(String applicationId, UserInfo userInfo);
-	
-	public Boolean returnApplication(IncomingData incomingData, UserInfo userInfo);
-	
+
+	public Boolean updateApplicationStatus(IncomingData incomingData, UserInfo userInfo, String operation);
+
 	public Boolean submitInspection(IncomingData incomingData, UserInfo userInfo);
 
 }

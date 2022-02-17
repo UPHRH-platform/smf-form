@@ -949,7 +949,7 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
-	public Boolean returnApplication(IncomingData incomingData, UserInfo userInfo) {
+	public Boolean updateApplicationStatus(IncomingData incomingData, UserInfo userInfo, String status) {
 		try {
 			SearchRequestDto srd = createSearchRequestObject(incomingData.getApplicationId());
 			List<Map<String, Object>> applicationMap = getApplications(userInfo, srd);
@@ -959,16 +959,14 @@ public class FormsServiceImpl implements FormsService {
 				}
 			}
 			incomingData.setReviewedDate(DateUtils.getYyyyMmDdInUTC());
-			WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo,
-					Constants.WorkflowActions.RETURN_APPLICATION);
+			WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo, status);
 			WorkflowUtil.getNextStateForMyRequest(workflowDto);
 			incomingData.setStatus(workflowDto.getNextState());
 			Boolean response = formsDao.updateFormData(incomingData, incomingData.getApplicationId());
-			sendNotification(response, incomingData.getApplicationId(), Constants.WorkflowActions.RETURN_APPLICATION,
-					userInfo);
+			sendNotification(response, incomingData.getApplicationId(), status, userInfo);
 			return response;
 		} catch (Exception e) {
-			LOGGER.error(String.format(Constants.EXCEPTION, "returnApplication", e.getMessage()));
+			LOGGER.error(String.format(Constants.EXCEPTION, "updateApplicationStatus", e.getMessage()));
 			return Boolean.FALSE;
 		}
 
