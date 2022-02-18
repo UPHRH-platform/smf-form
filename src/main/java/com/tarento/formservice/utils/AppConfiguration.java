@@ -93,6 +93,14 @@ public class AppConfiguration {
 	@Value("${user.routes.getuserbyid.url}")
 	private String getUserByIdAPI;
 
+	public String getGetUserByIdAPI() {
+		return getUserByIdAPI;
+	}
+
+	public void setGetUserByIdAPI(String getUserByIdAPI) {
+		this.getUserByIdAPI = getUserByIdAPI;
+	}
+
 	public String getElasticHost() {
 		return elasticHost;
 	}

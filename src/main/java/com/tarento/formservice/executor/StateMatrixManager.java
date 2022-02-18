@@ -1,5 +1,6 @@
 package com.tarento.formservice.executor;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -21,7 +22,7 @@ public class StateMatrixManager implements ApplicationRunner {
 	public static final Logger LOGGER = LoggerFactory.getLogger(StateMatrixManager.class);
 	protected static ConcurrentMap<Long, ResponseData> userData = new ConcurrentHashMap<>();
 	protected static ConcurrentMap<Long, State> stateMap = new ConcurrentHashMap<>();
-	protected static ConcurrentMap<String, StateMatrix> stateMatrixMap = new ConcurrentHashMap<>();
+	protected static ConcurrentMap<String, List<StateMatrix>> stateMatrixMap = new ConcurrentHashMap<>();
 	private static FormsService formsService;
 	
 	@Autowired
@@ -85,7 +86,7 @@ public class StateMatrixManager implements ApplicationRunner {
 	 * This method would return the State Matrix Map Data which has been stored in the Concurrent Hash Map
 	 * @return
 	 */
-	public static ConcurrentMap<String, StateMatrix> getStateMatrixMap() {
+	public static ConcurrentMap<String, List<StateMatrix>> getStateMatrixMap() {
 		return stateMatrixMap;
 	}
 	

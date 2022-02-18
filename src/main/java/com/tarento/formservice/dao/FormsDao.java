@@ -41,7 +41,7 @@ public interface FormsDao {
 
 	ConcurrentMap<Long, State> fetchAllStates(SearchRequest searchRequest);
 
-	ConcurrentMap<String, StateMatrix> fetchAllStateMatrix(SearchRequest searchRequest);
+	ConcurrentMap<String, List<StateMatrix>> fetchAllStateMatrix(SearchRequest searchRequest);
 
 	Boolean addLogs(ActivityLogs activityLogs);
 

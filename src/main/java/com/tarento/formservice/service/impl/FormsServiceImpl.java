@@ -39,9 +39,11 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.tarento.formservice.dao.FormsDao;
 import com.tarento.formservice.executor.StateMatrixManager;
@@ -111,6 +113,15 @@ public class FormsServiceImpl implements FormsService {
 			newForm.setVersion(1);
 		}
 		return (formsDao.addForm(newForm)) ? newForm : null;
+	}
+	
+	private void addAdditionalMandatoryFormFields() { 
+		String jsonContent = "[{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"heading\",\"fieldType\":\"heading\",\"values\":[{\"heading\":\"Inspection Summary\",\"subHeading\":\"Summary section where inspector is expected to add a detailed statement\",\"additionalProperties\":{}}],\"isRequired\":false,\"order\":1,\"additionalProperties\":{}},{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"Enter the summary of this inspection\",\"fieldType\":\"textarea\",\"values\":[],\"isRequired\":false,\"order\":2,\"additionalProperties\":{}},{\"refApi\":\"/users/getAllUsers?role=inspector\",\"logicalGroupCode\":\"\",\"name\":\"Add people who accompanied you\",\"fieldType\":\"dropdown\",\"values\":[{\"additionalProperties\":{\"value\":\"Select\",\"key\":\"Select\"}}],\"isRequired\":false,\"order\":3,\"additionalProperties\":{}},{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"Add\",\"fieldType\":\"button\",\"isRequired\":false,\"order\":3,\"additionalProperties\":{}},{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"Terms and Conditions\",\"fieldType\":\"checkbox\",\"values\":[{\"additionalProperties\":{\"value\":\"I accept the terms and conditions laid out by UP SMF\",\"key\":\"accept\"}}],\"isRequired\":false,\"order\":4,\"additionalProperties\":{}}]";
+		try {
+			ObjectNode jsonNode = (ObjectNode) objectMapper.readTree(jsonContent);
+		} catch (JsonProcessingException e) {
+		}
+
 	}
 
 	private void performVersionCheck(Form newForm) {
@@ -950,7 +961,7 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
-	public ConcurrentMap<String, StateMatrix> fetchAllStateMatrix() {
+	public ConcurrentMap<String, List<StateMatrix>> fetchAllStateMatrix() {
 		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
 		// es call
 		SearchRequest searchRequest = new SearchRequest(appConfig.getFormStateMatrixIndex())

@@ -144,8 +144,8 @@ public class FormsDaoImpl implements FormsDao {
 	}
 
 	@Override
-	public ConcurrentMap<String, StateMatrix> fetchAllStateMatrix(SearchRequest searchRequest) {
-		ConcurrentMap<String, StateMatrix> stateMatrixMap = new ConcurrentHashMap<String, StateMatrix>();
+	public ConcurrentMap<String, List<StateMatrix>> fetchAllStateMatrix(SearchRequest searchRequest) {
+		ConcurrentMap<String, List<StateMatrix>> stateMatrixMap = new ConcurrentHashMap<String, List<StateMatrix>>();
 		try {
 			MultiSearchResponse response = elasticsearchRepo.executeMultiSearchRequest(searchRequest);
 			SearchResponse searchResponse = response.getResponses()[0].getResponse();
@@ -153,7 +153,14 @@ public class FormsDaoImpl implements FormsDao {
 			for (SearchHit hits : hit) {
 				Map<String, Object> sourceAsMap = hits.getSourceAsMap();
 				StateMatrix eachStateMatrix = new ObjectMapper().convertValue(sourceAsMap, StateMatrix.class);
-				stateMatrixMap.put(eachStateMatrix.getAction(), eachStateMatrix);
+				if(stateMatrixMap.containsKey(eachStateMatrix.getAction())) { 
+					List<StateMatrix> stateMatrixList = stateMatrixMap.get(eachStateMatrix.getAction());
+					stateMatrixList.add(eachStateMatrix); 
+				} else { 
+					List<StateMatrix> stateMatrixList= new ArrayList<StateMatrix>();
+					stateMatrixList.add(eachStateMatrix);
+					stateMatrixMap.put(eachStateMatrix.getAction(), stateMatrixList);
+				}
 			}
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION,
