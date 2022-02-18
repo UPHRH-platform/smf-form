@@ -1,6 +1,8 @@
 package com.tarento.formservice.utils;
 
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,26 +34,26 @@ public class WorkflowUtil {
 	}
 	
 	public static void getNextStateForMyRequest(WorkflowDto workflowDto) {
-		StateMatrix matrix = StateMatrixManager.getStateMatrixMap().get(workflowDto.getActionStatement());
-		String nextState = ""; 
-		if(matrix.getRole().equals(workflowDto.getRole()) && matrix.getCurrentState().equals(workflowDto.getCurrentState())) { 
-			nextState = matrix.getNextState();
-			workflowDto.setNextState(nextState);
-		}
-		
-		Runnable task1 = new Runnable() {
-			@Override
-			public void run() {
-				try {
-					updateWorkflow(workflowDto);
-				} catch (Exception e) {
-					LOGGER.error(e.getMessage());
-				}
+		List<StateMatrix> stateMatrixList = StateMatrixManager.getStateMatrixMap().get(workflowDto.getActionStatement());
+		for(StateMatrix matrix : stateMatrixList) {
+			String nextState = ""; 
+			if(matrix.getRole().equals(workflowDto.getRole()) && matrix.getCurrentState().equals(workflowDto.getCurrentState())) { 
+				nextState = matrix.getNextState();
+				workflowDto.setNextState(nextState);
+				Runnable task1 = new Runnable() {
+					@Override
+					public void run() {
+						try {
+							updateWorkflow(workflowDto);
+						} catch (Exception e) {
+							LOGGER.error(e.getMessage());
+						}
+					}
+				};
+				Thread thread1 = new Thread(task1);
+				thread1.start();
 			}
-		};
-		Thread thread1 = new Thread(task1);
-		thread1.start();
-
+		}
 	}
 	
 	public static Boolean updateWorkflow(WorkflowDto workflowDto) {

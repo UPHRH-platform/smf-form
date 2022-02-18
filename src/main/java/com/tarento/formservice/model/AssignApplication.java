@@ -18,6 +18,22 @@ public class AssignApplication {
 	private List<Long> assistingInspector;
 	private List<Long> leadInspector;
 	private Long formId;
+	
+	public List<Long> getAssistingInspector() {
+		return assistingInspector;
+	}
+
+	public void setAssistingInspector(List<Long> assistingInspector) {
+		this.assistingInspector = assistingInspector;
+	}
+
+	public List<Long> getLeadInspector() {
+		return leadInspector;
+	}
+
+	public void setLeadInspector(List<Long> leadInspector) {
+		this.leadInspector = leadInspector;
+	}
 
 	public Long getFormId() {
 		return formId;

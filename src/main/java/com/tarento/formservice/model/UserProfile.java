@@ -39,6 +39,14 @@ public class UserProfile extends User {
 	private Long countryId;
 	private Boolean leadInspector;
 
+	public Boolean getLeadInspector() {
+		return leadInspector;
+	}
+
+	public void setLeadInspector(Boolean leadInspector) {
+		this.leadInspector = leadInspector;
+	}
+
 	public Long getProfileId() {
 		return profileId;
 	}

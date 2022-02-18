@@ -66,7 +66,7 @@ public interface FormsService {
 
 	public ConcurrentMap<Long, State> fetchAllStates();
 
-	public ConcurrentMap<String, StateMatrix> fetchAllStateMatrix();
+	public ConcurrentMap<String, List<StateMatrix>> fetchAllStateMatrix();
 
 	Boolean assignApplication(UserInfo userinfo, AssignApplication assign);
 

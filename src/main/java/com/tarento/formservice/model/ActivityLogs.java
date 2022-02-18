@@ -19,6 +19,14 @@ public class ActivityLogs {
 	private Long timestamp;
 	private Map<String, Map<String, Object>> changes;
 
+	public Long getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(Long timestamp) {
+		this.timestamp = timestamp;
+	}
+
 	public String getId() {
 		return id;
 	}
