@@ -56,7 +56,7 @@ public interface FormsService {
 
 	KeyValueList getApplicationsStatusCount();
 
-	public Boolean saveFormSubmitv1(IncomingData incomingData, UserInfo userInfo);
+	public Boolean saveFormSubmitv1(IncomingData incomingData, UserInfo userInfo, String action);
 
 	public String fileUpload(MultipartFile multipartFile, String folderName);
 

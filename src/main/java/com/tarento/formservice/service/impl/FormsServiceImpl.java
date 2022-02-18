@@ -731,7 +731,7 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
-	public Boolean saveFormSubmitv1(IncomingData incomingData, UserInfo userInfo) {
+	public Boolean saveFormSubmitv1(IncomingData incomingData, UserInfo userInfo, String action) {
 		Boolean indexed = Boolean.FALSE;
 		IncomingData oldDataObject = null;
 		try {
@@ -746,7 +746,7 @@ public class FormsServiceImpl implements FormsService {
 				}
 				incomingData.setUpdatedDate(DateUtils.getYyyyMmDdInUTC());
 				indexed = formsDao.updateFormData(incomingData, incomingData.getApplicationId());
-				appStatusTrack(indexed, applicationObject, null, userInfo);
+				appStatusTrack(indexed, applicationObject, action, userInfo);
 			}
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "saveFormSubmitv1", e.getMessage()));
@@ -998,9 +998,8 @@ public class FormsServiceImpl implements FormsService {
 				Constants.WorkflowActions.COMPLETED_INSPECTION);
 		WorkflowUtil.getNextStateForMyRequest(workflowDto);
 		incomingData.setStatus(workflowDto.getNextState());
-		Boolean response = saveFormSubmitv1(incomingData, userInfo);
-		appStatusTrack(response, (applicationMap != null && applicationMap.size() > 0 ? applicationMap.get(0) : null),
-				Constants.WorkflowActions.COMPLETED_INSPECTION, userInfo);
+		Boolean response = saveFormSubmitv1(incomingData, userInfo, Constants.WorkflowActions.COMPLETED_INSPECTION);
+
 		return response;
 	}
 
@@ -1012,6 +1011,7 @@ public class FormsServiceImpl implements FormsService {
 			UserInfo userInfo) {
 		new Thread(() -> {
 			try {
+				Thread.sleep(1000);
 				if (response != null && response) {
 					if (applicationMap != null && applicationMap.size() > 0) {
 						IncomingData applicationData = objectMapper.convertValue(applicationMap, IncomingData.class);
@@ -1019,14 +1019,15 @@ public class FormsServiceImpl implements FormsService {
 								userInfo);
 						IncomingData updatedAppData = objectMapper.convertValue(updatedAppMap, IncomingData.class);
 
+						// update activity logs
+						activityService.applicationActivity(applicationData, updatedAppData, userInfo);
+
 						// send notification
 						if (action.equals(Constants.WorkflowActions.ASSIGN_INSPECTOR)) {
 							NotificationUtil.SendNotification(updatedAppData, action, userInfo);
 						} else {
 							NotificationUtil.SendNotification(applicationData, action, userInfo);
 						}
-						// update activity logs
-						activityService.applicationActivity(applicationData, updatedAppData, userInfo);
 					}
 				}
 			} catch (Exception e) {

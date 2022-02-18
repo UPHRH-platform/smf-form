@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.tarento.formservice.dao.FormsDao;
 import com.tarento.formservice.model.ActivityLogs;
+import com.tarento.formservice.model.AssignApplication;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.service.ActivityService;
@@ -46,6 +47,7 @@ public class ActivityServiceImpl implements ActivityService {
 			activityLogs.setObject(oldObj);
 			activityLogs.setUpdatedObject(updatedObj);
 			Map<String, Map<String, Object>> changes = getUpdatedFields(oldObj, updatedObj);
+			System.out.println(changes);
 			if (changes != null && changes.size() > 0) {
 				activityLogs.setChanges(changes);
 				formsDao.addLogs(activityLogs);
@@ -112,7 +114,8 @@ public class ActivityServiceImpl implements ActivityService {
 			logStatement.put(Constants.Parameters.CHANGED_FROM, oldObj);
 		} else if (oldObj != null && updatedObj != null && !oldObj.equals(updatedObj)) {
 			logStatement.put(Constants.Parameters.ACTION, Constants.Operations.UPDATE);
-			if (oldObj instanceof Map && updatedObj instanceof Map) {
+			if ((oldObj instanceof Map && updatedObj instanceof Map)
+					|| (oldObj instanceof AssignApplication && updatedObj instanceof AssignApplication)) {
 				getMapFields(oldObj, updatedObj, changes, fieldPath);
 			} else {
 				logStatement.put(Constants.Parameters.CHANGED_FROM, oldObj);
