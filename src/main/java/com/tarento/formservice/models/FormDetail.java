@@ -15,7 +15,7 @@ import lombok.ToString;
 
 @ToString(includeFieldNames = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "updatedDate", "fields"})
+@JsonPropertyOrder({ "updatedDate", "fields", "inspectionFields"})
 public class FormDetail extends Form{
 
 	@JsonProperty("updatedDate")
@@ -57,10 +57,12 @@ public class FormDetail extends Form{
 		this.additionalProperties.put(name, value);
 	}
 
+	@JsonProperty("inspectionFields")
 	public List<Field> getInspectionFields() {
 		return inspectionFields;
 	}
 
+	@JsonProperty("inspectionFields")
 	public void setInspectionFields(List<Field> inspectionFields) {
 		this.inspectionFields = inspectionFields;
 	}
