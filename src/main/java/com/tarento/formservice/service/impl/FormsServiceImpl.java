@@ -114,8 +114,8 @@ public class FormsServiceImpl implements FormsService {
 		}
 		return (formsDao.addForm(newForm)) ? newForm : null;
 	}
-	
-	private void addAdditionalMandatoryFormFields() { 
+
+	private void addAdditionalMandatoryFormFields() {
 		String jsonContent = "[{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"heading\",\"fieldType\":\"heading\",\"values\":[{\"heading\":\"Inspection Summary\",\"subHeading\":\"Summary section where inspector is expected to add a detailed statement\",\"additionalProperties\":{}}],\"isRequired\":false,\"order\":1,\"additionalProperties\":{}},{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"Enter the summary of this inspection\",\"fieldType\":\"textarea\",\"values\":[],\"isRequired\":false,\"order\":2,\"additionalProperties\":{}},{\"refApi\":\"/users/getAllUsers?role=inspector\",\"logicalGroupCode\":\"\",\"name\":\"Add people who accompanied you\",\"fieldType\":\"dropdown\",\"values\":[{\"additionalProperties\":{\"value\":\"Select\",\"key\":\"Select\"}}],\"isRequired\":false,\"order\":3,\"additionalProperties\":{}},{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"Add\",\"fieldType\":\"button\",\"isRequired\":false,\"order\":3,\"additionalProperties\":{}},{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"Terms and Conditions\",\"fieldType\":\"checkbox\",\"values\":[{\"additionalProperties\":{\"value\":\"I accept the terms and conditions laid out by UP SMF\",\"key\":\"accept\"}}],\"isRequired\":false,\"order\":4,\"additionalProperties\":{}}]";
 		try {
 			ObjectNode jsonNode = (ObjectNode) objectMapper.readTree(jsonContent);
@@ -978,12 +978,30 @@ public class FormsServiceImpl implements FormsService {
 			for (Map<String, Object> innerMap : applicationMap) {
 				if (innerMap.containsKey(Constants.STATUS)) {
 					incomingData.setStatus(innerMap.get(Constants.STATUS).toString());
+					incomingData.setComments(
+							innerMap.containsKey(Constants.Parameters.COMMENTS) ? objectMapper.convertValue(
+									innerMap.get(Constants.Parameters.COMMENTS), new TypeReference<List<Object>>() {
+									}) : null);
 				}
 			}
 			incomingData.setReviewedDate(DateUtils.getYyyyMmDdInUTC());
 			WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo, status);
 			WorkflowUtil.getNextStateForMyRequest(workflowDto);
 			incomingData.setStatus(workflowDto.getNextState());
+			if (StringUtils.isNotBlank(incomingData.getNote())) {
+				List<Object> commentsList = new ArrayList<>();
+				Map<String, Object> commentsMap = new HashMap<>();
+				commentsMap.put(Constants.TYPE, incomingData.getStatus().toLowerCase()
+						+ Constants.convertToTitleCase(Constants.Parameters.COMMENTS));
+				commentsMap.put(Constants.VALUE, incomingData.getNote());
+				commentsMap.put(Constants.BY, userInfo.getId());
+				commentsMap.put(Constants.TIMESTAMP, DateUtils.getCurrentTimestamp());
+				if (incomingData.getComments() != null) {
+					commentsList = incomingData.getComments();
+				}
+				commentsList.add(commentsMap);
+				incomingData.setComments(commentsList);
+			}
 			Boolean response = formsDao.updateFormData(incomingData, incomingData.getApplicationId());
 			appStatusTrack(response,
 					(applicationMap != null && applicationMap.size() > 0 ? applicationMap.get(0) : null), status,

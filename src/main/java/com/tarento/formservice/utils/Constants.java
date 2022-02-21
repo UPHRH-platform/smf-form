@@ -3,6 +3,9 @@ package com.tarento.formservice.utils;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.WordUtils;
+import org.apache.commons.lang3.StringUtils;
+
 public interface Constants {
 
 	public static final String LOGO_URL = "https://cabhound-static.s3.amazonaws.com/insuranceDoc/claim/tarento_logo.png";
@@ -55,10 +58,10 @@ public interface Constants {
 		static final String LAST_NAME = "lastName";
 		static final String SEARCH = "search";
 		static final String RESPONSE_DATA = "responseData";
-		static final String STATUS = "Status";
 		static final String DATA_OBJECT = "dataObject";
 		static final String INSPECTION = "inspection";
 		static final String INSPECTOR_DATA_OBJECT = "inspectorDataObject";
+		static final String COMMENTS = "comments";
 
 		static final String ACTION = "action";
 		static final String FIELD = "field";
@@ -157,6 +160,9 @@ public interface Constants {
 	public static final String ASSIGNED_TO = "assignedTo";
 	public static final String TIMESTAMP = "timestamp";
 	public static final String EMPTY_SET = "emptySet";
+	public static final String VALUE = "value";
+	public static final String TYPE = "type";
+	public static final String BY = "by";
 
 	public static final String APPEND_KEYWORD = ".keyword";
 
@@ -186,6 +192,15 @@ public interface Constants {
 				put("assignedTo", "inspection.assignedTo.id");
 			}
 		};
+	}
+
+	public static String convertToTitleCase(String s) {
+		if (StringUtils.isNotEmpty(s)) {
+			char[] delimiters = { ' ', '_' };
+			String d = WordUtils.capitalizeFully(s, delimiters);
+			return d;
+		}
+		return " ";
 	}
 
 }

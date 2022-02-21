@@ -47,7 +47,6 @@ public class ActivityServiceImpl implements ActivityService {
 			activityLogs.setObject(oldObj);
 			activityLogs.setUpdatedObject(updatedObj);
 			Map<String, Map<String, Object>> changes = getUpdatedFields(oldObj, updatedObj);
-			System.out.println(changes);
 			if (changes != null && changes.size() > 0) {
 				activityLogs.setChanges(changes);
 				formsDao.addLogs(activityLogs);
