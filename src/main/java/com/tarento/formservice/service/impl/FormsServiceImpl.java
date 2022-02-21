@@ -67,6 +67,7 @@ import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.Vote;
 import com.tarento.formservice.model.VoteFeedbackDto;
 import com.tarento.formservice.model.WorkflowDto;
+import com.tarento.formservice.models.Field;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
 import com.tarento.formservice.repository.ElasticSearchRepository;
@@ -111,15 +112,20 @@ public class FormsServiceImpl implements FormsService {
 			newForm.setId(new Date().getTime());
 			newForm.setUpdatedDate(new Date().getTime());
 			newForm.setVersion(1);
+			addAdditionalMandatoryFormFields(newForm);
 		}
 		return (formsDao.addForm(newForm)) ? newForm : null;
+		
 	}
 	
-	private void addAdditionalMandatoryFormFields() { 
-		String jsonContent = "[{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"heading\",\"fieldType\":\"heading\",\"values\":[{\"heading\":\"Inspection Summary\",\"subHeading\":\"Summary section where inspector is expected to add a detailed statement\",\"additionalProperties\":{}}],\"isRequired\":false,\"order\":1,\"additionalProperties\":{}},{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"Enter the summary of this inspection\",\"fieldType\":\"textarea\",\"values\":[],\"isRequired\":false,\"order\":2,\"additionalProperties\":{}},{\"refApi\":\"/users/getAllUsers?role=inspector\",\"logicalGroupCode\":\"\",\"name\":\"Add people who accompanied you\",\"fieldType\":\"dropdown\",\"values\":[{\"additionalProperties\":{\"value\":\"Select\",\"key\":\"Select\"}}],\"isRequired\":false,\"order\":3,\"additionalProperties\":{}},{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"Add\",\"fieldType\":\"button\",\"isRequired\":false,\"order\":3,\"additionalProperties\":{}},{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"Terms and Conditions\",\"fieldType\":\"checkbox\",\"values\":[{\"additionalProperties\":{\"value\":\"I accept the terms and conditions laid out by UP SMF\",\"key\":\"accept\"}}],\"isRequired\":false,\"order\":4,\"additionalProperties\":{}}]";
+	private void addAdditionalMandatoryFormFields(FormDetail newForm) { 
+		String jsonContent = "[{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"heading\",\"fieldType\":\"heading\",\"values\":[{\"heading\":\"Inspection Summary\",\"subHeading\":\"Summary section where inspector is expected to add a detailed statement\",\"additionalProperties\":{}}],\"isRequired\":false,\"order\":1,\"additionalProperties\":{}},{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"Enter the summary of this inspection\",\"fieldType\":\"textarea\",\"values\":[],\"isRequired\":false,\"order\":2,\"additionalProperties\":{}},{\"refApi\":\"\",\"logicalGroupCode\":\"\",\"name\":\"Terms and Conditions\",\"fieldType\":\"checkbox\",\"values\":[{\"additionalProperties\":{\"value\":\"I accept the terms and conditions laid out by UP SMF\",\"key\":\"accept\"}}],\"isRequired\":false,\"order\":3,\"additionalProperties\":{}}]";
 		try {
-			ObjectNode jsonNode = (ObjectNode) objectMapper.readTree(jsonContent);
-		} catch (JsonProcessingException e) {
+			List<Field> inspectionFields = objectMapper.readValue(jsonContent, new TypeReference<List<Field>>(){});
+			newForm.setInspectionFields(inspectionFields);
+		} catch (Exception e) {
+			LOGGER.error("Encountered Error : {}", e.getMessage());
+
 		}
 
 	}

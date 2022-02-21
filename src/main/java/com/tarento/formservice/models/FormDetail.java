@@ -22,6 +22,8 @@ public class FormDetail extends Form{
 	private Long updatedDate;
 	@JsonProperty("fields")
 	private List<Field> fields = null;
+	@JsonProperty("fields")
+	private List<Field> inspectionFields = null;
 	@JsonIgnore
 	private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 	
@@ -54,5 +56,15 @@ public class FormDetail extends Form{
 	public void setAdditionalProperty(String name, Object value) {
 		this.additionalProperties.put(name, value);
 	}
+
+	public List<Field> getInspectionFields() {
+		return inspectionFields;
+	}
+
+	public void setInspectionFields(List<Field> inspectionFields) {
+		this.inspectionFields = inspectionFields;
+	}
+	
+	
 	
 }
