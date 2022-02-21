@@ -18,6 +18,7 @@ public class IncomingData {
 	private Long timestamp;
 	private Object dataObject;
 	private Object inspectorDataObject;
+	private Object inspectorSummaryDataObject;
 	private String formData;
 	private Long upvoteCount;
 	private Long downvoteCount;
@@ -34,6 +35,30 @@ public class IncomingData {
 	private String updatedDate;
 	private Long reviewedBy;
 	private String reviewedDate;
+
+	public Object getInspectorSummaryDataObject() {
+		return inspectorSummaryDataObject;
+	}
+
+	public void setInspectorSummaryDataObject(Object inspectorSummaryDataObject) {
+		this.inspectorSummaryDataObject = inspectorSummaryDataObject;
+	}
+
+	public String getNotes() {
+		return notes;
+	}
+
+	public void setNotes(String notes) {
+		this.notes = notes;
+	}
+
+	public List<Object> getComments() {
+		return comments;
+	}
+
+	public void setComments(List<Object> comments) {
+		this.comments = comments;
+	}
 
 	public Long getId() {
 		return id;

@@ -18,7 +18,18 @@ public class AssignApplication {
 	private List<Long> assistingInspector;
 	private List<Long> leadInspector;
 	private Long formId;
+	private List<Long> userId; 
 	
+	
+	
+	public List<Long> getUserId() {
+		return userId;
+	}
+
+	public void setUserId(List<Long> userId) {
+		this.userId = userId;
+	}
+
 	public List<Long> getAssistingInspector() {
 		return assistingInspector;
 	}

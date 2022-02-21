@@ -433,6 +433,7 @@ public class FormsController {
 			IncomingData inspectionData = new IncomingData();
 			inspectionData.setInspectorDataObject(incomingData);
 			inspectionData.setApplicationId(incomingData.getApplicationId());
+			inspectionData.setInspectorSummaryDataObject(incomingData.getInspectorSummaryDataObject());
 			UserInfo userInfo = null;
 			if (StringUtils.isNotBlank(xUserInfo)) {
 				userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);

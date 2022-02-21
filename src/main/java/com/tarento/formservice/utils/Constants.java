@@ -138,6 +138,7 @@ public interface Constants {
 		static final String FORM_ID_MISSING = "Form id is missing";
 		static final String DATA_OBJECT_MISSING = "Data object is missing";
 		static final String APPLICATION_ID_MISSING = "Application id is missing";
+		static final String INSPECTOR_SUMMARY_MISSING = "Inspector Summary is missing";
 	}
 
 	interface Markers {

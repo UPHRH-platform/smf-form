@@ -92,6 +92,9 @@ public class ValidationService {
 		if (incomingData.getDataObject() == null) {
 			return Constants.ResponseMessages.DATA_OBJECT_MISSING;
 		}
+		if (incomingData.getInspectorSummaryDataObject() == null) {
+			return Constants.ResponseMessages.INSPECTOR_SUMMARY_MISSING;
+		}
 		return Constants.ResponseCodes.SUCCESS;
 	}
 	
