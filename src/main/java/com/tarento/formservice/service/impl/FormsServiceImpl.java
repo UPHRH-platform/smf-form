@@ -39,11 +39,9 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.tarento.formservice.dao.FormsDao;
 import com.tarento.formservice.executor.StateMatrixManager;
@@ -103,18 +101,21 @@ public class FormsServiceImpl implements FormsService {
 
 	@Override
 	public Form createForm(FormDetail newForm) throws IOException {
+		Boolean response = Boolean.FALSE;
 		if (newForm.getId() != null)
 			performVersionCheck(newForm);
 
 		if (newForm.getId() != null) {
 			newForm.setUpdatedDate(new Date().getTime());
+			response = formsDao.updateForm(newForm);
 		} else {
 			newForm.setId(new Date().getTime());
 			newForm.setUpdatedDate(new Date().getTime());
 			newForm.setVersion(1);
 			addAdditionalMandatoryFormFields(newForm);
+			response = formsDao.addForm(newForm);
 		}
-		return (formsDao.addForm(newForm)) ? newForm : null;
+		return (response) ? newForm : null;
 
 	}
 
@@ -159,9 +160,9 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
-	public List<Form> getAllForms() {
+	public List<Form> getAllForms(UserInfo userInfo) {
 		List<Form> formList = new ArrayList<>();
-		SearchRequest searchRequest = buildQueryForGetAllForms();
+		SearchRequest searchRequest = buildQueryForGetAllForms(userInfo);
 		MultiSearchResponse response = elasticRepository.executeMultiSearchRequest(searchRequest);
 		SearchResponse searchResponse = response.getResponses()[0].getResponse();
 		JsonNode responseNode = null;
@@ -224,8 +225,8 @@ public class FormsServiceImpl implements FormsService {
 		return form;
 	}
 
-	private SearchRequest buildQueryForGetAllForms() {
-		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0)
+	private SearchRequest buildQueryForGetAllForms(UserInfo userInfo) {
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0).query(roleBasedFormQuery(userInfo))
 				.aggregation(AggregationBuilders.terms("UniqueFormId").field("id").size(100)
 						.order(BucketOrder.key(Boolean.TRUE))
 						.subAggregation(AggregationBuilders.topHits("LatestVersion").from(0).size(1)
@@ -233,6 +234,29 @@ public class FormsServiceImpl implements FormsService {
 								.sort(SortBuilders.fieldSort("version").order(SortOrder.DESC))));
 		return new SearchRequest(appConfig.getFormIndex()).types(appConfig.getFormIndexType())
 				.source(searchSourceBuilder);
+	}
+
+	private BoolQueryBuilder roleBasedFormQuery(UserInfo userInfo) {
+		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+		if (userInfo != null) {
+			for (Role role : userInfo.getRoles()) {
+				if (role.getName().equals(Roles.Institution.name()) || role.getName().equals(Roles.Inspector.name())) {
+					boolQuery.must(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.PUBLISH.name()));
+				} else if (role.getName().equals(Roles.Regulator.name())) {
+					boolQuery
+							.should(QueryBuilders.boolQuery()
+									.mustNot(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.DRAFT.name())))
+							.should(QueryBuilders.boolQuery()
+									.must(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.DRAFT.name()))
+									.must(QueryBuilders.matchPhraseQuery(Constants.Parameters.UPDATED_BY,
+											userInfo.getId())));
+				}
+			}
+		} else {
+			boolQuery.must(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.PUBLISH.name()));
+		}
+
+		return boolQuery;
 	}
 
 	private SearchRequest buildQueryForGetQueryById(Long id) {

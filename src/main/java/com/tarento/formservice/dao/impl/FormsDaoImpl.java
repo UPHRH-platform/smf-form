@@ -51,6 +51,12 @@ public class FormsDaoImpl implements FormsDao {
 	}
 
 	@Override
+	public Boolean updateForm(FormDetail newForm) {
+		return elasticsearchRepo.updateElasticData(newForm, newForm.getId().toString(), appConfig.getFormIndex(),
+				appConfig.getFormIndexType());
+	}
+
+	@Override
 	public Boolean addFormData(IncomingData incomingData) {
 		incomingData.setApplicationId(RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE));
 		return elasticsearchRepo.writeDatatoElastic(incomingData, incomingData.getApplicationId(),
@@ -67,7 +73,7 @@ public class FormsDaoImpl implements FormsDao {
 	@Override
 	public Boolean updateFormData(Object object, String id) {
 		return elasticsearchRepo.updateElasticData(object, id, appConfig.getFormDataIndex(),
-				appConfig.getFormIndexType());	
+				appConfig.getFormIndexType());
 	}
 
 	@Override
@@ -153,11 +159,11 @@ public class FormsDaoImpl implements FormsDao {
 			for (SearchHit hits : hit) {
 				Map<String, Object> sourceAsMap = hits.getSourceAsMap();
 				StateMatrix eachStateMatrix = new ObjectMapper().convertValue(sourceAsMap, StateMatrix.class);
-				if(stateMatrixMap.containsKey(eachStateMatrix.getAction())) { 
+				if (stateMatrixMap.containsKey(eachStateMatrix.getAction())) {
 					List<StateMatrix> stateMatrixList = stateMatrixMap.get(eachStateMatrix.getAction());
-					stateMatrixList.add(eachStateMatrix); 
-				} else { 
-					List<StateMatrix> stateMatrixList= new ArrayList<StateMatrix>();
+					stateMatrixList.add(eachStateMatrix);
+				} else {
+					List<StateMatrix> stateMatrixList = new ArrayList<StateMatrix>();
 					stateMatrixList.add(eachStateMatrix);
 					stateMatrixMap.put(eachStateMatrix.getAction(), stateMatrixList);
 				}

@@ -31,7 +31,7 @@ public interface FormsService {
 
 	public Form createForm(FormDetail newForm) throws IOException;
 
-	public List<Form> getAllForms();
+	public List<Form> getAllForms(UserInfo userInfo);
 
 	public FormDetail getFormById(Long id);
 

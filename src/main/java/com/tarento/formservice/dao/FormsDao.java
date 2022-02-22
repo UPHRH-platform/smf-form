@@ -45,4 +45,6 @@ public interface FormsDao {
 
 	Boolean addLogs(ActivityLogs activityLogs);
 
+	Boolean updateForm(FormDetail newForm);
+
 }

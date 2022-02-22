@@ -8,7 +8,7 @@ import lombok.ToString;
 
 @ToString(includeFieldNames = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "id", "title", "version", "numberOfRecords"})
+@JsonPropertyOrder({ "id", "title", "version", "numberOfRecords" })
 public class Form {
 
 	@JsonProperty("id")
@@ -21,7 +21,8 @@ public class Form {
 	private Long numberOfRecords;
 	@JsonProperty("secondaryId")
 	private String secondaryId;
-	
+	private String status;
+
 	@JsonProperty("secondaryId")
 	public String getSecondaryId() {
 		return secondaryId;
@@ -36,7 +37,7 @@ public class Form {
 	public Long getNumberOfRecords() {
 		return numberOfRecords;
 	}
-	
+
 	@JsonProperty("numberOfRecords")
 	public void setNumberOfRecords(Long numberOfRecords) {
 		this.numberOfRecords = numberOfRecords;
@@ -46,7 +47,7 @@ public class Form {
 	public int getVersion() {
 		return version;
 	}
-	
+
 	@JsonProperty("version")
 	public void setVersion(int version) {
 		this.version = version;
@@ -71,4 +72,13 @@ public class Form {
 	public void setTitle(String title) {
 		this.title = title;
 	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
 }

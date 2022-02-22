@@ -20,23 +20,26 @@ public class ValidationService {
 		if (form == null) {
 			return Constants.ResponseMessages.CHECK_REQUEST_PARAMS;
 		}
-		if (StringUtils.isBlank(form.getTitle())) {
-			return Constants.ResponseMessages.TITLE_MISSING;
-		}
-		if (form.getFields() == null || form.getFields().size() == 0) {
-			return Constants.ResponseMessages.FIELD_MISSING;
-		}
-		List<Integer> fieldOrders = new ArrayList<>();
-		for (Field field : form.getFields()) {
-			if (StringUtils.isBlank(field.getName())) {
-				return Constants.ResponseMessages.FIELD_NAME_MISSING;
+		// validate for create operation
+		if (form.getId() == null) {
+			if (StringUtils.isBlank(form.getTitle())) {
+				return Constants.ResponseMessages.TITLE_MISSING;
 			}
-			if (field.getOrder() == null || field.getOrder() == 0 || fieldOrders.contains(field.getOrder())) {
-				return Constants.ResponseMessages.FIELD_ORDER_MISSING;
+			if (form.getFields() == null || form.getFields().size() == 0) {
+				return Constants.ResponseMessages.FIELD_MISSING;
 			}
-			fieldOrders.add(field.getOrder());
-			if (StringUtils.isBlank(field.getFieldType())) {
-				field.setFieldType(Constants.FormFieldTypes.TEXT);
+			List<Integer> fieldOrders = new ArrayList<>();
+			for (Field field : form.getFields()) {
+				if (StringUtils.isBlank(field.getName())) {
+					return Constants.ResponseMessages.FIELD_NAME_MISSING;
+				}
+				if (field.getOrder() == null || field.getOrder() == 0 || fieldOrders.contains(field.getOrder())) {
+					return Constants.ResponseMessages.FIELD_ORDER_MISSING;
+				}
+				fieldOrders.add(field.getOrder());
+				if (StringUtils.isBlank(field.getFieldType())) {
+					field.setFieldType(Constants.FormFieldTypes.TEXT);
+				}
 			}
 		}
 		return Constants.ResponseCodes.SUCCESS;
@@ -97,7 +100,7 @@ public class ValidationService {
 		}
 		return Constants.ResponseCodes.SUCCESS;
 	}
-	
+
 	public String validateApplicationReturn(IncomingData incomingData) {
 		if (incomingData == null) {
 			return Constants.ResponseMessages.CHECK_REQUEST_PARAMS;
@@ -106,6 +109,14 @@ public class ValidationService {
 			return Constants.ResponseMessages.APPLICATION_ID_MISSING;
 		}
 		return Constants.ResponseCodes.SUCCESS;
+	}
+
+	public void validateFormStatus(FormDetail form) {
+		if (StringUtils.isNotBlank(form.getStatus()) && form.getStatus().equalsIgnoreCase(Status.DRAFT.name())) {
+			form.setStatus(Status.DRAFT.name());
+		} else {
+			form.setStatus(Status.NEW.name());
+		}
 	}
 
 }

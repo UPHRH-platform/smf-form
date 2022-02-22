@@ -79,7 +79,11 @@ public class FormsController {
 	public String getAllForms(
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
 			throws JsonProcessingException {
-		return ResponseGenerator.successResponse(formsService.getAllForms());
+		UserInfo userInfo = null;
+		if (StringUtils.isNotBlank(xUserInfo)) {
+			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+		}
+		return ResponseGenerator.successResponse(formsService.getAllForms(userInfo));
 	}
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_FORM_BY_ID, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -97,9 +101,17 @@ public class FormsController {
 	}
 
 	@PostMapping(value = PathRoutes.FormServiceApi.CREATE_FORM)
-	public String createForm(@RequestBody FormDetail form) throws IOException {
+	public String createForm(@RequestBody FormDetail form,
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
+			throws IOException {
 		String validation = validationService.validateCreateForm(form);
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
+			// validationService.validateFormStatus(form);
+			UserInfo userInfo = null;
+			if (StringUtils.isNotBlank(xUserInfo)) {
+				userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+				form.setUpdatedBy(userInfo.getId());
+			}
 			Form createdForm = formsService.createForm(form);
 			if (createdForm.getId() != null) {
 				return ResponseGenerator.successResponse(form);
