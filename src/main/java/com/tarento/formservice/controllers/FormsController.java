@@ -107,10 +107,7 @@ public class FormsController {
 			throws IOException {
 		String validation = validationService.validateCreateForm(form);
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
-			// validationService.validateFormStatus(form);
-			if (StringUtils.isBlank(form.getStatus())) {
-				form.setStatus(Status.NEW.name());
-			}
+			validationService.validateFormStatus(form);
 			UserInfo userInfo = null;
 			if (StringUtils.isNotBlank(xUserInfo)) {
 				userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);

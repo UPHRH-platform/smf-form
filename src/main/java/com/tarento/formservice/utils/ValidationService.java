@@ -114,8 +114,11 @@ public class ValidationService {
 	public void validateFormStatus(FormDetail form) {
 		if (StringUtils.isNotBlank(form.getStatus()) && form.getStatus().equalsIgnoreCase(Status.DRAFT.name())) {
 			form.setStatus(Status.DRAFT.name());
+		} else if (StringUtils.isNotBlank(form.getStatus())
+				&& form.getStatus().equalsIgnoreCase(Status.UNPUBLISH.name())) {
+			form.setStatus(Status.UNPUBLISH.name());
 		} else {
-			form.setStatus(Status.NEW.name());
+			form.setStatus(Status.PUBLISH.name());
 		}
 	}
 
