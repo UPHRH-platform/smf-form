@@ -37,6 +37,7 @@ import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.Role;
 import com.tarento.formservice.model.SearchObject;
 import com.tarento.formservice.model.SearchRequestDto;
+import com.tarento.formservice.model.Status;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.VoteFeedbackDto;
@@ -107,6 +108,9 @@ public class FormsController {
 		String validation = validationService.validateCreateForm(form);
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			// validationService.validateFormStatus(form);
+			if (StringUtils.isBlank(form.getStatus())) {
+				form.setStatus(Status.NEW.name());
+			}
 			UserInfo userInfo = null;
 			if (StringUtils.isNotBlank(xUserInfo)) {
 				userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
