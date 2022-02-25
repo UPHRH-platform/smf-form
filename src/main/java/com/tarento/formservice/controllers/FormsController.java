@@ -463,7 +463,7 @@ public class FormsController {
 	public String returnApplication(
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody IncomingData incomingData) throws IOException {
-		String validation = validationService.validateApplicationReturn(incomingData);
+		String validation = validationService.validateReturnedApplication(incomingData);
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			IncomingData applicationReturn = new IncomingData();
 			applicationReturn.setApplicationId(incomingData.getApplicationId());
@@ -484,7 +484,7 @@ public class FormsController {
 	public String approveApplication(
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody IncomingData incomingData) throws IOException {
-		String validation = validationService.validateApplicationReturn(incomingData);
+		String validation = validationService.validateApprovedApplication(incomingData);
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			IncomingData applicationReturn = new IncomingData();
 			applicationReturn.setApplicationId(incomingData.getApplicationId());
@@ -505,7 +505,7 @@ public class FormsController {
 	public String rejectApplication(
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody IncomingData incomingData) throws IOException {
-		String validation = validationService.validateApplicationReturn(incomingData);
+		String validation = validationService.validateReturnedApplication(incomingData);
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			IncomingData applicationReturn = new IncomingData();
 			applicationReturn.setApplicationId(incomingData.getApplicationId());
@@ -531,6 +531,13 @@ public class FormsController {
 			return ResponseGenerator.successResponse(response);
 		}
 		return ResponseGenerator.failureResponse();
+	}
+
+	@PostMapping(value = PathRoutes.FormServiceApi.GPS_TAGGING)
+	public String gpsTagging(@RequestBody IncomingData incomingData,
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
+			throws JsonProcessingException {
+		return ResponseGenerator.successResponse(Constants.ResponseCodes.SUCCESS);
 	}
 
 }

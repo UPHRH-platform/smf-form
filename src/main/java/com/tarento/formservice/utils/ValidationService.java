@@ -101,7 +101,20 @@ public class ValidationService {
 		return Constants.ResponseCodes.SUCCESS;
 	}
 
-	public String validateApplicationReturn(IncomingData incomingData) {
+	public String validateReturnedApplication(IncomingData incomingData) {
+		if (incomingData == null) {
+			return Constants.ResponseMessages.CHECK_REQUEST_PARAMS;
+		}
+		if (StringUtils.isBlank(incomingData.getApplicationId())) {
+			return Constants.ResponseMessages.APPLICATION_ID_MISSING;
+		}
+		if (StringUtils.isBlank(incomingData.getNotes())) {
+			return Constants.ResponseMessages.COMMENTS_MISSING;
+		}
+		return Constants.ResponseCodes.SUCCESS;
+	}
+
+	public String validateApprovedApplication(IncomingData incomingData) {
 		if (incomingData == null) {
 			return Constants.ResponseMessages.CHECK_REQUEST_PARAMS;
 		}
