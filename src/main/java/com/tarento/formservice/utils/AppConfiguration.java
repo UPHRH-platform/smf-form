@@ -93,6 +93,9 @@ public class AppConfiguration {
 	@Value("${user.routes.getuserbyid.url}")
 	private String getUserByIdAPI;
 
+	@Value("${fcm.service.account.filename}")
+	private String fcmFileName;
+
 	public String getGetUserByIdAPI() {
 		return getUserByIdAPI;
 	}

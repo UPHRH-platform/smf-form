@@ -1,4 +1,4 @@
-package com.tarento.formservice.utils;
+package com.tarento.formservice.utils.NotificationService;
 
 import java.io.StringWriter;
 import java.util.Map;
@@ -27,6 +27,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import com.tarento.formservice.utils.AppConfiguration;
+import com.tarento.formservice.utils.Constants;
+import com.tarento.formservice.utils.ExecutorManager;
+import com.tarento.formservice.utils.GMailAuthenticator;
+import com.tarento.formservice.utils.JsonKey;
 
 /**
  * this api is used to sending mail.

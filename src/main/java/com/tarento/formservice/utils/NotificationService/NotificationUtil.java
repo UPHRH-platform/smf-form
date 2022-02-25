@@ -1,4 +1,4 @@
-package com.tarento.formservice.utils;
+package com.tarento.formservice.utils.NotificationService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +18,8 @@ import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.UserProfile;
 import com.tarento.formservice.repository.RestService;
+import com.tarento.formservice.utils.AppConfiguration;
+import com.tarento.formservice.utils.Constants;
 
 @Service
 public class NotificationUtil {
