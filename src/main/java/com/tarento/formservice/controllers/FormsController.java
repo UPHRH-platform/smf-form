@@ -43,12 +43,14 @@ import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.VoteFeedbackDto;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
+import com.tarento.formservice.models.SendMessagePrototype;
 import com.tarento.formservice.service.FormsService;
 import com.tarento.formservice.service.JsonFormsService;
 import com.tarento.formservice.utils.Constants;
 import com.tarento.formservice.utils.PathRoutes;
 import com.tarento.formservice.utils.ResponseGenerator;
 import com.tarento.formservice.utils.ValidationService;
+import com.tarento.formservice.utils.NotificationService.PushBox;
 
 /**
  * 
@@ -75,6 +77,9 @@ public class FormsController {
 
 	@Autowired
 	private ValidationService validationService;
+
+	@Autowired
+	private PushBox pushBox;
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_FORMS, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getAllForms(
@@ -531,6 +536,13 @@ public class FormsController {
 			return ResponseGenerator.successResponse(response);
 		}
 		return ResponseGenerator.failureResponse();
+	}
+
+	@PostMapping(value = "/testPushNotification")
+	public String testPushNotification(@RequestBody SendMessagePrototype messagePrototype)
+			throws JsonProcessingException {
+		pushBox.sendMessagesToDevices(messagePrototype);
+		return ResponseGenerator.successResponse("Success");
 	}
 
 }

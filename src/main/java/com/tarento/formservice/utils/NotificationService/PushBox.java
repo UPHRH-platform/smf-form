@@ -35,12 +35,14 @@ public class PushBox {
 
 	private void initialize() {
 		try {
-			File file = new ClassPathResource(appConfig.getFcmFileName()).getFile();
-			FileInputStream serviceAccount = new FileInputStream(file);
 			FirebaseOptions options = FirebaseOptions.builder()
-					.setCredentials(GoogleCredentials.fromStream(serviceAccount)).build();
+					.setCredentials(GoogleCredentials
+							.fromStream(new ClassPathResource(appConfig.getFcmFileName()).getInputStream()))
+					.setDatabaseUrl("https://up-smf-47fd3-default-rtdb.asia-southeast1.firebasedatabase.app").build();
 			FirebaseApp.initializeApp(options);
+			LOGGER.info("##PushBoxFox## : Firebase App Initialized");
 		} catch (Exception e) {
+			e.printStackTrace();
 			LOGGER.error(String.format(Constants.EXCEPTION, "initialize", e.getMessage()));
 		}
 	}
