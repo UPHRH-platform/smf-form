@@ -96,6 +96,9 @@ public class AppConfiguration {
 	@Value("${fcm.service.account.filename}")
 	private String fcmFileName;
 
+	@Value("${user.routes.getuserdevicetoken}")
+	private String getUserDeviceTokenAPI;
+
 	public String getGetUserByIdAPI() {
 		return getUserByIdAPI;
 	}

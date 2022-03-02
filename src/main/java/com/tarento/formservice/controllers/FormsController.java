@@ -37,20 +37,17 @@ import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.Role;
 import com.tarento.formservice.model.SearchObject;
 import com.tarento.formservice.model.SearchRequestDto;
-import com.tarento.formservice.model.Status;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.VoteFeedbackDto;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
-import com.tarento.formservice.models.SendMessagePrototype;
 import com.tarento.formservice.service.FormsService;
 import com.tarento.formservice.service.JsonFormsService;
 import com.tarento.formservice.utils.Constants;
 import com.tarento.formservice.utils.PathRoutes;
 import com.tarento.formservice.utils.ResponseGenerator;
 import com.tarento.formservice.utils.ValidationService;
-import com.tarento.formservice.utils.NotificationService.PushBox;
 
 /**
  * 
@@ -77,9 +74,6 @@ public class FormsController {
 
 	@Autowired
 	private ValidationService validationService;
-
-	@Autowired
-	private PushBox pushBox;
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_FORMS, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getAllForms(
@@ -290,7 +284,6 @@ public class FormsController {
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
-		System.out.println(userInfo.toString());
 		List<Map<String, Object>> formFeedback = null;
 		formFeedback = formsService.getFeedbacks(approved, challenged, challengeStatus);
 		if (formFeedback != null) {
@@ -536,13 +529,6 @@ public class FormsController {
 			return ResponseGenerator.successResponse(response);
 		}
 		return ResponseGenerator.failureResponse();
-	}
-
-	@PostMapping(value = "/testPushNotification")
-	public String testPushNotification(@RequestBody SendMessagePrototype messagePrototype)
-			throws JsonProcessingException {
-		pushBox.sendMessagesToDevices(messagePrototype);
-		return ResponseGenerator.successResponse("Success");
 	}
 
 	@PostMapping(value = PathRoutes.FormServiceApi.GPS_TAGGING)

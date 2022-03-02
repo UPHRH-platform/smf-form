@@ -1,8 +1,5 @@
 package com.tarento.formservice.utils.NotificationService;
 
-import java.io.File;
-import java.io.FileInputStream;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +20,7 @@ import com.tarento.formservice.utils.Constants;
 @Service
 public class PushBox {
 
-	private final Logger LOGGER = LoggerFactory.getLogger(PushBox.class);
+	private final static Logger LOGGER = LoggerFactory.getLogger(PushBox.class);
 
 	AppConfiguration appConfig;
 
@@ -35,10 +32,9 @@ public class PushBox {
 
 	private void initialize() {
 		try {
-			FirebaseOptions options = FirebaseOptions.builder()
-					.setCredentials(GoogleCredentials
-							.fromStream(new ClassPathResource(appConfig.getFcmFileName()).getInputStream()))
-					.setDatabaseUrl("https://up-smf-47fd3-default-rtdb.asia-southeast1.firebasedatabase.app").build();
+			FirebaseOptions options = new FirebaseOptions.Builder().setCredentials(
+					GoogleCredentials.fromStream(new ClassPathResource(appConfig.getFcmFileName()).getInputStream()))
+					.build();
 			FirebaseApp.initializeApp(options);
 			LOGGER.info("##PushBoxFox## : Firebase App Initialized");
 		} catch (Exception e) {
@@ -47,19 +43,20 @@ public class PushBox {
 		}
 	}
 
-	public void sendMessagesToDevices(SendMessagePrototype messagePrototype) {
-		for (UserDevice userDevice : messagePrototype.getDevices())
+	public static void sendMessagesToDevices(SendMessagePrototype messagePrototype) {
+		for (UserDevice userDevice : messagePrototype.getDevices()) {
 			try {
-				Notification newNotification = Notification.builder().setTitle(messagePrototype.getMessageKey())
-						.setBody(messagePrototype.getMessage().getMessageTitle()).build();
-				Message message = Message.builder().putData("content", messagePrototype.getMessage().getMessageBody())
-						.setToken(userDevice.getUserDeviceToken()).setNotification(newNotification).build();
+				Notification newNotification = new Notification(messagePrototype.getMessageTitle(),
+						messagePrototype.getMessageContent());
+				Message message = Message.builder().setToken(userDevice.getDeviceToken())
+						.setNotification(newNotification).build();
 				String response = FirebaseMessaging.getInstance().sendAsync(message).get();
 				LOGGER.info("##PushBox## : Message Send Status : " + response);
 			} catch (Exception ex) {
 				LOGGER.error("##PushBox## : Error : Encountered an exception while sending the message : "
 						+ ex.getMessage());
 			}
+		}
 	}
 
 }

@@ -10,9 +10,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SendMessagePrototype {
-	private String messageKey;
 
-	private MessageContent message;
+	private String messageTitle;
+
+	private String messageContent;
 
 	private NotificationType type;
 
