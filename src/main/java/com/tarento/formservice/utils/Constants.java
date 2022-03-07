@@ -192,6 +192,7 @@ public interface Constants {
 				put("status", "status.keyword");
 				put("createdBy", "createdBy.keyword");
 				put("assignedTo", "inspection.assignedTo.id");
+				put("inspectionStatus", "inspection.status.keyword");
 			}
 		};
 	}

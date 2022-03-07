@@ -57,6 +57,7 @@ public interface PathRoutes {
 		final String REJECT_APPLICATION = "/rejectApplication";
 		final String ACTIVITY_LOGS = "/getActivityLogs";
 		final String GPS_TAGGING = "/gpsTagging";
+		final String CONSENT_APPLICATION = "/consentApplication";
 	}
 
 	public interface JsonFormServiceApi {

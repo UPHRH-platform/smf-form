@@ -46,6 +46,8 @@ import com.google.gson.Gson;
 import com.tarento.formservice.dao.FormsDao;
 import com.tarento.formservice.executor.StateMatrixManager;
 import com.tarento.formservice.model.AssignApplication;
+import com.tarento.formservice.model.Assignee;
+import com.tarento.formservice.model.Consent;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.KeyValue;
 import com.tarento.formservice.model.KeyValueList;
@@ -916,18 +918,18 @@ public class FormsServiceImpl implements FormsService {
 				// set assigned user meta data
 				assign.setAssignedTo(new ArrayList<>());
 				for (Long userId : inspectorsId) {
-					UserProfile userProfile = new UserProfile();
-					userProfile.setId(userId);
+					Assignee assignee = new Assignee();
+					assignee.setId(userId);
 					String key = String.valueOf(userId);
 					if (userMap.containsKey(key)) {
-						userProfile.setEmailId((String) userMap.get(key).get(Constants.Parameters.EMAIL_ID));
-						userProfile.setFirstName((String) userMap.get(key).get(Constants.Parameters.FIRST_NAME));
-						userProfile.setLastName((String) userMap.get(key).get(Constants.Parameters.LAST_NAME));
+						assignee.setEmailId((String) userMap.get(key).get(Constants.Parameters.EMAIL_ID));
+						assignee.setFirstName((String) userMap.get(key).get(Constants.Parameters.FIRST_NAME));
+						assignee.setLastName((String) userMap.get(key).get(Constants.Parameters.LAST_NAME));
 						if (assign.getLeadInspector().contains(userId)) {
-							userProfile.setLeadInspector(Boolean.TRUE);
+							assignee.setLeadInspector(Boolean.TRUE);
 						}
 					}
-					assign.getAssignedTo().add(userProfile);
+					assign.getAssignedTo().add(assignee);
 				}
 
 				IncomingData requestData = new IncomingData();
@@ -1048,16 +1050,21 @@ public class FormsServiceImpl implements FormsService {
 	@Override
 	public Boolean submitInspection(IncomingData incomingData, UserInfo userInfo) {
 		SearchRequestDto srd = createSearchRequestObject(incomingData.getApplicationId());
-		List<Map<String, Object>> applicationMap = getApplications(userInfo, srd);
-		for (Map<String, Object> innerMap : applicationMap) {
-			if (innerMap.containsKey(Constants.STATUS)) {
-				incomingData.setStatus(innerMap.get(Constants.STATUS).toString());
-			}
+		// List<Map<String, Object>> applicationMap = getApplications(userInfo, srd);
+		// for (Map<String, Object> innerMap : applicationMap) {
+		// if (innerMap.containsKey(Constants.STATUS)) {
+		// incomingData.setStatus(innerMap.get(Constants.STATUS).toString());
+		// }
+		// }
+		// WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo,
+		// Constants.WorkflowActions.COMPLETED_INSPECTION);
+		// WorkflowUtil.getNextStateForMyRequest(workflowDto);
+		// incomingData.setStatus(workflowDto.getNextState());
+		// incomingData.setInspectorDataObject(inspectorDataObject);
+		if (incomingData.getInspection() == null) {
+			incomingData.setInspection(new AssignApplication());
 		}
-		WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo,
-				Constants.WorkflowActions.COMPLETED_INSPECTION);
-		WorkflowUtil.getNextStateForMyRequest(workflowDto);
-		incomingData.setStatus(workflowDto.getNextState());
+		incomingData.getInspection().setStatus(Status.LEADINSCOMPLETED.name());
 		Boolean response = saveFormSubmitv1(incomingData, userInfo, Constants.WorkflowActions.COMPLETED_INSPECTION);
 
 		return response;
@@ -1116,5 +1123,31 @@ public class FormsServiceImpl implements FormsService {
 			LOGGER.error(String.format(Constants.EXCEPTION, "getActivityLogs", e.getMessage()));
 			return null;
 		}
+	}
+
+	@Override
+	public Boolean consentApplication(Consent consent, UserInfo userInfo) {
+		try {
+			Map<String, Object> applicationMap = getApplicationById(consent.getApplicationId(), userInfo);
+			if (applicationMap != null) {
+				IncomingData applicationData = objectMapper.convertValue(applicationMap, IncomingData.class);
+				if (applicationData != null && applicationData.getInspection() != null
+						&& applicationData.getInspection().getAssignedTo() != null) {
+					for (Assignee assignee : applicationData.getInspection().getAssignedTo()) {
+						if (assignee.getLeadInspector() == null && !assignee.getLeadInspector()
+								&& assignee.getId().equals(userInfo.getId())) {
+							assignee.setConsentApplication(consent.getAgree());
+							assignee.setComments(consent.getComments());
+							assignee.setStatus(Status.INSCOMPLETED.name());
+							assignee.setConsentDate(DateUtils.getYyyyMmDdInUTC());
+						}
+						return formsDao.updateFormData(applicationData, consent.getApplicationId());
+					}
+				}
+			}
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "consentApplication", e.getMessage()));
+		}
+		return Boolean.FALSE;
 	}
 }
