@@ -80,8 +80,8 @@ import com.tarento.formservice.utils.AppConfiguration;
 import com.tarento.formservice.utils.CloudStorage;
 import com.tarento.formservice.utils.Constants;
 import com.tarento.formservice.utils.DateUtils;
-import com.tarento.formservice.utils.NotificationUtil;
 import com.tarento.formservice.utils.WorkflowUtil;
+import com.tarento.formservice.utils.NotificationService.NotificationUtil;
 
 @Service(Constants.ServiceRepositories.FORM_SERVICE)
 public class FormsServiceImpl implements FormsService {
