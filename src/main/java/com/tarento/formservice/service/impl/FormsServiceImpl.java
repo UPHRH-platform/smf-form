@@ -719,6 +719,7 @@ public class FormsServiceImpl implements FormsService {
 					for (Map<String, Object> responseObj : response) {
 						IncomingData incomingData = objectMapper.convertValue(responseObj, IncomingData.class);
 						if (incomingData.getInspection() != null
+								&& incomingData.getInspection().getStatus().equals(Status.LEADINSCOMPLETED.name())
 								&& incomingData.getInspection().getAssignedTo() != null) {
 							for (Assignee assignee : incomingData.getInspection().getAssignedTo()) {
 								if (assignee.getId().equals(userInfo.getId())
