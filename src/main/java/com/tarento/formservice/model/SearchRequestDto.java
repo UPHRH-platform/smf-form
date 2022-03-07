@@ -9,6 +9,7 @@ import java.util.List;
 public class SearchRequestDto {
 	private List<SearchObject> searchObjects;
 	private List<SearchObject> excludeObject;
+	private List<SearchObject> filterObjects;
 
 	public List<SearchObject> getSearchObjects() {
 		return searchObjects;
@@ -24,6 +25,14 @@ public class SearchRequestDto {
 
 	public void setExcludeObject(List<SearchObject> excludeObject) {
 		this.excludeObject = excludeObject;
+	}
+
+	public List<SearchObject> getFilterObjects() {
+		return filterObjects;
+	}
+
+	public void setFilterObjects(List<SearchObject> filterObjects) {
+		this.filterObjects = filterObjects;
 	}
 
 }
