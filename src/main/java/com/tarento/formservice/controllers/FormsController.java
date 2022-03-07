@@ -40,6 +40,7 @@ import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.Role;
 import com.tarento.formservice.model.SearchObject;
 import com.tarento.formservice.model.SearchRequestDto;
+import com.tarento.formservice.model.Status;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.VoteFeedbackDto;
@@ -102,7 +103,7 @@ public class FormsController {
 		}
 		return ResponseGenerator.successResponse(formsService.getFormById(formId));
 	}
-	
+
 	@PostMapping(value = PathRoutes.FormServiceApi.CREATE_FORM)
 	public String createForm(@RequestBody FormDetail form,
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
@@ -533,17 +534,14 @@ public class FormsController {
 		}
 		return ResponseGenerator.failureResponse();
 	}
-	
+
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_FORM_STATUS)
 	public String getAllFormStatus() throws IOException {
-	    final List<KeyValue> modelList = new ArrayList<>();
-	    for (final Status key : Status.values())
-	        modelList.add(new KeyValue(key.name(), key));
-	    return ResponseGenerator.successResponse(modelList);
+		final List<KeyValue> modelList = new ArrayList<>();
+		for (final Status key : Status.values())
+			modelList.add(new KeyValue(key.name(), key));
+		return ResponseGenerator.successResponse(modelList);
 	}
-	
-	
-	
 
 	@PostMapping(value = PathRoutes.FormServiceApi.GPS_TAGGING)
 	public String gpsTagging(@RequestBody IncomingData incomingData,
@@ -563,7 +561,6 @@ public class FormsController {
 				return ResponseGenerator.successResponse(Boolean.TRUE);
 			}
 		}
-
 		return ResponseGenerator.failureResponse();
 	}
 

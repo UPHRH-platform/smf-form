@@ -74,6 +74,9 @@ public interface Constants {
 		static final String UPDATED_BY = "updatedBy";
 		static final String UPDATED_DATE = "updatedDate";
 		static final String UPDATED_BY_EMAIL = "updatedByEmail";
+
+		// filters
+		static final String TO_CONSENT = "toConsent";
 	}
 
 	interface WorkflowActions {
