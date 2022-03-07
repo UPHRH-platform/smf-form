@@ -1,10 +1,12 @@
-package com.tarento.formservice.utils;
+package com.tarento.formservice.utils.NotificationService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.htrace.fasterxml.jackson.core.type.TypeReference;
 import org.apache.htrace.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.velocity.VelocityContext;
 import org.slf4j.Logger;
@@ -17,7 +19,11 @@ import com.tarento.formservice.model.AssignApplication;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.UserProfile;
+import com.tarento.formservice.models.SendMessagePrototype;
+import com.tarento.formservice.models.UserDevice;
 import com.tarento.formservice.repository.RestService;
+import com.tarento.formservice.utils.AppConfiguration;
+import com.tarento.formservice.utils.Constants;
 
 @Service
 public class NotificationUtil {
@@ -101,13 +107,23 @@ public class NotificationUtil {
 				context.put(body, sentInspectionBody.replace(formName, applicationData.getTitle()));
 				SendMail.sendMail(recipient.toArray(new String[recipient.size()]), sentInspectionSubject, context,
 						templateName);
-
+				// Email notification for inspector
 				List<String> inspectorEmail = getAssigneeEmail(applicationData.getInspection());
+				String messageContent = assignedInspectionBody.replace(formName, applicationData.getTitle())
+						.replace("{{date}}", applicationData.getInspection().getAssignedDate());
 				if (!inspectorEmail.isEmpty()) {
 					String[] inspectorId = inspectorEmail.toArray(new String[inspectorEmail.size()]);
-					context.put(body, assignedInspectionBody.replace(formName, applicationData.getTitle())
-							.replace("{{date}}", applicationData.getInspection().getAssignedDate()));
+					context.put(body, messageContent);
 					SendMail.sendMail(inspectorId, assignedInspectionSubject, context, templateName);
+				}
+				// push notification for inspector
+				List<UserDevice> userDevices = getAssigneeDeviceToken(applicationData.getInspection(), userInfo);
+				if (userDevices != null && userDevices.size() > 0) {
+					SendMessagePrototype messagePrototype = new SendMessagePrototype();
+					messagePrototype.setDevices(userDevices);
+					messagePrototype.setMessageTitle(assignedInspectionSubject);
+					messagePrototype.setMessageContent(messageContent.replace("<b>", "").replace("</b>", ""));
+					PushBox.sendMessagesToDevices(messagePrototype);
 				}
 				break;
 
@@ -153,6 +169,25 @@ public class NotificationUtil {
 	}
 
 	/**
+	 * Returns the device token of the inspection assinged user
+	 * 
+	 * @param inspection
+	 *            AssignApplication
+	 * @param userinfo
+	 *            UserInfo
+	 * @return List<String>
+	 */
+	private static List<UserDevice> getAssigneeDeviceToken(AssignApplication inspection, UserInfo userinfo) {
+		List<Long> inspectorUserId = new ArrayList<>();
+		if (inspection != null) {
+			inspectorUserId.addAll(inspection.getLeadInspector());
+			inspectorUserId.addAll(inspection.getAssistingInspector());
+			return getUserDeviceToken(inspectorUserId, userinfo);
+		}
+		return null;
+	}
+
+	/**
 	 * User service call to get user info by their id
 	 * 
 	 * @param userId
@@ -179,6 +214,32 @@ public class NotificationUtil {
 			}
 		} catch (Exception e) {
 			logger.error(String.format(Constants.EXCEPTION, "getRegulatorEmail", e.getMessage()));
+		}
+		return null;
+	}
+
+	/**
+	 * User service call to get the user's device token
+	 * 
+	 * @param userIds
+	 *            List<Long>
+	 * @param userinfo
+	 *            UserInfo
+	 * @return List<String>
+	 */
+	private static List<UserDevice> getUserDeviceToken(List<Long> userIds, UserInfo userinfo) {
+		try {
+			String ids = userIds.stream().map(id -> String.valueOf(id)).collect(Collectors.joining(", "));
+			String url = appConfig.getUserServiceHost() + appConfig.getGetUserDeviceTokenAPI() + "?userIds=" + ids;
+			HttpHeaders headers = new HttpHeaders();
+			headers.add(Constants.Parameters.AUTHORIZATION, userinfo.getAuthToken());
+			Object response = RestService.getRequestWithHeaders(headers, url);
+			if (response != null) {
+				return mapper.convertValue(response, new TypeReference<List<UserDevice>>() {
+				});
+			}
+		} catch (Exception e) {
+			logger.error(String.format(Constants.EXCEPTION, "getUserDeviceToken", e.getMessage()));
 		}
 		return null;
 	}

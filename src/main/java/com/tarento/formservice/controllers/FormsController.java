@@ -37,7 +37,6 @@ import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.Role;
 import com.tarento.formservice.model.SearchObject;
 import com.tarento.formservice.model.SearchRequestDto;
-import com.tarento.formservice.model.Status;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.VoteFeedbackDto;
@@ -285,7 +284,6 @@ public class FormsController {
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
-		System.out.println(userInfo.toString());
 		List<Map<String, Object>> formFeedback = null;
 		formFeedback = formsService.getFeedbacks(approved, challenged, challengeStatus);
 		if (formFeedback != null) {
