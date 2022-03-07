@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -19,9 +20,12 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.BucketOrder;
+import org.elasticsearch.search.aggregations.bucket.filter.FilterAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
@@ -76,8 +80,8 @@ import com.tarento.formservice.utils.AppConfiguration;
 import com.tarento.formservice.utils.CloudStorage;
 import com.tarento.formservice.utils.Constants;
 import com.tarento.formservice.utils.DateUtils;
+import com.tarento.formservice.utils.NotificationUtil;
 import com.tarento.formservice.utils.WorkflowUtil;
-import com.tarento.formservice.utils.NotificationService.NotificationUtil;
 
 @Service(Constants.ServiceRepositories.FORM_SERVICE)
 public class FormsServiceImpl implements FormsService {
@@ -739,18 +743,98 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
-	public KeyValueList getApplicationsStatusCount() {
+	public KeyValueList getApplicationsStatusCount(UserInfo userInfo) {
 		try {
 			// query builder
-			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0);
-			searchSourceBuilder.aggregation(AggregationBuilders.terms("Total Pending")
-					.field(Constants.ElasticSearchFields.MAPPING.get(Constants.STATUS)));
-
-			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
-					.types(appConfig.getFormIndexType()).source(searchSourceBuilder);
-			LOGGER.info("Search Request : " + searchRequest);
-			List<Map<String, Object>> responseNode = formsDao.searchAggregationResponse(searchRequest);
-			return translateResponse(responseNode);
+			
+			if(userInfo != null && userInfo.getRoles() != null) { 
+				for(Role role : userInfo.getRoles()) { 
+					if(role.getName().equals(Roles.Regulator.name())) { 
+						SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0);
+						searchSourceBuilder.aggregation(AggregationBuilders.terms("Total Pending")
+								.field(Constants.ElasticSearchFields.MAPPING.get(Constants.STATUS)));
+						SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
+								.types(appConfig.getFormIndexType()).source(searchSourceBuilder);
+						LOGGER.info("Search Request : " + searchRequest);
+						List<Map<String, Object>> responseNode = formsDao.searchAggregationResponse(searchRequest, "Total Pending");
+						return translateResponse(responseNode);
+					} else { 
+						// Setting all prerequisites 
+						List<SearchRequest> searchRequestList = new ArrayList<SearchRequest>();
+						List<Map<String, Object>> responseNode = new ArrayList<Map<String,Object>>(); 
+						List<Long> userIdList = new ArrayList<Long>(); 
+						userIdList.add(userInfo.getId()); 
+						Calendar cal = Calendar.getInstance();
+						cal.setTime(new Date());
+						String dateFormat = "" + cal.get(Calendar.YEAR) + "-" + cal.get(Calendar.MONTH + 1) + "-" + cal.get(Calendar.DAY_OF_MONTH);
+						KeyValueList finalList = new KeyValueList(); 
+						List<KeyValue> keyValueList = new ArrayList<>(); 
+						finalList.setKeyValues(keyValueList);
+						
+						// Creating Search Request for Total Pending
+						TermsQueryBuilder userIdFilter = QueryBuilders.termsQuery("inspection.leadInspector", userIdList);
+						TermQueryBuilder inspectionStatusFilter = QueryBuilders.termQuery("inspection.status.keyword", "SENTFORINS");
+						TermQueryBuilder statusFilter = QueryBuilders.termQuery("status.keyword", "SENTFORINS");
+						BoolQueryBuilder filters = QueryBuilders.boolQuery()
+								   .filter(userIdFilter)
+								   .filter(inspectionStatusFilter)
+								   .filter(statusFilter);
+						FilterAggregationBuilder totalPendingAggregationFilter = AggregationBuilders
+								.filter("Inspector Total Pending", filters).subAggregation(AggregationBuilders
+										.cardinality("Count").field("inspection.applicationId.keyword"));
+						SearchSourceBuilder totalPendingAggrSourceBuilder = new SearchSourceBuilder().size(0);
+						totalPendingAggrSourceBuilder.aggregation(totalPendingAggregationFilter);
+						SearchRequest totalPendingSearchRequest = new SearchRequest(appConfig.getFormDataIndex())
+								.types(appConfig.getFormIndexType()).source(totalPendingAggrSourceBuilder);
+						LOGGER.info("Search Request : " + totalPendingSearchRequest);
+						List<Map<String, Object>> totalPendingResponse = formsDao.searchAggregationResponse(totalPendingSearchRequest, "Inspector Total Pending");
+						KeyValueList list = translateResponse(totalPendingResponse);
+						finalList.getKeyValues().addAll(list.getKeyValues()); 
+						
+						// Creating Search Request for Received Today						
+						TermQueryBuilder assignedDateFilter = QueryBuilders.termQuery("inspection.assignedDate", new Date().getTime());
+						BoolQueryBuilder filters2 = QueryBuilders.boolQuery()
+								   .filter(userIdFilter)
+								   .filter(assignedDateFilter);
+						FilterAggregationBuilder receivedTodayAggregationFilter = AggregationBuilders
+								.filter("Received Today", filters2).subAggregation(AggregationBuilders
+										.cardinality("Count").field("inspection.applicationId.keyword"));
+						SearchSourceBuilder receivedTodayAggrSourceBuilder = new SearchSourceBuilder().size(0);
+						receivedTodayAggrSourceBuilder.aggregation(receivedTodayAggregationFilter);
+						SearchRequest receivedTodaySearchRequest = new SearchRequest(appConfig.getFormDataIndex())
+								.types(appConfig.getFormIndexType()).source(receivedTodayAggrSourceBuilder);
+						LOGGER.info("Search Request : " + receivedTodaySearchRequest);
+						List<Map<String, Object>> receivedTodayResponse = formsDao.searchAggregationResponse(receivedTodaySearchRequest, "Received Today");
+						list = translateResponse(receivedTodayResponse);
+						finalList.getKeyValues().addAll(list.getKeyValues()); 
+						
+						// Creating Search Request for Reviewed Today
+						TermQueryBuilder updatedDateFilter = QueryBuilders.termQuery("inspection.updatedDate", new Date().getTime());
+						TermQueryBuilder inspectionCompletedFilter = QueryBuilders.termQuery("status.keyword", "INSCOMPLETED");
+						BoolQueryBuilder filters3 = QueryBuilders.boolQuery()
+								   .filter(userIdFilter)
+								   .filter(updatedDateFilter)
+								   .filter(inspectionCompletedFilter); 
+						FilterAggregationBuilder reviewedTodayAggregationFilter = AggregationBuilders
+								.filter("Reviewed Today", filters3).subAggregation(AggregationBuilders
+										.cardinality("Count").field("inspection.applicationId.keyword"));
+						SearchSourceBuilder reviewedTodayAggrSourceBuilder = new SearchSourceBuilder().size(0);
+						reviewedTodayAggrSourceBuilder.aggregation(reviewedTodayAggregationFilter);
+						SearchRequest reviewedTodaySearchRequest = new SearchRequest(appConfig.getFormDataIndex())
+								.types(appConfig.getFormIndexType()).source(reviewedTodayAggrSourceBuilder);
+						LOGGER.info("Search Request : " + reviewedTodaySearchRequest);
+						List<Map<String, Object>> reviewedTodayResponse = formsDao.searchAggregationResponse(reviewedTodaySearchRequest, "Reviewed Today");
+						list = translateResponse(reviewedTodayResponse);
+						finalList.getKeyValues().addAll(list.getKeyValues());
+						
+						
+						return finalList; 
+						
+					}
+				}
+			}
+			
+			
 		} catch (Exception ex) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "getApplicationsStatusCount", ex.getMessage()));
 		}
@@ -765,6 +849,19 @@ public class FormsServiceImpl implements FormsService {
 			List<KeyValue> keyValueList = eachMap.entrySet().stream().filter(entry -> !"DRAFT".equals(entry.getKey()))
 					.map(entry -> new KeyValue(entry.getKey().equals("NEW") ? "Total Pending" : entry.getKey(),
 							entry.getValue()))
+					.collect(Collectors.toList());
+			listOfKeyValuePairs.addAll(keyValueList);
+		}
+		list.setKeyValues(listOfKeyValuePairs);
+		return list;
+	}
+	
+	KeyValueList translateInspectorResponse(List<Map<String, Object>> responseNode) {
+		KeyValueList list = new KeyValueList();
+		List<KeyValue> listOfKeyValuePairs = new ArrayList<KeyValue>();
+		for (Map<String, Object> eachMap : responseNode) {
+			List<KeyValue> keyValueList = eachMap.entrySet().stream()
+					.map(entry -> new KeyValue(entry.getKey(), entry.getValue()))
 					.collect(Collectors.toList());
 			listOfKeyValuePairs.addAll(keyValueList);
 		}

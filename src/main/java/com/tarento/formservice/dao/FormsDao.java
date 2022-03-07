@@ -37,8 +37,8 @@ public interface FormsDao {
 
 	List<Map<String, Object>> searchResponse(SearchRequest searchRequest);
 
-	List<Map<String, Object>> searchAggregationResponse(SearchRequest searchRequest);
-
+	List<Map<String, Object>> searchAggregationResponse(SearchRequest searchRequest, String aggregationName);
+	
 	ConcurrentMap<Long, State> fetchAllStates(SearchRequest searchRequest);
 
 	ConcurrentMap<String, List<StateMatrix>> fetchAllStateMatrix(SearchRequest searchRequest);

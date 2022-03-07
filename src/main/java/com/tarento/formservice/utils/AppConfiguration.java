@@ -99,6 +99,22 @@ public class AppConfiguration {
 	@Value("${user.routes.getuserdevicetoken}")
 	private String getUserDeviceTokenAPI;
 
+	public String getFcmFileName() {
+		return fcmFileName;
+	}
+
+	public void setFcmFileName(String fcmFileName) {
+		this.fcmFileName = fcmFileName;
+	}
+
+	public String getGetUserDeviceTokenAPI() {
+		return getUserDeviceTokenAPI;
+	}
+
+	public void setGetUserDeviceTokenAPI(String getUserDeviceTokenAPI) {
+		this.getUserDeviceTokenAPI = getUserDeviceTokenAPI;
+	}
+
 	public String getGetUserByIdAPI() {
 		return getUserByIdAPI;
 	}

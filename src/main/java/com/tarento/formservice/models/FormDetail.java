@@ -75,5 +75,7 @@ public class FormDetail extends Form {
 	public void setUpdatedBy(Long updatedBy) {
 		this.updatedBy = updatedBy;
 	}
+	
+	
 
 }

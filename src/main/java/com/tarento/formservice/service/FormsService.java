@@ -54,7 +54,7 @@ public interface FormsService {
 
 	List<Map<String, Object>> getApplications(UserInfo userInfo, SearchRequestDto searchRequestDto);
 
-	KeyValueList getApplicationsStatusCount();
+	KeyValueList getApplicationsStatusCount(UserInfo userInfo);
 
 	public Boolean saveFormSubmitv1(IncomingData incomingData, UserInfo userInfo, String action);
 
