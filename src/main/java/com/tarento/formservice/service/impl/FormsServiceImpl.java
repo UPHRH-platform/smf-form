@@ -50,6 +50,8 @@ import com.google.gson.Gson;
 import com.tarento.formservice.dao.FormsDao;
 import com.tarento.formservice.executor.StateMatrixManager;
 import com.tarento.formservice.model.AssignApplication;
+import com.tarento.formservice.model.Assignee;
+import com.tarento.formservice.model.Consent;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.KeyValue;
 import com.tarento.formservice.model.KeyValueList;
@@ -872,7 +874,6 @@ public class FormsServiceImpl implements FormsService {
 	@Override
 	public Boolean saveFormSubmitv1(IncomingData incomingData, UserInfo userInfo, String action) {
 		Boolean indexed = Boolean.FALSE;
-		IncomingData oldDataObject = null;
 		try {
 			if (StringUtils.isBlank(incomingData.getApplicationId())) {
 				incomingData.setTimestamp(DateUtils.getCurrentTimestamp());
@@ -880,9 +881,6 @@ public class FormsServiceImpl implements FormsService {
 				indexed = formsDao.addFormData(incomingData);
 			} else {
 				Map<String, Object> applicationObject = getApplicationById(incomingData.getApplicationId(), userInfo);
-				if (applicationObject != null) {
-					oldDataObject = objectMapper.convertValue(applicationObject, IncomingData.class);
-				}
 				incomingData.setUpdatedDate(DateUtils.getYyyyMmDdInUTC());
 				indexed = formsDao.updateFormData(incomingData, incomingData.getApplicationId());
 				appStatusTrack(indexed, applicationObject, action, userInfo);
@@ -1013,18 +1011,18 @@ public class FormsServiceImpl implements FormsService {
 				// set assigned user meta data
 				assign.setAssignedTo(new ArrayList<>());
 				for (Long userId : inspectorsId) {
-					UserProfile userProfile = new UserProfile();
-					userProfile.setId(userId);
+					Assignee assignee = new Assignee();
+					assignee.setId(userId);
 					String key = String.valueOf(userId);
 					if (userMap.containsKey(key)) {
-						userProfile.setEmailId((String) userMap.get(key).get(Constants.Parameters.EMAIL_ID));
-						userProfile.setFirstName((String) userMap.get(key).get(Constants.Parameters.FIRST_NAME));
-						userProfile.setLastName((String) userMap.get(key).get(Constants.Parameters.LAST_NAME));
+						assignee.setEmailId((String) userMap.get(key).get(Constants.Parameters.EMAIL_ID));
+						assignee.setFirstName((String) userMap.get(key).get(Constants.Parameters.FIRST_NAME));
+						assignee.setLastName((String) userMap.get(key).get(Constants.Parameters.LAST_NAME));
 						if (assign.getLeadInspector().contains(userId)) {
-							userProfile.setLeadInspector(Boolean.TRUE);
+							assignee.setLeadInspector(Boolean.TRUE);
 						}
 					}
-					assign.getAssignedTo().add(userProfile);
+					assign.getAssignedTo().add(assignee);
 				}
 
 				IncomingData requestData = new IncomingData();
@@ -1144,20 +1142,47 @@ public class FormsServiceImpl implements FormsService {
 
 	@Override
 	public Boolean submitInspection(IncomingData incomingData, UserInfo userInfo) {
-		SearchRequestDto srd = createSearchRequestObject(incomingData.getApplicationId());
-		List<Map<String, Object>> applicationMap = getApplications(userInfo, srd);
-		for (Map<String, Object> innerMap : applicationMap) {
-			if (innerMap.containsKey(Constants.STATUS)) {
-				incomingData.setStatus(innerMap.get(Constants.STATUS).toString());
-			}
-		}
-		WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo,
-				Constants.WorkflowActions.COMPLETED_INSPECTION);
-		WorkflowUtil.getNextStateForMyRequest(workflowDto);
-		incomingData.setStatus(workflowDto.getNextState());
-		Boolean response = saveFormSubmitv1(incomingData, userInfo, Constants.WorkflowActions.COMPLETED_INSPECTION);
+		try {
+			Map<String, Object> applicationMap = getApplicationById(incomingData.getApplicationId(), userInfo);
+			if (applicationMap != null) {
+				IncomingData applicationData = objectMapper.convertValue(applicationMap, IncomingData.class);
+				// get workflow next status
+				WorkflowDto workflowDto = new WorkflowDto(applicationData, userInfo,
+						Constants.WorkflowActions.COMPLETED_INSPECTION);
+				WorkflowUtil.getNextStateForMyRequest(workflowDto);
 
-		return response;
+				// update assignee inspection status in data object
+				Boolean isLeadIns = Boolean.FALSE;
+				Boolean inspectionCompleted = Boolean.TRUE;
+				if (applicationData != null && applicationData.getInspection() != null
+						&& applicationData.getInspection().getAssignedTo() != null) {
+					for (Assignee assignee : applicationData.getInspection().getAssignedTo()) {
+						if (assignee.getId().equals(userInfo.getId()) && assignee.getLeadInspector() != null
+								&& assignee.getLeadInspector()) {
+							isLeadIns = Boolean.TRUE;
+							assignee.setStatus(workflowDto.getNextState());
+							assignee.setConsentDate(DateUtils.getYyyyMmDdInUTC());
+						} else if (StringUtils.isBlank(assignee.getStatus())) {
+							inspectionCompleted = Boolean.FALSE;
+						}
+					}
+				}
+				// allow only lead inspector to submit inspection details
+				if (isLeadIns) {
+					incomingData.setInspection(applicationData.getInspection());
+					String nextStatus = inspectionCompleted ? workflowDto.getNextState()
+							: Status.LEADINSCOMPLETED.name();
+					incomingData.getInspection().setStatus(nextStatus);
+					Boolean response = saveFormSubmitv1(incomingData, userInfo,
+							inspectionCompleted ? Constants.WorkflowActions.COMPLETED_INSPECTION
+									: Constants.WorkflowActions.LEAD_INSPECTION_COMPLETED);
+					return response;
+				}
+			}
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "submitInspection", e.getMessage()));
+		}
+		return null;
 	}
 
 	/**
@@ -1214,4 +1239,48 @@ public class FormsServiceImpl implements FormsService {
 			return null;
 		}
 	}
+
+	@Override
+	public Boolean consentApplication(Consent consent, UserInfo userInfo) {
+		try {
+			Map<String, Object> applicationMap = getApplicationById(consent.getApplicationId(), userInfo);
+			if (applicationMap != null) {
+				IncomingData applicationData = objectMapper.convertValue(applicationMap, IncomingData.class);
+				Boolean inspectionCompleted = Boolean.TRUE;
+				if (applicationData != null && applicationData.getInspection() != null
+						&& applicationData.getInspection().getAssignedTo() != null) {
+					// get workflow next status
+					WorkflowDto workflowDto = new WorkflowDto(applicationData, userInfo,
+							Constants.WorkflowActions.COMPLETED_INSPECTION);
+					WorkflowUtil.getNextStateForMyRequest(workflowDto);
+
+					for (Assignee assignee : applicationData.getInspection().getAssignedTo()) {
+						if (assignee.getId().equals(userInfo.getId())) {
+							assignee.setConsentApplication(consent.getAgree());
+							assignee.setComments(consent.getComments());
+							assignee.setStatus(workflowDto.getNextState());
+							assignee.setConsentDate(DateUtils.getYyyyMmDdInUTC());
+						} else if (StringUtils.isBlank(assignee.getStatus())) {
+							inspectionCompleted = Boolean.FALSE;
+						}
+					}
+
+					// if all assisting inspector had given their consent, move the application to
+					// next status
+					if (inspectionCompleted) {
+						applicationData.setStatus(workflowDto.getNextState());
+						applicationData.getInspection().setStatus(workflowDto.getNextState());
+					}
+					Boolean indexed = formsDao.updateFormData(applicationData, consent.getApplicationId());
+					appStatusTrack(indexed, objectMapper.convertValue(applicationData, Map.class),
+							inspectionCompleted ? workflowDto.getNextState() : null, userInfo);
+					return indexed;
+				}
+			}
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "consentApplication", e.getMessage()));
+		}
+		return Boolean.FALSE;
+	}
+
 }

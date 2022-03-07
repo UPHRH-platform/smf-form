@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.tarento.formservice.model.AssignApplication;
+import com.tarento.formservice.model.Consent;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.KeyValueList;
 import com.tarento.formservice.model.ReplyFeedbackDto;
@@ -77,5 +78,7 @@ public interface FormsService {
 	public Boolean submitInspection(IncomingData incomingData, UserInfo userInfo);
 
 	public List<Map<String, Object>> getActivityLogs(String applicationId);
+
+	public Boolean consentApplication(Consent consent, UserInfo userInfo);
 
 }

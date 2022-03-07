@@ -83,6 +83,7 @@ public interface Constants {
 		static final String COMPLETED_INSPECTION = "Complete Inspection";
 		static final String APPROVE_APPLICATION = "Approve Application";
 		static final String REJECT_APPLICATION = "Reject Application";
+		static final String LEAD_INSPECTION_COMPLETED = "Lead inspection";
 	}
 
 	interface PortfolioConstants {
@@ -192,6 +193,7 @@ public interface Constants {
 				put("status", "status.keyword");
 				put("createdBy", "createdBy.keyword");
 				put("assignedTo", "inspection.assignedTo.id");
+				put("inspectionStatus", "inspection.status.keyword");
 			}
 		};
 	}

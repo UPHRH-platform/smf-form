@@ -10,7 +10,7 @@ import lombok.Setter;
 public class AssignApplication {
 
 	private String applicationId;
-	private List<UserProfile> assignedTo;
+	private List<Assignee> assignedTo;
 	private String scheduledDate;
 	private String status;
 	private Long assignedBy;
@@ -18,10 +18,8 @@ public class AssignApplication {
 	private List<Long> assistingInspector;
 	private List<Long> leadInspector;
 	private Long formId;
-	private List<Long> userId; 
-	
-	
-	
+	private List<Long> userId;
+
 	public List<Long> getUserId() {
 		return userId;
 	}
@@ -62,11 +60,11 @@ public class AssignApplication {
 		this.applicationId = applicationId;
 	}
 
-	public List<UserProfile> getAssignedTo() {
+	public List<Assignee> getAssignedTo() {
 		return assignedTo;
 	}
 
-	public void setAssignedTo(List<UserProfile> assignedTo) {
+	public void setAssignedTo(List<Assignee> assignedTo) {
 		this.assignedTo = assignedTo;
 	}
 

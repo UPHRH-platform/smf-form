@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.gson.Gson;
 import com.tarento.formservice.model.AssignApplication;
+import com.tarento.formservice.model.Consent;
 import com.tarento.formservice.model.FormData;
 import com.tarento.formservice.model.FormModel;
 import com.tarento.formservice.model.IncomingData;
@@ -549,6 +550,21 @@ public class FormsController {
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
 			throws JsonProcessingException {
 		return ResponseGenerator.successResponse(Constants.ResponseCodes.SUCCESS);
+	}
+
+	@PostMapping(value = PathRoutes.FormServiceApi.CONSENT_APPLICATION)
+	public String consentApplication(@RequestBody Consent consent,
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
+			throws JsonProcessingException {
+		UserInfo userInfo = null;
+		if (StringUtils.isNotBlank(xUserInfo)) {
+			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+			if (formsService.consentApplication(consent, userInfo)) {
+				return ResponseGenerator.successResponse(Boolean.TRUE);
+			}
+		}
+
+		return ResponseGenerator.failureResponse();
 	}
 
 }

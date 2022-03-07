@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import com.tarento.formservice.model.AssignApplication;
+import com.tarento.formservice.model.Assignee;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.model.UserProfile;
@@ -159,7 +160,7 @@ public class NotificationUtil {
 	private static List<String> getAssigneeEmail(AssignApplication inspection) {
 		List<String> assignee = new ArrayList<>();
 		if (inspection != null && inspection.getAssignedTo() != null && !inspection.getAssignedTo().isEmpty()) {
-			for (UserProfile user : inspection.getAssignedTo()) {
+			for (Assignee user : inspection.getAssignedTo()) {
 				if (user != null && StringUtils.isNotBlank(user.getEmailId())) {
 					assignee.add(user.getEmailId());
 				}

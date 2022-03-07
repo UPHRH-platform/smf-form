@@ -3,7 +3,8 @@ package com.tarento.formservice.model;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum Status {
-	DRAFT("Draft"), NEW("New"), REVIEW("Review"), PUBLISH("Publish"), UNPUBLISH("Unpublish");
+	DRAFT("Draft"), NEW("New"), REVIEW("Review"), PUBLISH("Publish"), UNPUBLISH("Unpublish"), INSCOMPLETED(
+			"INSCOMPLETED"), LEADINSCOMPLETED("LEADINSCOMPLETED");
 
 	private String value;
 

@@ -37,15 +37,6 @@ public class UserProfile extends User {
 	private Long updatedBy;
 	private List<Role> roles;
 	private Long countryId;
-	private Boolean leadInspector;
-
-	public Boolean getLeadInspector() {
-		return leadInspector;
-	}
-
-	public void setLeadInspector(Boolean leadInspector) {
-		this.leadInspector = leadInspector;
-	}
 
 	public Long getProfileId() {
 		return profileId;
