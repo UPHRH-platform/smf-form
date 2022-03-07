@@ -1,6 +1,7 @@
 package com.tarento.formservice.repository;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -84,6 +85,10 @@ public class ElasticSearchRepository {
 		};
 		return new RestHighLevelClient(
 				RestClient.builder(new HttpHost(appConfig.getElasticHost(), appConfig.getElasticPort())));
+
+/*		return new RestHighLevelClient(
+				RestClient.builder(new HttpHost(appConfig.getElasticHost(), appConfig.getElasticPort(), "https"))
+				.setHttpClientConfigCallback(httpClientConfigCallback)); */
 
 	}
 
@@ -204,6 +209,21 @@ public class ElasticSearchRepository {
 		} catch (IOException e) {
 			LOGGER.error(marker, "Encountered an error while connecting : ", e);
 			LOGGER.error(marker, "Error Message to report :{} ", e.getMessage());
+		}
+		return response;
+	}
+	
+	public MultiSearchResponse executeMultiSearchRequest(List<SearchRequest> searchRequests) {
+		MultiSearchResponse response = null;
+		try {
+			MultiSearchRequest multiRequest = new MultiSearchRequest();
+			for(SearchRequest request : searchRequests) { 
+				multiRequest.add(request);
+			}
+			response = client.msearch(multiRequest, RequestOptions.DEFAULT);
+		} catch (IOException e) {
+			LOGGER.error(marker, "Encountered an error while connecting : ", e);
+			LOGGER.error(marker, "Error Messsage to report :{} ", e.getMessage());
 		}
 		return response;
 	}

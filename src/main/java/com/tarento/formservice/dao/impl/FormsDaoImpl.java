@@ -9,12 +9,15 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.elasticsearch.action.search.MultiSearchResponse;
+import org.elasticsearch.action.search.MultiSearchResponse.Item;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.filter.ParsedFilter;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.metrics.ParsedCardinality;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,27 +111,37 @@ public class FormsDaoImpl implements FormsDao {
 	}
 
 	@Override
-	public List<Map<String, Object>> searchAggregationResponse(SearchRequest searchRequest) {
+	public List<Map<String, Object>> searchAggregationResponse(SearchRequest searchRequest, String aggregationName) {
 		try {
 			List<Map<String, Object>> responseData = new ArrayList<>();
 			MultiSearchResponse response = elasticsearchRepo.executeMultiSearchRequest(searchRequest);
 			SearchResponse searchResponse = response.getResponses()[0].getResponse();
 			Aggregations aggregations = searchResponse.getAggregations();
-			ParsedStringTerms subjects = aggregations.get("Total Pending");
-			for (Terms.Bucket bucket : subjects.getBuckets()) {
-				String key = (String) bucket.getKey();
-				long docCount = bucket.getDocCount();
+			if(!aggregationName.equals("Total Pending")) { 
+				ParsedFilter filters = aggregations.get(aggregationName);
+				Aggregations subAggregations = filters.getAggregations(); 
+				ParsedCardinality value = subAggregations.get("Count"); 
 				Map<String, Object> eachRecordMap = new HashMap<String, Object>();
-				eachRecordMap.put(key, docCount);
+				eachRecordMap.put(aggregationName, value.getValue());
 				responseData.add(eachRecordMap);
+			} else { 
+				ParsedStringTerms subjects = aggregations.get(aggregationName);
+				for (Terms.Bucket bucket : subjects.getBuckets()) {
+					String key = (String) bucket.getKey();
+					long docCount = bucket.getDocCount();
+					Map<String, Object> eachRecordMap = new HashMap<String, Object>();
+					eachRecordMap.put(key, docCount);
+					responseData.add(eachRecordMap);
+				}
 			}
+			
 			return responseData;
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "searchResponse", e.getMessage()));
 			return null;
 		}
 	}
-
+	
 	@Override
 	public ConcurrentMap<Long, State> fetchAllStates(SearchRequest searchRequest) {
 		ConcurrentMap<Long, State> stateMap = new ConcurrentHashMap<Long, State>();
@@ -182,5 +195,6 @@ public class FormsDaoImpl implements FormsDao {
 				RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE), appConfig.getActivityLogIndex(),
 				appConfig.getActivityLogIndexType());
 	}
+
 
 }

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,6 +34,7 @@ import com.tarento.formservice.model.Consent;
 import com.tarento.formservice.model.FormData;
 import com.tarento.formservice.model.FormModel;
 import com.tarento.formservice.model.IncomingData;
+import com.tarento.formservice.model.KeyValue;
 import com.tarento.formservice.model.KeyValueList;
 import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.Role;
@@ -100,7 +102,7 @@ public class FormsController {
 		}
 		return ResponseGenerator.successResponse(formsService.getFormById(formId));
 	}
-
+	
 	@PostMapping(value = PathRoutes.FormServiceApi.CREATE_FORM)
 	public String createForm(@RequestBody FormDetail form,
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
@@ -336,7 +338,7 @@ public class FormsController {
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
-		KeyValueList responseData = formsService.getApplicationsStatusCount();
+		KeyValueList responseData = formsService.getApplicationsStatusCount(userInfo);
 		if (responseData != null) {
 			return ResponseGenerator.successResponse(responseData);
 		}
@@ -531,6 +533,17 @@ public class FormsController {
 		}
 		return ResponseGenerator.failureResponse();
 	}
+	
+	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_FORM_STATUS)
+	public String getAllFormStatus() throws IOException {
+	    final List<KeyValue> modelList = new ArrayList<>();
+	    for (final Status key : Status.values())
+	        modelList.add(new KeyValue(key.name(), key));
+	    return ResponseGenerator.successResponse(modelList);
+	}
+	
+	
+	
 
 	@PostMapping(value = PathRoutes.FormServiceApi.GPS_TAGGING)
 	public String gpsTagging(@RequestBody IncomingData incomingData,
