@@ -65,6 +65,10 @@ public class NotificationUtil {
 	private static String inspectionCompletedSubject = "Application inspection completed";
 	private static String inspectionCompletedBody = "The <b>" + formName + "</b> application inspection completed.";
 
+	private static String leadInspCompletedSubject = "Application consent";
+	private static String leadInspCompletedBody = "The lead inspection for <b>" + formName
+			+ "</b> application is submitted. Please provide your consent";
+
 	/**
 	 * Handles every request workflow actions
 	 * 
@@ -109,7 +113,8 @@ public class NotificationUtil {
 				SendMail.sendMail(recipient.toArray(new String[recipient.size()]), sentInspectionSubject, context,
 						templateName);
 				// Email notification for inspector
-				List<String> inspectorEmail = getAssigneeEmail(applicationData.getInspection());
+				List<String> inspectorEmail = getAssigneeEmail(applicationData.getInspection(), Boolean.TRUE,
+						Boolean.TRUE);
 				String messageContent = assignedInspectionBody.replace(formName, applicationData.getTitle())
 						.replace("{{date}}", applicationData.getInspection().getAssignedDate());
 				if (!inspectorEmail.isEmpty()) {
@@ -118,7 +123,8 @@ public class NotificationUtil {
 					SendMail.sendMail(inspectorId, assignedInspectionSubject, context, templateName);
 				}
 				// push notification for inspector
-				List<UserDevice> userDevices = getAssigneeDeviceToken(applicationData.getInspection(), userInfo);
+				List<UserDevice> userDevices = getAssigneeDeviceToken(applicationData.getInspection(), userInfo,
+						Boolean.TRUE, Boolean.TRUE);
 				if (userDevices != null && userDevices.size() > 0) {
 					SendMessagePrototype messagePrototype = new SendMessagePrototype();
 					messagePrototype.setDevices(userDevices);
@@ -142,6 +148,27 @@ public class NotificationUtil {
 				}
 				break;
 
+			case Constants.WorkflowActions.LEAD_INSPECTION_COMPLETED:
+				// Email notification for inspector
+				List<String> assistInspEmail = getAssigneeEmail(applicationData.getInspection(), Boolean.FALSE,
+						Boolean.TRUE);
+				String msgContent = leadInspCompletedBody.replace(formName, applicationData.getTitle());
+				if (!assistInspEmail.isEmpty()) {
+					String[] inspectorId = assistInspEmail.toArray(new String[assistInspEmail.size()]);
+					context.put(body, msgContent);
+					SendMail.sendMail(inspectorId, leadInspCompletedSubject, context, templateName);
+				}
+				// push notification for inspector
+				List<UserDevice> assistInspDevices = getAssigneeDeviceToken(applicationData.getInspection(), userInfo,
+						Boolean.FALSE, Boolean.TRUE);
+				if (assistInspDevices != null && assistInspDevices.size() > 0) {
+					SendMessagePrototype messagePrototype = new SendMessagePrototype();
+					messagePrototype.setDevices(assistInspDevices);
+					messagePrototype.setMessageTitle(leadInspCompletedSubject);
+					messagePrototype.setMessageContent(msgContent.replace("<b>", "").replace("</b>", ""));
+					PushBox.sendMessagesToDevices(messagePrototype);
+				}
+				break;
 			default:
 				break;
 			}
@@ -155,14 +182,23 @@ public class NotificationUtil {
 	 * 
 	 * @param inspection
 	 *            AssignApplication
+	 * @param isLead
+	 *            Boolean
+	 * @param isAssistant
+	 *            Boolean
 	 * @return List<String>
 	 */
-	private static List<String> getAssigneeEmail(AssignApplication inspection) {
+	private static List<String> getAssigneeEmail(AssignApplication inspection, Boolean isLead, Boolean isAssistant) {
 		List<String> assignee = new ArrayList<>();
 		if (inspection != null && inspection.getAssignedTo() != null && !inspection.getAssignedTo().isEmpty()) {
 			for (Assignee user : inspection.getAssignedTo()) {
 				if (user != null && StringUtils.isNotBlank(user.getEmailId())) {
-					assignee.add(user.getEmailId());
+					if (Boolean.TRUE.equals(isLead) && Boolean.TRUE.equals(user.getLeadInspector())) {
+						assignee.add(user.getEmailId());
+					}
+					if (Boolean.TRUE.equals(isAssistant) && Boolean.TRUE.equals(!user.getLeadInspector())) {
+						assignee.add(user.getEmailId());
+					}
 				}
 			}
 		}
@@ -176,13 +212,22 @@ public class NotificationUtil {
 	 *            AssignApplication
 	 * @param userinfo
 	 *            UserInfo
+	 * @param isLead
+	 *            Boolean
+	 * @param isAssistant
+	 *            Boolean
 	 * @return List<String>
 	 */
-	private static List<UserDevice> getAssigneeDeviceToken(AssignApplication inspection, UserInfo userinfo) {
+	private static List<UserDevice> getAssigneeDeviceToken(AssignApplication inspection, UserInfo userinfo,
+			Boolean isLead, Boolean isAssistant) {
 		List<Long> inspectorUserId = new ArrayList<>();
 		if (inspection != null) {
-			inspectorUserId.addAll(inspection.getLeadInspector());
-			inspectorUserId.addAll(inspection.getAssistingInspector());
+			if (Boolean.TRUE.equals(isLead)) {
+				inspectorUserId.addAll(inspection.getLeadInspector());
+			}
+			if (Boolean.TRUE.equals(isAssistant)) {
+				inspectorUserId.addAll(inspection.getAssistingInspector());
+			}
 			return getUserDeviceToken(inspectorUserId, userinfo);
 		}
 		return null;
@@ -230,14 +275,16 @@ public class NotificationUtil {
 	 */
 	private static List<UserDevice> getUserDeviceToken(List<Long> userIds, UserInfo userinfo) {
 		try {
-			String ids = userIds.stream().map(id -> String.valueOf(id)).collect(Collectors.joining(", "));
-			String url = appConfig.getUserServiceHost() + appConfig.getGetUserDeviceTokenAPI() + "?userIds=" + ids;
-			HttpHeaders headers = new HttpHeaders();
-			headers.add(Constants.Parameters.AUTHORIZATION, userinfo.getAuthToken());
-			Object response = RestService.getRequestWithHeaders(headers, url);
-			if (response != null) {
-				return mapper.convertValue(response, new TypeReference<List<UserDevice>>() {
-				});
+			if (userIds != null && !userIds.isEmpty()) {
+				String ids = userIds.stream().map(id -> String.valueOf(id)).collect(Collectors.joining(", "));
+				String url = appConfig.getUserServiceHost() + appConfig.getGetUserDeviceTokenAPI() + "?userIds=" + ids;
+				HttpHeaders headers = new HttpHeaders();
+				headers.add(Constants.Parameters.AUTHORIZATION, userinfo.getAuthToken());
+				Object response = RestService.getRequestWithHeaders(headers, url);
+				if (response != null) {
+					return mapper.convertValue(response, new TypeReference<List<UserDevice>>() {
+					});
+				}
 			}
 		} catch (Exception e) {
 			logger.error(String.format(Constants.EXCEPTION, "getUserDeviceToken", e.getMessage()));

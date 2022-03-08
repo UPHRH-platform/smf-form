@@ -1218,7 +1218,7 @@ public class FormsServiceImpl implements FormsService {
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "submitInspection", e.getMessage()));
 		}
-		return null;
+		return Boolean.FALSE;
 	}
 
 	/**
@@ -1309,7 +1309,9 @@ public class FormsServiceImpl implements FormsService {
 					}
 					Boolean indexed = formsDao.updateFormData(applicationData, consent.getApplicationId());
 					appStatusTrack(indexed, objectMapper.convertValue(applicationData, Map.class),
-							inspectionCompleted ? workflowDto.getNextState() : null, userInfo);
+							inspectionCompleted ? Constants.WorkflowActions.COMPLETED_INSPECTION
+									: Constants.WorkflowActions.LEAD_INSPECTION_COMPLETED,
+							userInfo);
 					return indexed;
 				}
 			}
