@@ -169,6 +169,7 @@ public interface Constants {
 	public static final String VALUE = "value";
 	public static final String TYPE = "type";
 	public static final String BY = "by";
+	public static final String LEAD_INSPECTOR = "inspectionLeadInspector"; 
 
 	public static final String APPEND_KEYWORD = ".keyword";
 
@@ -197,6 +198,7 @@ public interface Constants {
 				put("createdBy", "createdBy.keyword");
 				put("assignedTo", "inspection.assignedTo.id");
 				put("inspectionStatus", "inspection.status.keyword");
+				put("inspectionLeadInspector", "inspection.leadInspector"); 
 			}
 		};
 	}

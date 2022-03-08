@@ -20,6 +20,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -66,7 +67,6 @@ import com.tarento.formservice.model.State;
 import com.tarento.formservice.model.StateMatrix;
 import com.tarento.formservice.model.Status;
 import com.tarento.formservice.model.UserInfo;
-import com.tarento.formservice.model.UserProfile;
 import com.tarento.formservice.model.VerifyFeedbackDto;
 import com.tarento.formservice.model.Vote;
 import com.tarento.formservice.model.VoteFeedbackDto;
@@ -808,9 +808,20 @@ public class FormsServiceImpl implements FormsService {
 						KeyValueList finalList = new KeyValueList();
 						List<KeyValue> keyValueList = new ArrayList<>();
 						finalList.setKeyValues(keyValueList);
+						Calendar startOfTodayCal = Calendar.getInstance();
+						startOfTodayCal.setTime(new Date());
+						startOfTodayCal.set(Calendar.HOUR, 0);
+						startOfTodayCal.set(Calendar.AM_PM, Calendar.AM);
+						startOfTodayCal.set(Calendar.MINUTE, 01);
+
+						Calendar endOfTodayCal = Calendar.getInstance();
+						endOfTodayCal.setTime(new Date());
+						endOfTodayCal.set(Calendar.HOUR, 11);
+						endOfTodayCal.set(Calendar.AM_PM, Calendar.PM);
+						endOfTodayCal.set(Calendar.MINUTE, 59);
 
 						// Creating Search Request for Total Pending
-						TermsQueryBuilder userIdFilter = QueryBuilders.termsQuery("inspection.leadInspector",
+						TermsQueryBuilder userIdFilter = QueryBuilders.termsQuery(Constants.ElasticSearchFields.MAPPING.get("inspectionLeadInspector"),
 								userIdList);
 						TermQueryBuilder inspectionStatusFilter = QueryBuilders.termQuery("inspection.status.keyword",
 								"SENTFORINS");
@@ -831,8 +842,8 @@ public class FormsServiceImpl implements FormsService {
 						finalList.getKeyValues().addAll(list.getKeyValues());
 
 						// Creating Search Request for Received Today
-						TermQueryBuilder assignedDateFilter = QueryBuilders.termQuery("inspection.assignedDate",
-								new Date().getTime());
+						RangeQueryBuilder assignedDateFilter = QueryBuilders.rangeQuery("inspection.assignedDate")
+								.from(startOfTodayCal.getTime().getTime()).to(endOfTodayCal.getTime().getTime());
 						BoolQueryBuilder filters2 = QueryBuilders.boolQuery().filter(userIdFilter)
 								.filter(assignedDateFilter);
 						FilterAggregationBuilder receivedTodayAggregationFilter = AggregationBuilders
@@ -849,8 +860,8 @@ public class FormsServiceImpl implements FormsService {
 						finalList.getKeyValues().addAll(list.getKeyValues());
 
 						// Creating Search Request for Reviewed Today
-						TermQueryBuilder updatedDateFilter = QueryBuilders.termQuery("inspection.updatedDate",
-								new Date().getTime());
+						RangeQueryBuilder updatedDateFilter = QueryBuilders.rangeQuery("inspection.updatedDate")
+								.from(startOfTodayCal.getTime().getTime()).to(endOfTodayCal.getTime().getTime());
 						TermQueryBuilder inspectionCompletedFilter = QueryBuilders.termQuery("status.keyword",
 								"INSCOMPLETED");
 						BoolQueryBuilder filters3 = QueryBuilders.boolQuery().filter(userIdFilter)
