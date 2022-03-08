@@ -1209,6 +1209,9 @@ public class FormsServiceImpl implements FormsService {
 					String nextStatus = inspectionCompleted ? workflowDto.getNextState()
 							: Status.LEADINSCOMPLETED.name();
 					incomingData.getInspection().setStatus(nextStatus);
+					if (inspectionCompleted) {
+						incomingData.setStatus(workflowDto.getNextState());
+					}
 					Boolean response = saveFormSubmitv1(incomingData, userInfo,
 							inspectionCompleted ? Constants.WorkflowActions.COMPLETED_INSPECTION
 									: Constants.WorkflowActions.LEAD_INSPECTION_COMPLETED);

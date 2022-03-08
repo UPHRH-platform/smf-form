@@ -67,7 +67,7 @@ public class NotificationUtil {
 
 	private static String leadInspCompletedSubject = "Application consent";
 	private static String leadInspCompletedBody = "The lead inspection for <b>" + formName
-			+ "</b> application is submitted. Please provide your consent";
+			+ "</b> application is submitted. Please provide your consent.";
 
 	/**
 	 * Handles every request workflow actions
@@ -193,10 +193,12 @@ public class NotificationUtil {
 		if (inspection != null && inspection.getAssignedTo() != null && !inspection.getAssignedTo().isEmpty()) {
 			for (Assignee user : inspection.getAssignedTo()) {
 				if (user != null && StringUtils.isNotBlank(user.getEmailId())) {
-					if (Boolean.TRUE.equals(isLead) && Boolean.TRUE.equals(user.getLeadInspector())) {
+					if (Boolean.TRUE.equals(isLead) && user.getLeadInspector() != null
+							&& Boolean.TRUE.equals(user.getLeadInspector())) {
 						assignee.add(user.getEmailId());
 					}
-					if (Boolean.TRUE.equals(isAssistant) && Boolean.TRUE.equals(!user.getLeadInspector())) {
+					if (Boolean.TRUE.equals(isAssistant)
+							&& (user.getLeadInspector() == null || Boolean.TRUE.equals(!user.getLeadInspector()))) {
 						assignee.add(user.getEmailId());
 					}
 				}
