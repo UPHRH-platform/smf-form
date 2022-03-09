@@ -29,6 +29,8 @@ import com.tarento.formservice.models.FormDetail;
  *
  */
 public interface FormsService {
+	
+	public static String INSPECTION_LEAD_INSPECTOR = "inspectionLeadInspector"; 
 
 	public Form createForm(FormDetail newForm) throws IOException;
 

@@ -199,6 +199,9 @@ public interface Constants {
 				put("assignedTo", "inspection.assignedTo.id");
 				put("inspectionStatus", "inspection.status.keyword");
 				put("inspectionLeadInspector", "inspection.leadInspector"); 
+				put("inspectionApplicationId", "inspection.applicationId.keyword"); 
+				put("inspectionAssignedDate", "inspection.assignedDate"); 
+				put("inspectionUpdatedDate", "inspection.updatedDate");
 			}
 		};
 	}

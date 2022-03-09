@@ -782,7 +782,6 @@ public class FormsServiceImpl implements FormsService {
 	public KeyValueList getApplicationsStatusCount(UserInfo userInfo) {
 		try {
 			// query builder
-
 			if (userInfo != null && userInfo.getRoles() != null) {
 				for (Role role : userInfo.getRoles()) {
 					if (role.getName().equals(Roles.Regulator.name())) {
@@ -810,9 +809,10 @@ public class FormsServiceImpl implements FormsService {
 						finalList.setKeyValues(keyValueList);
 						Calendar startOfTodayCal = Calendar.getInstance();
 						startOfTodayCal.setTime(new Date());
-						startOfTodayCal.set(Calendar.HOUR, 0);
-						startOfTodayCal.set(Calendar.AM_PM, Calendar.AM);
-						startOfTodayCal.set(Calendar.MINUTE, 01);
+						startOfTodayCal.add(Calendar.DAY_OF_YEAR, -1);
+						startOfTodayCal.set(Calendar.HOUR, 11);
+						startOfTodayCal.set(Calendar.AM_PM, Calendar.PM);
+						startOfTodayCal.set(Calendar.MINUTE, 59);
 
 						Calendar endOfTodayCal = Calendar.getInstance();
 						endOfTodayCal.setTime(new Date());
@@ -823,14 +823,14 @@ public class FormsServiceImpl implements FormsService {
 						// Creating Search Request for Total Pending
 						TermsQueryBuilder userIdFilter = QueryBuilders.termsQuery(Constants.ElasticSearchFields.MAPPING.get("inspectionLeadInspector"),
 								userIdList);
-						TermQueryBuilder inspectionStatusFilter = QueryBuilders.termQuery("inspection.status.keyword",
-								"SENTFORINS");
-						TermQueryBuilder statusFilter = QueryBuilders.termQuery("status.keyword", "SENTFORINS");
+						TermQueryBuilder inspectionStatusFilter = QueryBuilders.termQuery(Constants.ElasticSearchFields.MAPPING.get("inspectionStatus"),
+								Status.SENTFORINS.name());
+						TermQueryBuilder statusFilter = QueryBuilders.termQuery(Constants.ElasticSearchFields.MAPPING.get("status"), Status.SENTFORINS.name());
 						BoolQueryBuilder filters = QueryBuilders.boolQuery().filter(userIdFilter)
 								.filter(inspectionStatusFilter).filter(statusFilter);
 						FilterAggregationBuilder totalPendingAggregationFilter = AggregationBuilders
 								.filter("Inspector Total Pending", filters).subAggregation(AggregationBuilders
-										.cardinality("Count").field("inspection.applicationId.keyword"));
+										.cardinality("Count").field(Constants.ElasticSearchFields.MAPPING.get("inspectionApplicationId")));
 						SearchSourceBuilder totalPendingAggrSourceBuilder = new SearchSourceBuilder().size(0);
 						totalPendingAggrSourceBuilder.aggregation(totalPendingAggregationFilter);
 						SearchRequest totalPendingSearchRequest = new SearchRequest(appConfig.getFormDataIndex())
@@ -842,13 +842,13 @@ public class FormsServiceImpl implements FormsService {
 						finalList.getKeyValues().addAll(list.getKeyValues());
 
 						// Creating Search Request for Received Today
-						RangeQueryBuilder assignedDateFilter = QueryBuilders.rangeQuery("inspection.assignedDate")
+						RangeQueryBuilder assignedDateFilter = QueryBuilders.rangeQuery("inspectionAssignedDate")
 								.from(startOfTodayCal.getTime().getTime()).to(endOfTodayCal.getTime().getTime());
 						BoolQueryBuilder filters2 = QueryBuilders.boolQuery().filter(userIdFilter)
 								.filter(assignedDateFilter);
 						FilterAggregationBuilder receivedTodayAggregationFilter = AggregationBuilders
 								.filter("Received Today", filters2).subAggregation(AggregationBuilders
-										.cardinality("Count").field("inspection.applicationId.keyword"));
+										.cardinality("Count").field(Constants.ElasticSearchFields.MAPPING.get("inspectionApplicationId")));
 						SearchSourceBuilder receivedTodayAggrSourceBuilder = new SearchSourceBuilder().size(0);
 						receivedTodayAggrSourceBuilder.aggregation(receivedTodayAggregationFilter);
 						SearchRequest receivedTodaySearchRequest = new SearchRequest(appConfig.getFormDataIndex())
@@ -860,15 +860,15 @@ public class FormsServiceImpl implements FormsService {
 						finalList.getKeyValues().addAll(list.getKeyValues());
 
 						// Creating Search Request for Reviewed Today
-						RangeQueryBuilder updatedDateFilter = QueryBuilders.rangeQuery("inspection.updatedDate")
+						RangeQueryBuilder updatedDateFilter = QueryBuilders.rangeQuery(Constants.ElasticSearchFields.MAPPING.get("inspectionUpdatedDate"))
 								.from(startOfTodayCal.getTime().getTime()).to(endOfTodayCal.getTime().getTime());
-						TermQueryBuilder inspectionCompletedFilter = QueryBuilders.termQuery("status.keyword",
-								"INSCOMPLETED");
+						TermQueryBuilder inspectionCompletedFilter = QueryBuilders.termQuery(Constants.ElasticSearchFields.MAPPING.get("status"),
+								Status.INSCOMPLETED.name());
 						BoolQueryBuilder filters3 = QueryBuilders.boolQuery().filter(userIdFilter)
 								.filter(updatedDateFilter).filter(inspectionCompletedFilter);
 						FilterAggregationBuilder reviewedTodayAggregationFilter = AggregationBuilders
 								.filter("Reviewed Today", filters3).subAggregation(AggregationBuilders
-										.cardinality("Count").field("inspection.applicationId.keyword"));
+										.cardinality("Count").field(Constants.ElasticSearchFields.MAPPING.get("inspectionApplicationId")));
 						SearchSourceBuilder reviewedTodayAggrSourceBuilder = new SearchSourceBuilder().size(0);
 						reviewedTodayAggrSourceBuilder.aggregation(reviewedTodayAggregationFilter);
 						SearchRequest reviewedTodaySearchRequest = new SearchRequest(appConfig.getFormDataIndex())
