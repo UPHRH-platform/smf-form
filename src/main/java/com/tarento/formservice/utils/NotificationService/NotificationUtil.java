@@ -1,6 +1,7 @@
 package com.tarento.formservice.utils.NotificationService;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,7 +20,6 @@ import com.tarento.formservice.model.AssignApplication;
 import com.tarento.formservice.model.Assignee;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.UserInfo;
-import com.tarento.formservice.model.UserProfile;
 import com.tarento.formservice.models.SendMessagePrototype;
 import com.tarento.formservice.models.UserDevice;
 import com.tarento.formservice.repository.RestService;
@@ -130,7 +130,9 @@ public class NotificationUtil {
 					messagePrototype.setDevices(userDevices);
 					messagePrototype.setMessageTitle(assignedInspectionSubject);
 					messagePrototype.setMessageContent(messageContent.replace("<b>", "").replace("</b>", ""));
-					PushBox.sendMessagesToDevices(messagePrototype);
+					Map<String, String> pushBoxData = new HashMap<>();
+					pushBoxData.put(Constants.APPLICATION_ID, applicationData.getApplicationId());
+					PushBox.sendMessagesToDevices(messagePrototype, pushBoxData);
 				}
 				break;
 
@@ -166,7 +168,9 @@ public class NotificationUtil {
 					messagePrototype.setDevices(assistInspDevices);
 					messagePrototype.setMessageTitle(leadInspCompletedSubject);
 					messagePrototype.setMessageContent(msgContent.replace("<b>", "").replace("</b>", ""));
-					PushBox.sendMessagesToDevices(messagePrototype);
+					Map<String, String> pushBoxData = new HashMap<>();
+					pushBoxData.put(Constants.APPLICATION_ID, applicationData.getApplicationId());
+					PushBox.sendMessagesToDevices(messagePrototype, pushBoxData);
 				}
 				break;
 			default:

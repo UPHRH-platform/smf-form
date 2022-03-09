@@ -59,6 +59,7 @@ public interface PathRoutes {
 		final String GPS_TAGGING = "/gpsTagging";
 		final String CONSENT_APPLICATION = "/consentApplication";
 		final String GET_ALL_FORM_STATUS = "/getAllFormStatus";
+		final String SUBMIT_BULK_INSPECTION = "/submitBulkInspection";
 	}
 
 	public interface JsonFormServiceApi {

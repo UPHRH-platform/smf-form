@@ -1,5 +1,7 @@
 package com.tarento.formservice.utils.NotificationService;
 
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,13 +45,13 @@ public class PushBox {
 		}
 	}
 
-	public static void sendMessagesToDevices(SendMessagePrototype messagePrototype) {
+	public static void sendMessagesToDevices(SendMessagePrototype messagePrototype, Map<String, String> dataMap) {
 		for (UserDevice userDevice : messagePrototype.getDevices()) {
 			try {
 				Notification newNotification = new Notification(messagePrototype.getMessageTitle(),
 						messagePrototype.getMessageContent());
 				Message message = Message.builder().setToken(userDevice.getDeviceToken())
-						.setNotification(newNotification).build();
+						.setNotification(newNotification).putAllData(dataMap).build();
 				String response = FirebaseMessaging.getInstance().sendAsync(message).get();
 				LOGGER.info("##PushBox## : Message Send Status : " + response);
 			} catch (Exception ex) {

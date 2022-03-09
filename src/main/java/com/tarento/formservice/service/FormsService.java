@@ -81,4 +81,6 @@ public interface FormsService {
 
 	public Boolean consentApplication(Consent consent, UserInfo userInfo);
 
+	public void submitBulkInspection(List<IncomingData> inspectionDataList, UserInfo userInfo);
+
 }

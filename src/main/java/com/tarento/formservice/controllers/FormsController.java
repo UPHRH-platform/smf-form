@@ -563,4 +563,31 @@ public class FormsController {
 		return ResponseGenerator.failureResponse();
 	}
 
+	@PostMapping(value = PathRoutes.FormServiceApi.SUBMIT_BULK_INSPECTION)
+	public String submitBulkInspection(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
+			@RequestBody List<IncomingData> incomingDataList) throws IOException {
+		if (incomingDataList != null && incomingDataList.size() > 0) {
+			for (IncomingData incomingData : incomingDataList) {
+				List<IncomingData> inspectionDataList = new ArrayList<>();
+				String validation = validationService.validateInspectionObject(incomingData);
+				if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
+					IncomingData inspectionData = new IncomingData();
+					inspectionData.setInspectorDataObject(incomingData);
+					inspectionData.setApplicationId(incomingData.getApplicationId());
+					inspectionData.setInspectorSummaryDataObject(incomingData.getInspectorSummaryDataObject());
+					UserInfo userInfo = null;
+					if (StringUtils.isNotBlank(xUserInfo)) {
+						userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+						inspectionData.setUpdatedBy(userInfo.getEmailId());
+					}
+					inspectionDataList.add(inspectionData);
+					formsService.submitBulkInspection(inspectionDataList, userInfo);
+					return ResponseGenerator.successResponse(Boolean.TRUE);
+
+				}
+			}
+		}
+		return ResponseGenerator.failureResponse();
+	}
 }
