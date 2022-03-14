@@ -79,14 +79,14 @@ public class FormsController {
 	private ValidationService validationService;
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_FORMS, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getAllForms(
+	public String getAllForms(@RequestParam(required = false) Boolean isDetail,
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
 			throws JsonProcessingException {
 		UserInfo userInfo = null;
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
-		return ResponseGenerator.successResponse(formsService.getAllForms(userInfo));
+		return ResponseGenerator.successResponse(formsService.getAllForms(userInfo, isDetail));
 	}
 
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_FORM_BY_ID, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -587,6 +587,19 @@ public class FormsController {
 
 				}
 			}
+		}
+		return ResponseGenerator.failureResponse();
+	}
+
+	@PostMapping(value = PathRoutes.FormServiceApi.CONSENT_BULK_APPLICATION)
+	public String consentBulkApplication(@RequestBody List<Consent> consentList,
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
+			throws JsonProcessingException {
+		UserInfo userInfo = null;
+		if (StringUtils.isNotBlank(xUserInfo)) {
+			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+			formsService.consentBulkApplication(consentList, userInfo);
+			return ResponseGenerator.successResponse(Boolean.TRUE);
 		}
 		return ResponseGenerator.failureResponse();
 	}

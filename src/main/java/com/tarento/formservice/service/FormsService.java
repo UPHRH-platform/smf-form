@@ -29,12 +29,12 @@ import com.tarento.formservice.models.FormDetail;
  *
  */
 public interface FormsService {
-	
-	public static String INSPECTION_LEAD_INSPECTOR = "inspectionLeadInspector"; 
+
+	public static String INSPECTION_LEAD_INSPECTOR = "inspectionLeadInspector";
 
 	public Form createForm(FormDetail newForm) throws IOException;
 
-	public List<Form> getAllForms(UserInfo userInfo);
+	public List<Form> getAllForms(UserInfo userInfo, Boolean isDetail);
 
 	public FormDetail getFormById(Long id);
 
@@ -84,5 +84,7 @@ public interface FormsService {
 	public Boolean consentApplication(Consent consent, UserInfo userInfo);
 
 	public void submitBulkInspection(List<IncomingData> inspectionDataList, UserInfo userInfo);
+
+	public void consentBulkApplication(List<Consent> consentList, UserInfo userInfo);
 
 }

@@ -166,7 +166,7 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
-	public List<Form> getAllForms(UserInfo userInfo) {
+	public List<Form> getAllForms(UserInfo userInfo, Boolean isDetail) {
 		List<Form> formList = new ArrayList<>();
 		SearchRequest searchRequest = buildQueryForGetAllForms(userInfo);
 		MultiSearchResponse response = elasticRepository.executeMultiSearchRequest(searchRequest);
@@ -184,7 +184,13 @@ public class FormsServiceImpl implements FormsService {
 					if (hitsNode.has("hits")) {
 						JsonNode innerHits = hitsNode.findValue("hits");
 						for (JsonNode eachInnerHit : innerHits) {
-							Form form = gson.fromJson(eachInnerHit.findValue("sourceAsMap").toString(), Form.class);
+							Form form = null;
+							if (isDetail != null && isDetail) {
+								form = gson.fromJson(eachInnerHit.findValue("sourceAsMap").toString(),
+										FormDetail.class);
+							} else {
+								form = gson.fromJson(eachInnerHit.findValue("sourceAsMap").toString(), Form.class);
+							}
 							form.setNumberOfRecords((long) randInt(1, 1000));
 							LOGGER.info("Each Form : {}", gson.toJson(form));
 							formList.add(form);
@@ -1347,6 +1353,19 @@ public class FormsServiceImpl implements FormsService {
 			try {
 				for (IncomingData incomingData : inspectionDataList) {
 					submitInspection(incomingData, userInfo);
+				}
+			} catch (Exception e) {
+				LOGGER.error(String.format(Constants.EXCEPTION, "submitBulkInspection", e.getMessage()));
+			}
+		}).start();
+	}
+
+	@Override
+	public void consentBulkApplication(List<Consent> consentList, UserInfo userInfo) {
+		new Thread(() -> {
+			try {
+				for (Consent consent : consentList) {
+					consentApplication(consent, userInfo);
 				}
 			} catch (Exception e) {
 				LOGGER.error(String.format(Constants.EXCEPTION, "submitBulkInspection", e.getMessage()));
