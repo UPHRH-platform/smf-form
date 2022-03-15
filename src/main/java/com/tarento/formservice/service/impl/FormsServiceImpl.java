@@ -851,7 +851,7 @@ public class FormsServiceImpl implements FormsService {
 						finalList.getKeyValues().addAll(list.getKeyValues());
 
 						// Creating Search Request for Received Today
-						RangeQueryBuilder assignedDateFilter = QueryBuilders.rangeQuery("inspectionAssignedDate")
+						RangeQueryBuilder assignedDateFilter = QueryBuilders.rangeQuery(Constants.ElasticSearchFields.MAPPING.get("inspectionAssignedDate"))
 								.from(startOfTodayCal.getTime().getTime()).to(endOfTodayCal.getTime().getTime());
 						BoolQueryBuilder filters2 = QueryBuilders.boolQuery().filter(userIdFilter)
 								.filter(assignedDateFilter);
@@ -871,7 +871,7 @@ public class FormsServiceImpl implements FormsService {
 
 						// Creating Search Request for Reviewed Today
 						RangeQueryBuilder updatedDateFilter = QueryBuilders
-								.rangeQuery(Constants.ElasticSearchFields.MAPPING.get("inspectionUpdatedDate"))
+								.rangeQuery("inspectionDate")
 								.from(startOfTodayCal.getTime().getTime()).to(endOfTodayCal.getTime().getTime());
 						TermQueryBuilder inspectionCompletedFilter = QueryBuilders.termQuery(
 								Constants.ElasticSearchFields.MAPPING.get("status"), Status.INSCOMPLETED.name());
@@ -1215,6 +1215,7 @@ public class FormsServiceImpl implements FormsService {
 				Boolean inspectionCompleted = Boolean.TRUE;
 				if (applicationData != null && applicationData.getInspection() != null
 						&& applicationData.getInspection().getAssignedTo() != null) {
+					applicationData.setInspectionDate(DateUtils.getYyyyMmDdInUTC());
 					for (Assignee assignee : applicationData.getInspection().getAssignedTo()) {
 						if (assignee.getId().equals(userInfo.getId()) && assignee.getLeadInspector() != null
 								&& assignee.getLeadInspector()) {
@@ -1228,6 +1229,7 @@ public class FormsServiceImpl implements FormsService {
 				}
 				// allow only lead inspector to submit inspection details
 				if (isLeadIns) {
+					incomingData.setInspectionDate(DateUtils.getYyyyMmDdInUTC());
 					incomingData.setInspection(applicationData.getInspection());
 					String nextStatus = inspectionCompleted ? workflowDto.getNextState()
 							: Status.LEADINSCOMPLETED.name();

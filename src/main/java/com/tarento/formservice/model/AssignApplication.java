@@ -18,6 +18,15 @@ public class AssignApplication {
 	private List<Long> assistingInspector;
 	private List<Long> leadInspector;
 	private Long formId;
+	private String inspectionDate; 
+	
+	public String getInspectionDate() {
+		return inspectionDate;
+	}
+
+	public void setInspectionDate(String inspectionDate) {
+		this.inspectionDate = inspectionDate;
+	}
 
 	public List<Long> getAssistingInspector() {
 		return assistingInspector;

@@ -35,6 +35,15 @@ public class IncomingData {
 	private String updatedDate;
 	private Long reviewedBy;
 	private String reviewedDate;
+	private String inspectionDate;
+	
+	public String getInspectionDate() {
+		return inspectionDate;
+	}
+
+	public void setInspectionDate(String inspectionDate) {
+		this.inspectionDate = inspectionDate;
+	}
 
 	public Object getInspectorSummaryDataObject() {
 		return inspectorSummaryDataObject;
