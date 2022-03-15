@@ -36,7 +36,8 @@ public class IncomingData {
 	private Long reviewedBy;
 	private String reviewedDate;
 	private String inspectionDate;
-	
+	private String inspectionCompletedDate;
+
 	public String getInspectionDate() {
 		return inspectionDate;
 	}

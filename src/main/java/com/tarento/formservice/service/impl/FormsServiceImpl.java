@@ -851,7 +851,8 @@ public class FormsServiceImpl implements FormsService {
 						finalList.getKeyValues().addAll(list.getKeyValues());
 
 						// Creating Search Request for Received Today
-						RangeQueryBuilder assignedDateFilter = QueryBuilders.rangeQuery(Constants.ElasticSearchFields.MAPPING.get("inspectionAssignedDate"))
+						RangeQueryBuilder assignedDateFilter = QueryBuilders
+								.rangeQuery(Constants.ElasticSearchFields.MAPPING.get("inspectionAssignedDate"))
 								.from(startOfTodayCal.getTime().getTime()).to(endOfTodayCal.getTime().getTime());
 						BoolQueryBuilder filters2 = QueryBuilders.boolQuery().filter(userIdFilter)
 								.filter(assignedDateFilter);
@@ -870,8 +871,7 @@ public class FormsServiceImpl implements FormsService {
 						finalList.getKeyValues().addAll(list.getKeyValues());
 
 						// Creating Search Request for Reviewed Today
-						RangeQueryBuilder updatedDateFilter = QueryBuilders
-								.rangeQuery("inspectionDate")
+						RangeQueryBuilder updatedDateFilter = QueryBuilders.rangeQuery("inspectionDate")
 								.from(startOfTodayCal.getTime().getTime()).to(endOfTodayCal.getTime().getTime());
 						TermQueryBuilder inspectionCompletedFilter = QueryBuilders.termQuery(
 								Constants.ElasticSearchFields.MAPPING.get("status"), Status.INSCOMPLETED.name());
@@ -1215,7 +1215,6 @@ public class FormsServiceImpl implements FormsService {
 				Boolean inspectionCompleted = Boolean.TRUE;
 				if (applicationData != null && applicationData.getInspection() != null
 						&& applicationData.getInspection().getAssignedTo() != null) {
-					applicationData.setInspectionDate(DateUtils.getYyyyMmDdInUTC());
 					for (Assignee assignee : applicationData.getInspection().getAssignedTo()) {
 						if (assignee.getId().equals(userInfo.getId()) && assignee.getLeadInspector() != null
 								&& assignee.getLeadInspector()) {
@@ -1229,13 +1228,16 @@ public class FormsServiceImpl implements FormsService {
 				}
 				// allow only lead inspector to submit inspection details
 				if (isLeadIns) {
-					incomingData.setInspectionDate(DateUtils.getYyyyMmDdInUTC());
 					incomingData.setInspection(applicationData.getInspection());
+					incomingData.setInspectionDate(DateUtils.getYyyyMmDdInUTC());
+					incomingData.getInspection().setInspectionDate(DateUtils.getYyyyMmDdInUTC());
 					String nextStatus = inspectionCompleted ? workflowDto.getNextState()
 							: Status.LEADINSCOMPLETED.name();
 					incomingData.getInspection().setStatus(nextStatus);
 					if (inspectionCompleted) {
 						incomingData.setStatus(workflowDto.getNextState());
+						incomingData.setInspectionCompletedDate(DateUtils.getYyyyMmDdInUTC());
+						incomingData.getInspection().setInspectionCompletedDate(DateUtils.getYyyyMmDdInUTC());
 					}
 					Boolean response = saveFormSubmitv1(incomingData, userInfo,
 							inspectionCompleted ? Constants.WorkflowActions.COMPLETED_INSPECTION
@@ -1334,6 +1336,8 @@ public class FormsServiceImpl implements FormsService {
 					if (inspectionCompleted) {
 						applicationData.setStatus(workflowDto.getNextState());
 						applicationData.getInspection().setStatus(workflowDto.getNextState());
+						applicationData.setInspectionCompletedDate(DateUtils.getYyyyMmDdInUTC());
+						applicationData.getInspection().setInspectionCompletedDate(DateUtils.getYyyyMmDdInUTC());
 					}
 					Boolean indexed = formsDao.updateFormData(applicationData, consent.getApplicationId());
 					appStatusTrack(indexed, objectMapper.convertValue(applicationData, Map.class),
