@@ -873,10 +873,8 @@ public class FormsServiceImpl implements FormsService {
 						// Creating Search Request for Reviewed Today
 						RangeQueryBuilder updatedDateFilter = QueryBuilders.rangeQuery("inspectionDate")
 								.from(startOfTodayCal.getTime().getTime()).to(endOfTodayCal.getTime().getTime());
-						TermQueryBuilder inspectionCompletedFilter = QueryBuilders.termQuery(
-								Constants.ElasticSearchFields.MAPPING.get("status"), Status.INSCOMPLETED.name());
 						BoolQueryBuilder filters3 = QueryBuilders.boolQuery().filter(userIdFilter)
-								.filter(updatedDateFilter).filter(inspectionCompletedFilter);
+								.filter(updatedDateFilter);
 						FilterAggregationBuilder reviewedTodayAggregationFilter = AggregationBuilders
 								.filter("Reviewed Today", filters3)
 								.subAggregation(AggregationBuilders.cardinality("Count")
