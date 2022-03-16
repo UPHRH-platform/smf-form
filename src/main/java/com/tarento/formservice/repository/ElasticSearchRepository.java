@@ -64,12 +64,14 @@ public class ElasticSearchRepository {
 	private AppConfiguration appConfig;
 
 	private RestHighLevelClient client;
+	private RestHighLevelClient client2;
 
 	@Autowired
 	private ElasticSearchRepository(AppConfiguration appConfiguration, RestTemplate restTemp) {
 		appConfig = appConfiguration;
 		restTemplate = restTemp;
 		client = connectToElasticSearch();
+		client2 = connectToElasticSearch2();
 	}
 
 	private RestHighLevelClient connectToElasticSearch() {
@@ -86,9 +88,22 @@ public class ElasticSearchRepository {
 		return new RestHighLevelClient(
 				RestClient.builder(new HttpHost(appConfig.getElasticHost(), appConfig.getElasticPort())));
 
-/*		return new RestHighLevelClient(
-				RestClient.builder(new HttpHost(appConfig.getElasticHost(), appConfig.getElasticPort(), "https"))
-				.setHttpClientConfigCallback(httpClientConfigCallback)); */
+	}
+	
+	private RestHighLevelClient connectToElasticSearch2() {
+		final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+		credentialsProvider.setCredentials(AuthScope.ANY,
+				new UsernamePasswordCredentials("elastic", "PuAz@itAqwsaR34bYu"));
+
+		HttpClientConfigCallback httpClientConfigCallback = new HttpClientConfigCallback() {
+			@Override
+			public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+				return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+			}
+		};
+		return new RestHighLevelClient(
+				RestClient.builder(new HttpHost("elastic.pulz.app",443, "https"))
+				.setHttpClientConfigCallback(httpClientConfigCallback)); 
 
 	}
 
@@ -126,6 +141,7 @@ public class ElasticSearchRepository {
 			IndexRequest indexRequest = new IndexRequest(indexName, documentType, id).source(new Gson().toJson(object),
 					XContentType.JSON);
 			IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
+			client2.index(indexRequest, RequestOptions.DEFAULT);
 			if (!StringUtils.isBlank(response.toString()))
 				LOGGER.info("Response : {}", response);
 		} catch (Exception e) {
@@ -141,6 +157,7 @@ public class ElasticSearchRepository {
 			UpdateRequest updateRequest = new UpdateRequest(indexName, documentType, id).doc(new Gson().toJson(object),
 					XContentType.JSON);
 			UpdateResponse response = client.update(updateRequest, RequestOptions.DEFAULT);
+			client2.update(updateRequest, RequestOptions.DEFAULT);
 			if (!StringUtils.isBlank(response.toString()))
 				LOGGER.info("Updated Response : {}", response.getResult());
 		} catch (Exception e) {
@@ -153,6 +170,7 @@ public class ElasticSearchRepository {
 	public Boolean writeBulkDatatoElastic(BulkRequest request) throws IOException {
 		try {
 			BulkResponse response = client.bulk(request, RequestOptions.DEFAULT);
+			client2.bulk(request, RequestOptions.DEFAULT);
 			if (!StringUtils.isBlank(response.toString()))
 				LOGGER.info("Response : {}", response);
 		} catch (Exception e) {
