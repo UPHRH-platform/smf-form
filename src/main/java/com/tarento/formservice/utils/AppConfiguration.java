@@ -36,9 +36,6 @@ public class AppConfiguration {
 	@Value("${es.fs.formsdata.document.type}")
 	private String formDataIndexType;
 
-	@Value("(${es.fs.interactions.index.name}")
-	private String formInteractionIndex;
-
 	@Value("${cloud_storage_type}")
 	private String provider;
 
@@ -185,14 +182,6 @@ public class AppConfiguration {
 
 	public void setFormDataIndexType(String formDataIndexType) {
 		this.formDataIndexType = formDataIndexType;
-	}
-
-	public String getFormInteractionIndex() {
-		return formInteractionIndex;
-	}
-
-	public void setFormInteractionIndex(String formInteractionIndex) {
-		this.formInteractionIndex = formInteractionIndex;
 	}
 
 	public String getProvider() {

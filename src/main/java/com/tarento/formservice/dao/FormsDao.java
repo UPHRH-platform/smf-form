@@ -5,10 +5,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import org.elasticsearch.action.search.SearchRequest;
-import org.springframework.http.HttpHeaders;
 
 import com.tarento.formservice.model.ActivityLogs;
-import com.tarento.formservice.model.FormData;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.State;
 import com.tarento.formservice.model.StateMatrix;
@@ -31,14 +29,10 @@ public interface FormsDao {
 
 	Boolean updateFormData(Object object, String id);
 
-	public Boolean addInteraction(FormData fData, HttpHeaders httpHeaders);
-
-	public Boolean updateInteractions(Map<String, Object> jsonMap, String id);
-
 	List<Map<String, Object>> searchResponse(SearchRequest searchRequest);
 
 	List<Map<String, Object>> searchAggregationResponse(SearchRequest searchRequest, String aggregationName);
-	
+
 	ConcurrentMap<Long, State> fetchAllStates(SearchRequest searchRequest);
 
 	ConcurrentMap<String, List<StateMatrix>> fetchAllStateMatrix(SearchRequest searchRequest);
