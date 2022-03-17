@@ -2,7 +2,6 @@ package com.tarento.formservice.utils;
 
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,26 +17,28 @@ import com.tarento.formservice.repository.ElasticSearchRepository;
 public class WorkflowUtil {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(WorkflowUtil.class);
-	
+
 	static AppConfiguration appConfig;
 
 	static ElasticSearchRepository elasticsearchRepo;
-	
+
 	@Autowired
 	public void setFormService(ElasticSearchRepository elasticsearchRepo) {
 		WorkflowUtil.elasticsearchRepo = elasticsearchRepo;
 	}
-	
+
 	@Autowired
 	public void setAppConfig(AppConfiguration appConfig) {
 		WorkflowUtil.appConfig = appConfig;
 	}
-	
+
 	public static void getNextStateForMyRequest(WorkflowDto workflowDto) {
-		List<StateMatrix> stateMatrixList = StateMatrixManager.getStateMatrixMap().get(workflowDto.getActionStatement());
-		for(StateMatrix matrix : stateMatrixList) {
-			String nextState = ""; 
-			if(matrix.getRole().equals(workflowDto.getRole()) && matrix.getCurrentState().equals(workflowDto.getCurrentState())) { 
+		List<StateMatrix> stateMatrixList = StateMatrixManager.getStateMatrixMap()
+				.get(workflowDto.getActionStatement());
+		for (StateMatrix matrix : stateMatrixList) {
+			String nextState = "";
+			if (matrix.getRole().equals(workflowDto.getRole())
+					&& matrix.getCurrentState().equals(workflowDto.getCurrentState())) {
 				nextState = matrix.getNextState();
 				workflowDto.setNextState(nextState);
 				Runnable task1 = new Runnable() {
@@ -55,9 +56,9 @@ public class WorkflowUtil {
 			}
 		}
 	}
-	
+
 	public static Boolean updateWorkflow(WorkflowDto workflowDto) {
-		return elasticsearchRepo.writeDatatoElastic(workflowDto, String.valueOf(new Date().getTime()), appConfig.getWorkflowLogIndex(),
-				appConfig.getFormIndexType());
+		return elasticsearchRepo.writeDatatoElastic(workflowDto, String.valueOf(new Date().getTime()),
+				appConfig.getWorkflowLogIndex(), appConfig.getFormIndexType());
 	}
 }

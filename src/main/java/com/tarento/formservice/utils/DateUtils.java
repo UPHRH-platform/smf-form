@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 public class DateUtils {
 	private static final String ENCOUNTERED_AN_EXCEPTION = "Encountered an Exception : %s";
-	public static final Logger LOGGER = LoggerFactory.getLogger(DateUtil.class);
+	public static final Logger LOGGER = LoggerFactory.getLogger(DateUtils.class);
 
 	public static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 	public static final String INVOICE_DATE_FORMATTER = "EEEE, MMMM d, yyyy";

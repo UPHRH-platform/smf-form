@@ -18,7 +18,6 @@ import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
@@ -49,14 +48,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.tarento.formservice.dao.FormsDao;
-import com.tarento.formservice.executor.StateMatrixManager;
 import com.tarento.formservice.model.AssignApplication;
 import com.tarento.formservice.model.Assignee;
 import com.tarento.formservice.model.Consent;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.KeyValue;
 import com.tarento.formservice.model.KeyValueList;
-import com.tarento.formservice.model.ReplyFeedbackDto;
 import com.tarento.formservice.model.ResponseData;
 import com.tarento.formservice.model.Result;
 import com.tarento.formservice.model.Role;
@@ -67,9 +64,6 @@ import com.tarento.formservice.model.State;
 import com.tarento.formservice.model.StateMatrix;
 import com.tarento.formservice.model.Status;
 import com.tarento.formservice.model.UserInfo;
-import com.tarento.formservice.model.VerifyFeedbackDto;
-import com.tarento.formservice.model.Vote;
-import com.tarento.formservice.model.VoteFeedbackDto;
 import com.tarento.formservice.model.WorkflowDto;
 import com.tarento.formservice.models.Field;
 import com.tarento.formservice.models.Form;
@@ -252,9 +246,9 @@ public class FormsServiceImpl implements FormsService {
 		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
 		if (userInfo != null) {
 			for (Role role : userInfo.getRoles()) {
-				if (role.getName().equals(Roles.Institution.name()) || role.getName().equals(Roles.Inspector.name())) {
+				if (role.getName().equals(Roles.INSTITUTION.name()) || role.getName().equals(Roles.INSPECTOR.name())) {
 					boolQuery.must(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.PUBLISH.name()));
-				} else if (role.getName().equals(Roles.Regulator.name())) {
+				} else if (role.getName().equals(Roles.REGULATOR.name())) {
 					boolQuery
 							.should(QueryBuilders.boolQuery()
 									.mustNot(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.DRAFT.name())))
@@ -282,164 +276,9 @@ public class FormsServiceImpl implements FormsService {
 				.source(searchSourceBuilder);
 	}
 
-	private SearchRequest buildQueryForGetFeedbacks(Long id, String approved, String challenged, Long agentId,
-			Long customerId, UserInfo userInfo, Boolean challengeStatus) {
-		if (StringUtils.isNotBlank(challenged)) {
-			challengeStatus = Boolean.TRUE;
-		}
-		for (Role role : userInfo.getRoles()) {
-			if (role.getName().equals("Customer")) {
-				customerId = userInfo.getId();
-				return buildQueryForCustomerFeedbacks(id, approved, challenged, challengeStatus);
-			} else if (role.getName().equals("Agent")) {
-				agentId = userInfo.getId();
-			}
-		}
-		return buildQueryForGetFeedbacksGeneral(id, approved, challenged, agentId, customerId, challengeStatus);
-	}
-
-	private SearchRequest buildQueryForCustomerFeedbacks(Long id, String approved, String challenged,
-			Boolean challengeStatus) {
-		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
-		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-		if (id == null && approved == null && challenged == null) {
-			boolQuery.must(QueryBuilders.matchAllQuery());
-		}
-		if (id != null && id > 0) {
-			boolQuery.must(QueryBuilders.matchQuery("id", id));
-		}
-		if (approved != null) {
-			if (approved.equalsIgnoreCase("APPROVED"))
-				boolQuery.filter(QueryBuilders.termQuery("approval.keyword", "APPROVED"));
-			else if (approved.equalsIgnoreCase("REJECTED"))
-				boolQuery.filter(QueryBuilders.termQuery("approval.keyword", "REJECTED"));
-			else if (approved.equalsIgnoreCase("PENDING"))
-				boolQuery.filter(QueryBuilders.termQuery("approval.keyword", ""));
-		}
-		if (challengeStatus != null && challengeStatus) {
-			boolQuery.filter(QueryBuilders.termQuery("approval.keyword", "APPROVED"));
-			if (challenged != null) {
-				if (challenged.equalsIgnoreCase("OVERRULED"))
-					boolQuery.filter(QueryBuilders.termQuery("challenge.keyword", "OVERRULED"));
-				else if (challenged.equalsIgnoreCase("SUSTAINED"))
-					boolQuery.filter(QueryBuilders.termQuery("challenge.keyword", "SUSTAINED"));
-				else if (challenged.equalsIgnoreCase("PENDING"))
-					boolQuery.filter(QueryBuilders.matchQuery("challengeStatus", Boolean.TRUE));
-			}
-		}
-		if (approved == null && challengeStatus == null) {
-			boolQuery.must(QueryBuilders.termQuery("approval.keyword", "APPROVED"));
-			BoolQueryBuilder bool2Query = new BoolQueryBuilder();
-			bool2Query.must(QueryBuilders.matchQuery("challengeStatus", Boolean.TRUE));
-			bool2Query.filter(QueryBuilders.termQuery("challenge.keyword", "OVERRULED"));
-			BoolQueryBuilder bool3Query = new BoolQueryBuilder();
-			bool3Query.should(QueryBuilders.termQuery("challengeStatus", Boolean.FALSE));
-			bool3Query.should(bool2Query);
-			boolQuery.must(bool3Query);
-		}
-		searchSourceBuilder.query(boolQuery).sort(SortBuilders.fieldSort(Constants.TIMESTAMP).order(SortOrder.DESC))
-				.size(1000);
-		return new SearchRequest(appConfig.getFormDataIndex()).types(appConfig.getFormDataIndexType())
-				.source(searchSourceBuilder);
-	}
-
-	private SearchRequest buildQueryForGetFeedbacksGeneral(Long id, String approved, String challenged, Long agentId,
-			Long customerId, Boolean challengeStatus) {
-		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
-		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-		if (id == null && approved == null && challenged == null && agentId == null && customerId == null) {
-			boolQuery.must(QueryBuilders.matchAllQuery());
-		}
-		if (id != null && id > 0) {
-			boolQuery.must(QueryBuilders.matchQuery("id", id));
-		}
-		if (customerId != null && customerId > 0) {
-			MatchQueryBuilder approvalMatch = QueryBuilders.matchQuery("approval.keyword", "APPROVED");
-			boolQuery.must(approvalMatch);
-			MatchQueryBuilder blankChallengeStatusMatch = QueryBuilders.matchQuery("challenge.keyword", "");
-			MatchQueryBuilder overruledChallengeStatusMatch = QueryBuilders.matchQuery("challenge.keyword",
-					"SUSTAINED");
-			boolQuery.should(blankChallengeStatusMatch);
-			boolQuery.should(overruledChallengeStatusMatch);
-		}
-		if (agentId != null && agentId > 0) {
-			boolQuery.must(QueryBuilders.matchQuery("agentId", agentId));
-		}
-		if (approved != null) {
-			if (approved.equalsIgnoreCase("APPROVED"))
-				boolQuery.must(QueryBuilders.matchQuery("approval.keyword", "APPROVED"));
-			else if (approved.equalsIgnoreCase("REJECTED"))
-				boolQuery.must(QueryBuilders.matchQuery("approval.keyword", "REJECTED"));
-			else if (approved.equalsIgnoreCase("PENDING"))
-				boolQuery.must(QueryBuilders.matchQuery("approval.keyword", ""));
-		}
-		if (challengeStatus != null && challengeStatus) {
-			boolQuery.must(QueryBuilders.matchQuery("approval.keyword", "APPROVED"));
-			if (challenged != null) {
-				if (challenged.equalsIgnoreCase("OVERRULED"))
-					boolQuery.must(QueryBuilders.matchQuery("challenge.keyword", "OVERRULED"));
-				else if (challenged.equalsIgnoreCase("SUSTAINED"))
-					boolQuery.filter(QueryBuilders.termQuery("challenge.keyword", "SUSTAINED"));
-				else if (challenged.equalsIgnoreCase("PENDING"))
-					boolQuery.filter(QueryBuilders.matchQuery("challengeStatus", Boolean.TRUE));
-			}
-
-		}
-		searchSourceBuilder.query(boolQuery).sort(SortBuilders.fieldSort(Constants.TIMESTAMP).order(SortOrder.DESC))
-				.size(1000);
-		return new SearchRequest(appConfig.getFormDataIndex()).types(appConfig.getFormDataIndexType())
-				.source(searchSourceBuilder);
-
-	}
-
 	@Override
 	public Boolean saveFormSubmit(IncomingData incomingData) throws IOException {
 		return formsDao.addFormData(incomingData);
-	}
-
-	@Override
-	public List<Map<String, Object>> getFeedbacksByFormId(Long id, String approved, String challenged, Long agentId,
-			Long customerId, UserInfo userInfo, Boolean challengeStatus) {
-		SearchRequest searchRequest = buildQueryForGetFeedbacks(id, approved, challenged, agentId, customerId, userInfo,
-				challengeStatus);
-		return formsDao.searchResponse(searchRequest);
-
-	}
-
-	@Override
-	public List<Map<String, Object>> getFeedbacksByFormId(Long id) {
-		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
-		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-		if (id != null && id > 0) {
-			boolQuery.must(QueryBuilders.matchQuery("id", id));
-		}
-		searchSourceBuilder.query(boolQuery).sort(SortBuilders.fieldSort(Constants.TIMESTAMP).order(SortOrder.DESC))
-				.size(1000);
-		SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
-				.types(appConfig.getFormIndexType()).source(searchSourceBuilder);
-		return formsDao.searchResponse(searchRequest);
-	}
-
-	@Override
-	public Boolean verifyFeedback(UserInfo userInfo, VerifyFeedbackDto verifyFeedbackDto) throws IOException {
-		Map<String, Object> jsonMap = new HashMap<>();
-		if (verifyFeedbackDto.getCondition().equalsIgnoreCase("APPROVAL")
-				&& !StringUtils.isBlank(verifyFeedbackDto.getStatus())
-				&& (verifyFeedbackDto.getStatus().equalsIgnoreCase("APPROVED")
-						|| verifyFeedbackDto.getStatus().equalsIgnoreCase("REJECTED"))) {
-			jsonMap.put("approval", verifyFeedbackDto.getStatus());
-			jsonMap.put("approvedTime", new Date().getTime());
-			jsonMap.put("approvedBy", userInfo.getId());
-		} else if (verifyFeedbackDto.getCondition().equalsIgnoreCase("CHALLENGE")
-				&& !StringUtils.isBlank(verifyFeedbackDto.getStatus())
-				&& (verifyFeedbackDto.getStatus().equalsIgnoreCase("OVERRULED")
-						|| verifyFeedbackDto.getStatus().equalsIgnoreCase("SUSTAINED"))) {
-			jsonMap.put("challenge", verifyFeedbackDto.getStatus());
-			jsonMap.put("challengeStatus", true);
-			jsonMap.put("challengeVerifiedTime", new Date().getTime());
-			jsonMap.put("challengeVerifiedBy", userInfo.getId());
-		}
-		return formsDao.updateFormData(jsonMap, verifyFeedbackDto.getId());
 	}
 
 	@Override
@@ -467,178 +306,11 @@ public class FormsServiceImpl implements FormsService {
 		return null;
 	}
 
-	@Override
-	public List<Map<String, Object>> getFeedbacks(String approved, String challenged, Boolean challengeStatus) {
-		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0);
-		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery());
-		if (approved != null) {
-			if (approved.equalsIgnoreCase("APPROVED"))
-				boolQuery.filter(QueryBuilders.termQuery("approval.keyword", "APPROVED"));
-			else if (approved.equalsIgnoreCase("REJECTED"))
-				boolQuery.filter(QueryBuilders.termQuery("approval.keyword", "REJECTED"));
-			else if (approved.equalsIgnoreCase("PENDING"))
-				boolQuery.filter(QueryBuilders.termQuery("approval.keyword", ""));
-		}
-		if (challengeStatus != null && challengeStatus) {
-			boolQuery.filter(QueryBuilders.termQuery("approval.keyword", "APPROVED"));
-			boolQuery.filter(QueryBuilders.termQuery("challengeStatus", true));
-			if (challenged != null) {
-				if (challenged.equalsIgnoreCase("OVERRULED"))
-					boolQuery.filter(QueryBuilders.termQuery("challenge.keyword", "OVERRULED"));
-				else if (challenged.equalsIgnoreCase("SUSTAINED"))
-					boolQuery.filter(QueryBuilders.termQuery("challenge.keyword", "SUSTAINED"));
-			} else {
-				boolQuery.filter(QueryBuilders.termQuery("challenge.keyword", ""));
-			}
-		} else if (challengeStatus != null && !challengeStatus) {
-			boolQuery.filter(QueryBuilders.termQuery("challengeStatus", false));
-		}
-		searchSourceBuilder.query(boolQuery).sort(SortBuilders.fieldSort(Constants.TIMESTAMP).order(SortOrder.DESC))
-				.size(1000);
-		SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
-				.types(appConfig.getFormDataIndexType()).source(searchSourceBuilder);
-
-		return formsDao.searchResponse(searchRequest);
-	}
-
 	public Boolean challengeFeedback(String id, String reason) throws IOException {
 		Map<String, Object> jsonMap = new HashMap<>();
 		jsonMap.put("challengeStatus", true);
 		jsonMap.put("reasonForChallenge", reason);
 		return formsDao.updateFormData(jsonMap, id);
-	}
-
-	@Override
-	public Boolean voteFeedback(UserInfo userInfo, VoteFeedbackDto voteFeedbackDto) throws IOException {
-		Map<String, Object> jsonMap = new HashMap<>();
-		SearchRequest searchRequest = buildQueryForGetFeedbackById(voteFeedbackDto.getRecordId());
-		MultiSearchResponse response = elasticRepository.executeMultiSearchRequest(searchRequest);
-		SearchResponse searchResponse = response.getResponses()[0].getResponse();
-		JsonNode responseNode = null;
-		IncomingData form = new IncomingData();
-		if (searchResponse != null && searchResponse.getHits() != null) {
-			responseNode = new ObjectMapper().convertValue(searchResponse.getHits(), JsonNode.class);
-			if (responseNode.has("hits")) {
-				JsonNode innerHits = responseNode.findValue("hits");
-				for (JsonNode eachInnerHit : innerHits) {
-					form = gson.fromJson(eachInnerHit.findValue("sourceAsMap").toString(), IncomingData.class);
-					LOGGER.info("Each Form : {}", gson.toJson(form));
-				}
-			}
-		}
-		if (voteFeedbackDto.getAction().equals("DO")) {
-			if (voteFeedbackDto.getVote().equals("UP")) {
-				Vote vote = new Vote();
-				vote.setVoteDate(new Date().getTime());
-				vote.setCustomerId(voteFeedbackDto.getCustomerId());
-				vote.setVote(voteFeedbackDto.getVote());
-				List<Vote> updatedVotes = new ArrayList<>();
-				Long upvotesCount = 0l;
-				if (form.getUpvotes() != null && form.getUpvotes().size() > 0) {
-					updatedVotes = form.getUpvotes();
-					upvotesCount = form.getUpvoteCount();
-				}
-				updatedVotes.add(vote);
-				upvotesCount = upvotesCount + 1l;
-				jsonMap.put("upvotes", updatedVotes);
-				jsonMap.put("upvoteCount", upvotesCount);
-			} else if (voteFeedbackDto.getVote().equals("DOWN")) {
-				Vote vote = new Vote();
-				vote.setVoteDate(new Date().getTime());
-				vote.setCustomerId(voteFeedbackDto.getCustomerId());
-				vote.setVote(voteFeedbackDto.getVote());
-				List<Vote> updatedVotes = new ArrayList<>();
-				Long downvotesCount = 0l;
-				if (form.getDownvotes() != null && form.getDownvotes().size() > 0) {
-					updatedVotes = form.getDownvotes();
-					downvotesCount = form.getDownvoteCount();
-				}
-				updatedVotes.add(vote);
-				downvotesCount = downvotesCount + 1l;
-				jsonMap.put("downvotes", updatedVotes);
-				jsonMap.put("downvoteCount", downvotesCount);
-			}
-		} else if (voteFeedbackDto.getAction().equals("UNDO")) {
-			Map<Long, Vote> votesMap = new HashMap<Long, Vote>();
-			Long upvotesCount = 0l;
-			Long downvotesCount = 0l;
-			if (voteFeedbackDto.getVote().equals("UP")) {
-				if (form.getUpvotes() != null && form.getUpvotes().size() > 0) {
-					upvotesCount = form.getUpvoteCount();
-					for (Vote vote : form.getUpvotes()) {
-						if (!vote.getCustomerId().equals(voteFeedbackDto.getCustomerId())) {
-							votesMap.put(vote.getCustomerId(), vote);
-						} else {
-							upvotesCount = upvotesCount - 1l;
-						}
-					}
-				}
-				List<Vote> finalUpvotesList = new ArrayList(votesMap.values());
-				jsonMap.put("upvotes", finalUpvotesList);
-				jsonMap.put("upvoteCount", upvotesCount);
-			} else if (voteFeedbackDto.getVote().equals("DOWN")) {
-				if (form.getDownvotes() != null && form.getDownvotes().size() > 0) {
-					downvotesCount = form.getDownvoteCount();
-					for (Vote vote : form.getDownvotes()) {
-						if (!vote.getCustomerId().equals(voteFeedbackDto.getCustomerId())) {
-							votesMap.put(vote.getCustomerId(), vote);
-						} else {
-							downvotesCount = downvotesCount - 1l;
-						}
-					}
-				}
-
-				List<Vote> finalDownvotesList = new ArrayList(votesMap.values());
-				jsonMap.put("downvotes", finalDownvotesList);
-				jsonMap.put("downvoteCount", downvotesCount);
-			}
-		}
-		return formsDao.updateFormData(jsonMap, voteFeedbackDto.getRecordId());
-	}
-
-	private SearchRequest buildQueryForGetFeedbackById(String recordId) {
-		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(10)
-				.query(QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("_id", recordId)));
-		return new SearchRequest(appConfig.getFormDataIndex()).types(appConfig.getFormDataIndexType())
-				.source(searchSourceBuilder);
-	}
-
-	@Override
-	public Boolean replyFeedback(UserInfo userInfo, ReplyFeedbackDto replyFeedbackDto) throws IOException {
-		Map<String, Object> jsonMap = new HashMap<>();
-		replyFeedbackDto.setUserId(userInfo.getId());
-		if (StateMatrixManager.getUserData().get(userInfo.getId()) != null) {
-			replyFeedbackDto
-					.setUsername(StateMatrixManager.getUserData().get(userInfo.getId()).getUsername().toString());
-		} else {
-			ResponseData data = fetchUserInfo(userInfo.getId());
-			if (data != null) {
-				StateMatrixManager.getUserData().put(userInfo.getId(), data);
-				replyFeedbackDto.setUsername(data.getUsername().toString());
-			}
-		}
-		replyFeedbackDto.setReplyDate(new Date().getTime());
-		SearchRequest searchRequest = buildQueryForGetFeedbackById(replyFeedbackDto.getRecordId());
-
-		MultiSearchResponse response = elasticRepository.executeMultiSearchRequest(searchRequest);
-		SearchResponse searchResponse = response.getResponses()[0].getResponse();
-		JsonNode responseNode = null;
-		IncomingData form = new IncomingData();
-		if (searchResponse != null && searchResponse.getHits() != null) {
-			responseNode = new ObjectMapper().convertValue(searchResponse.getHits(), JsonNode.class);
-			if (responseNode.has("hits")) {
-				JsonNode innerHits = responseNode.findValue("hits");
-				for (JsonNode eachInnerHit : innerHits) {
-					form = gson.fromJson(eachInnerHit.findValue("sourceAsMap").toString(), IncomingData.class);
-					LOGGER.info("Each Form : {}", gson.toJson(form));
-				}
-			}
-		}
-		List<ReplyFeedbackDto> replies = new ArrayList<>();
-		if (replyFeedbackDto.getReply() != null && replyFeedbackDto.getReply() != "")
-			replies.add(replyFeedbackDto);
-		jsonMap.put("replies", replies);
-		return formsDao.updateFormData(jsonMap, replyFeedbackDto.getRecordId());
 	}
 
 	@Override
@@ -746,10 +418,10 @@ public class FormsServiceImpl implements FormsService {
 		if (userInfo != null && userInfo.getRoles() != null) {
 			for (Role role : userInfo.getRoles()) {
 				SearchObject roleBasedSearch = new SearchObject();
-				if (role.getName().equals(Roles.Institution.name())) {
+				if (role.getName().equals(Roles.INSTITUTION.name())) {
 					roleBasedSearch.setKey(Constants.CREATED_BY);
 					roleBasedSearch.setValues(userInfo.getEmailId());
-				} else if (role.getName().equals(Roles.Inspector.name())) {
+				} else if (role.getName().equals(Roles.INSPECTOR.name())) {
 					roleBasedSearch.setKey(Constants.ASSIGNED_TO);
 					roleBasedSearch.setValues(userInfo.getId());
 				}
@@ -767,7 +439,7 @@ public class FormsServiceImpl implements FormsService {
 	private void setRoleBasedExcludeSearchObject(UserInfo userInfo, SearchRequestDto searchRequestDto) {
 		if (userInfo != null && userInfo.getRoles() != null) {
 			for (Role role : userInfo.getRoles()) {
-				if (role.getName().equals(Roles.Regulator.name()) || role.getName().equals(Roles.Inspector.name())) {
+				if (role.getName().equals(Roles.REGULATOR.name()) || role.getName().equals(Roles.INSPECTOR.name())) {
 					SearchObject roleBasedSearch = new SearchObject();
 					roleBasedSearch.setKey(Constants.STATUS);
 					roleBasedSearch.setValues(Status.DRAFT.name());
@@ -790,7 +462,7 @@ public class FormsServiceImpl implements FormsService {
 			// query builder
 			if (userInfo != null && userInfo.getRoles() != null) {
 				for (Role role : userInfo.getRoles()) {
-					if (role.getName().equals(Roles.Regulator.name())) {
+					if (role.getName().equals(Roles.REGULATOR.name())) {
 						SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0);
 						searchSourceBuilder.aggregation(AggregationBuilders.terms("Total Pending")
 								.field(Constants.ElasticSearchFields.MAPPING.get(Constants.STATUS)));
@@ -802,14 +474,10 @@ public class FormsServiceImpl implements FormsService {
 						return translateResponse(responseNode);
 					} else {
 						// Setting all prerequisites
-						List<SearchRequest> searchRequestList = new ArrayList<SearchRequest>();
-						List<Map<String, Object>> responseNode = new ArrayList<Map<String, Object>>();
 						List<Long> userIdList = new ArrayList<Long>();
 						userIdList.add(userInfo.getId());
 						Calendar cal = Calendar.getInstance();
 						cal.setTime(new Date());
-						String dateFormat = "" + cal.get(Calendar.YEAR) + "-" + cal.get(Calendar.MONTH + 1) + "-"
-								+ cal.get(Calendar.DAY_OF_MONTH);
 						KeyValueList finalList = new KeyValueList();
 						List<KeyValue> keyValueList = new ArrayList<>();
 						finalList.setKeyValues(keyValueList);
@@ -1171,12 +839,12 @@ public class FormsServiceImpl implements FormsService {
 			WorkflowDto workflowDto = new WorkflowDto(incomingData, userInfo, status);
 			WorkflowUtil.getNextStateForMyRequest(workflowDto);
 			incomingData.setStatus(workflowDto.getNextState());
-			if (StringUtils.isNotBlank(incomingData.getNote())) {
+			if (StringUtils.isNotBlank(incomingData.getNotes())) {
 				List<Object> commentsList = new ArrayList<>();
 				Map<String, Object> commentsMap = new HashMap<>();
 				commentsMap.put(Constants.TYPE, incomingData.getStatus().toLowerCase()
 						+ Constants.convertToTitleCase(Constants.Parameters.COMMENTS));
-				commentsMap.put(Constants.VALUE, incomingData.getNote());
+				commentsMap.put(Constants.VALUE, incomingData.getNotes());
 				commentsMap.put(Constants.BY, userInfo.getId());
 				commentsMap.put(Constants.TIMESTAMP, DateUtils.getCurrentTimestamp());
 				if (incomingData.getComments() != null) {
@@ -1372,7 +1040,7 @@ public class FormsServiceImpl implements FormsService {
 					consentApplication(consent, userInfo);
 				}
 			} catch (Exception e) {
-				LOGGER.error(String.format(Constants.EXCEPTION, "submitBulkInspection", e.getMessage()));
+				LOGGER.error(String.format(Constants.EXCEPTION, "consentBulkApplication", e.getMessage()));
 			}
 		}).start();
 	}

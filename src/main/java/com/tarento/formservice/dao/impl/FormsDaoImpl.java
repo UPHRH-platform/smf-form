@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.elasticsearch.action.search.MultiSearchResponse;
-import org.elasticsearch.action.search.MultiSearchResponse.Item;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
@@ -80,18 +79,6 @@ public class FormsDaoImpl implements FormsDao {
 	}
 
 	@Override
-	public Boolean addInteraction(FormData fData, HttpHeaders httpHeaders) {
-		return elasticsearchRepo.writeDatatoElastic(fData, RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE),
-				appConfig.getFormInteractionIndex(), appConfig.getFormIndexType());
-	}
-
-	@Override
-	public Boolean updateInteractions(Map<String, Object> jsonMap, String id) {
-		return elasticsearchRepo.updateElasticData(jsonMap, id, appConfig.getFormInteractionIndex(),
-				appConfig.getFormIndexType());
-	}
-
-	@Override
 	public List<Map<String, Object>> searchResponse(SearchRequest searchRequest) {
 		try {
 			List<Map<String, Object>> responseData = new ArrayList<>();
@@ -117,14 +104,14 @@ public class FormsDaoImpl implements FormsDao {
 			MultiSearchResponse response = elasticsearchRepo.executeMultiSearchRequest(searchRequest);
 			SearchResponse searchResponse = response.getResponses()[0].getResponse();
 			Aggregations aggregations = searchResponse.getAggregations();
-			if(!aggregationName.equals("Total Pending")) { 
+			if (!aggregationName.equals("Total Pending")) {
 				ParsedFilter filters = aggregations.get(aggregationName);
-				Aggregations subAggregations = filters.getAggregations(); 
-				ParsedCardinality value = subAggregations.get("Count"); 
+				Aggregations subAggregations = filters.getAggregations();
+				ParsedCardinality value = subAggregations.get("Count");
 				Map<String, Object> eachRecordMap = new HashMap<String, Object>();
 				eachRecordMap.put(aggregationName, value.getValue());
 				responseData.add(eachRecordMap);
-			} else { 
+			} else {
 				ParsedStringTerms subjects = aggregations.get(aggregationName);
 				for (Terms.Bucket bucket : subjects.getBuckets()) {
 					String key = (String) bucket.getKey();
@@ -134,14 +121,14 @@ public class FormsDaoImpl implements FormsDao {
 					responseData.add(eachRecordMap);
 				}
 			}
-			
+
 			return responseData;
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "searchResponse", e.getMessage()));
 			return null;
 		}
 	}
-	
+
 	@Override
 	public ConcurrentMap<Long, State> fetchAllStates(SearchRequest searchRequest) {
 		ConcurrentMap<Long, State> stateMap = new ConcurrentHashMap<Long, State>();
@@ -195,6 +182,5 @@ public class FormsDaoImpl implements FormsDao {
 				RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE), appConfig.getActivityLogIndex(),
 				appConfig.getActivityLogIndexType());
 	}
-
 
 }
