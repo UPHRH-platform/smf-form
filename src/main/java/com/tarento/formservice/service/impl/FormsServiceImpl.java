@@ -245,10 +245,13 @@ public class FormsServiceImpl implements FormsService {
 	private BoolQueryBuilder roleBasedFormQuery(UserInfo userInfo) {
 		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
 		if (userInfo != null) {
+			// Returning all the published & unpublished forms for regulator & inspector
+			// login and only published form for institute login
 			for (Role role : userInfo.getRoles()) {
-				if (role.getName().equals(Roles.INSTITUTION.name()) || role.getName().equals(Roles.INSPECTOR.name())) {
+				if (role.getName().equals(Roles.INSTITUTION.name())) {
 					boolQuery.must(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.PUBLISH.name()));
-				} else if (role.getName().equals(Roles.REGULATOR.name())) {
+				} else if (role.getName().equals(Roles.REGULATOR.name())
+						|| role.getName().equals(Roles.INSPECTOR.name())) {
 					boolQuery
 							.should(QueryBuilders.boolQuery()
 									.mustNot(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.DRAFT.name())))

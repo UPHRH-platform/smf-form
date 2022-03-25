@@ -35,6 +35,7 @@ public class ActivityServiceImpl implements ActivityService {
 	@Override
 	public void applicationActivity(IncomingData oldObj, IncomingData updatedObj, UserInfo userInfo) {
 		try {
+			LOGGER.info("Checking the changes in the application");
 			ActivityLogs activityLogs = new ActivityLogs();
 			activityLogs.setId(updatedObj.getApplicationId());
 			activityLogs.setType(Constants.ServiceTypes.APPLICATION);
@@ -48,13 +49,15 @@ public class ActivityServiceImpl implements ActivityService {
 			activityLogs.setUpdatedObject(updatedObj);
 			Map<String, Map<String, Object>> changes = getUpdatedFields(oldObj, updatedObj);
 			if (changes != null && changes.size() > 0) {
+				LOGGER.info("Saving the application changes");
 				activityLogs.setChanges(changes);
 				formsDao.addLogs(activityLogs);
+			} else {
+				LOGGER.info("No changes detected in the application");
 			}
 
 		} catch (Exception e) {
-			e.printStackTrace();
-			LOGGER.error(String.format(Constants.EXCEPTION, "createUpdateApplication", e.getMessage()));
+			LOGGER.error(String.format(Constants.EXCEPTION, "applicationActivity", e.getMessage()));
 		}
 	}
 
