@@ -1060,4 +1060,48 @@ public class FormsServiceImpl implements FormsService {
 		}).start();
 	}
 
+	@Override
+	public List<Map<String, Object>> getAllPlainForms() {
+		try {
+			// query builder
+			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
+			BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
+			searchSourceBuilder.query(boolBuilder);
+			System.out.println(searchSourceBuilder);
+			// es call
+			SearchRequest searchRequest = new SearchRequest("fs-plain-form")
+					.types("forms").source(searchSourceBuilder);
+			LOGGER.info("Search Request : " + searchRequest);
+			List<Map<String, Object>> response = formsDao.searchPlainFormResponse(searchRequest);
+			return response;
+
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "getApplications", e.getMessage()));
+		}
+		return null;
+	}
+
+	@Override
+	public List<Map<String, Object>> getPlainFormsById(String id) {
+		try {
+			// query builder
+			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
+			BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
+			boolBuilder.must().add(
+					QueryBuilders.termsQuery("_id", id));
+			searchSourceBuilder.query(boolBuilder);
+			System.out.println(searchSourceBuilder);
+			// es call
+			SearchRequest searchRequest = new SearchRequest("fs-plain-form")
+					.types("forms").source(searchSourceBuilder);
+			LOGGER.info("Search Request : " + searchRequest);
+			List<Map<String, Object>> response = formsDao.searchPlainFormResponse(searchRequest);
+			return response;
+
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "getApplications", e.getMessage()));
+		}
+		return null;
+	}
+
 }

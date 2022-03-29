@@ -457,4 +457,25 @@ public class FormsController {
 		}
 		return ResponseGenerator.failureResponse();
 	}
+	
+	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_PLAIN_FORMS, produces = MediaType.APPLICATION_JSON_VALUE)
+	public String getAllPlainForms() throws JsonProcessingException {
+		List<Map<String, Object>> responseData = new ArrayList<>();
+		responseData = formsService.getAllPlainForms();
+		if (responseData != null) {
+			return ResponseGenerator.successResponse(responseData);
+		}
+		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
+	}
+	
+	@GetMapping(value = PathRoutes.FormServiceApi.GET_PLAIN_FORM_BY_ID, produces = MediaType.APPLICATION_JSON_VALUE)
+	public String getPlainFormById(@RequestParam(value = Constants.APPLICATION_ID, required = true) String applicationId)
+			throws JsonProcessingException {
+		List<Map<String, Object>> responseData = formsService.getPlainFormsById(applicationId);
+		if (responseData != null) {
+			return (responseData.isEmpty()) ? ResponseGenerator.successResponse(new HashMap<>())
+					: ResponseGenerator.successResponse(responseData.get(0));
+		}
+		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
+	}
 }

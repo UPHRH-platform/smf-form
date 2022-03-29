@@ -28,6 +28,8 @@ public interface PathRoutes {
 		final String SUBMIT_BULK_INSPECTION = "/submitBulkInspection";
 		final String CONSENT_BULK_APPLICATION = "/consentBulkApplication";
 		final String SAVE_PLAIN_FORM = "/v1/savePlainForm";
+		final String GET_ALL_PLAIN_FORMS = "/getAllPlainForms";
+		final String GET_PLAIN_FORM_BY_ID = "/getPlainFormById";
 	}
 
 	public interface JsonFormServiceApi {

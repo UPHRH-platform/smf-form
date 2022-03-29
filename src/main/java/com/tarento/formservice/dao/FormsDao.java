@@ -32,6 +32,8 @@ public interface FormsDao {
 	Boolean updateFormData(Object object, String id);
 
 	List<Map<String, Object>> searchResponse(SearchRequest searchRequest);
+	
+	List<Map<String, Object>> searchPlainFormResponse(SearchRequest searchRequest); 
 
 	List<Map<String, Object>> searchAggregationResponse(SearchRequest searchRequest, String aggregationName);
 

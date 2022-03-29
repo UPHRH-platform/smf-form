@@ -38,6 +38,10 @@ public interface FormsService {
 	ResponseData fetchUserInfo(Long userId);
 
 	List<Map<String, Object>> getApplications(UserInfo userInfo, SearchRequestDto searchRequestDto);
+	
+	List<Map<String, Object>> getPlainFormsById(String id);
+	
+	List<Map<String, Object>> getAllPlainForms();
 
 	KeyValueList getApplicationsStatusCount(UserInfo userInfo);
 

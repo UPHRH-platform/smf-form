@@ -102,6 +102,25 @@ public class FormsDaoImpl implements FormsDao {
 			return null;
 		}
 	}
+	
+	@Override
+	public List<Map<String, Object>> searchPlainFormResponse(SearchRequest searchRequest) {
+		try {
+			List<Map<String, Object>> responseData = new ArrayList<>();
+			MultiSearchResponse response = elasticsearchRepo.executeMultiSearchRequest(searchRequest);
+			SearchResponse searchResponse = response.getResponses()[0].getResponse();
+			SearchHit[] hit = searchResponse.getHits().getHits();
+			for (SearchHit hits : hit) {
+				Map<String, Object> sourceAsMap = hits.getSourceAsMap();
+				sourceAsMap.put(Constants.APPLICATION_ID, hits.getId());
+				responseData.add(sourceAsMap);
+			}
+			return responseData;
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "searchResponse", e.getMessage()));
+			return null;
+		}
+	}
 
 	@Override
 	public List<Map<String, Object>> searchAggregationResponse(SearchRequest searchRequest, String aggregationName) {
