@@ -1063,7 +1063,7 @@ public class FormsServiceImpl implements FormsService {
 			searchSourceBuilder.query(boolBuilder);
 			System.out.println(searchSourceBuilder);
 			// es call
-			SearchRequest searchRequest = new SearchRequest("fs-plain-form").types("forms").source(searchSourceBuilder);
+			SearchRequest searchRequest = new SearchRequest("fs-plain-form").source(searchSourceBuilder);
 			LOGGER.info("Search Request : " + searchRequest);
 			List<Map<String, Object>> response = formsDao.searchPlainFormResponse(searchRequest);
 			return response;
@@ -1084,7 +1084,7 @@ public class FormsServiceImpl implements FormsService {
 			searchSourceBuilder.query(boolBuilder);
 			System.out.println(searchSourceBuilder);
 			// es call
-			SearchRequest searchRequest = new SearchRequest("fs-plain-form").types("forms").source(searchSourceBuilder);
+			SearchRequest searchRequest = new SearchRequest("fs-plain-form").source(searchSourceBuilder);
 			LOGGER.info("Search Request : " + searchRequest);
 			List<Map<String, Object>> response = formsDao.searchPlainFormResponse(searchRequest);
 			return response;
