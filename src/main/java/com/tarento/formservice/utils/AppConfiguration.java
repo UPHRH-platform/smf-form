@@ -27,14 +27,8 @@ public class AppConfiguration {
 	@Value("${es.fs.forms.index.name}")
 	private String formIndex;
 
-	@Value("${es.fs.forms.document.type}")
-	private String formIndexType;
-
 	@Value("${es.fs.formsdata.index.name}")
 	private String formDataIndex;
-
-	@Value("${es.fs.formsdata.document.type}")
-	private String formDataIndexType;
 
 	@Value("${cloud_storage_type}")
 	private String provider;
@@ -83,9 +77,6 @@ public class AppConfiguration {
 
 	@Value("${es.fs.activitylog.index.name}")
 	private String activityLogIndex;
-
-	@Value("${es.fs.activitylog.index.type}")
-	private String activityLogIndexType;
 
 	@Value("${user.routes.getuserbyid.url}")
 	private String getUserByIdAPI;
@@ -160,28 +151,12 @@ public class AppConfiguration {
 		this.formIndex = formIndex;
 	}
 
-	public String getFormIndexType() {
-		return formIndexType;
-	}
-
-	public void setFormIndexType(String formIndexType) {
-		this.formIndexType = formIndexType;
-	}
-
 	public String getFormDataIndex() {
 		return formDataIndex;
 	}
 
 	public void setFormDataIndex(String formDataIndex) {
 		this.formDataIndex = formDataIndex;
-	}
-
-	public String getFormDataIndexType() {
-		return formDataIndexType;
-	}
-
-	public void setFormDataIndexType(String formDataIndexType) {
-		this.formDataIndexType = formDataIndexType;
 	}
 
 	public String getProvider() {
@@ -310,14 +285,6 @@ public class AppConfiguration {
 
 	public void setActivityLogIndex(String activityLogIndex) {
 		this.activityLogIndex = activityLogIndex;
-	}
-
-	public String getActivityLogIndexType() {
-		return activityLogIndexType;
-	}
-
-	public void setActivityLogIndexType(String activityLogIndexType) {
-		this.activityLogIndexType = activityLogIndexType;
 	}
 
 }

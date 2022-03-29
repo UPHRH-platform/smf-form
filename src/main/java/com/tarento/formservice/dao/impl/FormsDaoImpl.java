@@ -48,40 +48,35 @@ public class FormsDaoImpl implements FormsDao {
 
 	@Override
 	public Boolean addForm(FormDetail newForm) {
-		return elasticsearchRepo.writeDatatoElastic(newForm, newForm.getId().toString(), appConfig.getFormIndex(),
-				appConfig.getFormIndexType());
+		return elasticsearchRepo.writeDatatoElastic(newForm, newForm.getId().toString(), appConfig.getFormIndex());
 	}
 
 	@Override
 	public Boolean updateForm(FormDetail newForm) {
-		return elasticsearchRepo.updateElasticData(newForm, newForm.getId().toString(), appConfig.getFormIndex(),
-				appConfig.getFormIndexType());
+		return elasticsearchRepo.updateElasticData(newForm, newForm.getId().toString(), appConfig.getFormIndex());
 	}
 
 	@Override
 	public Boolean addFormData(IncomingData incomingData) {
 		incomingData.setApplicationId(RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE));
 		return elasticsearchRepo.writeDatatoElastic(incomingData, incomingData.getApplicationId(),
-				appConfig.getFormDataIndex(), appConfig.getFormIndexType());
+				appConfig.getFormDataIndex());
 	}
-	
+
 	@Override
 	public Boolean addPlainFormData(IncomingData incomingData) {
 		incomingData.setApplicationId(RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE));
-		return elasticsearchRepo.writeDatatoElastic(incomingData, incomingData.getApplicationId(),
-				"fs-plain-form", "forms");
+		return elasticsearchRepo.writeDatatoElastic(incomingData, incomingData.getApplicationId(), "fs-plain-form");
 	}
 
 	@Override
 	public Boolean updateFormData(Map<String, Object> jsonMap, String id) {
-		return elasticsearchRepo.updateElasticData(jsonMap, id, appConfig.getFormDataIndex(),
-				appConfig.getFormIndexType());
+		return elasticsearchRepo.updateElasticData(jsonMap, id, appConfig.getFormDataIndex());
 	}
 
 	@Override
 	public Boolean updateFormData(Object object, String id) {
-		return elasticsearchRepo.updateElasticData(object, id, appConfig.getFormDataIndex(),
-				appConfig.getFormIndexType());
+		return elasticsearchRepo.updateElasticData(object, id, appConfig.getFormDataIndex());
 	}
 
 	@Override
@@ -102,7 +97,7 @@ public class FormsDaoImpl implements FormsDao {
 			return null;
 		}
 	}
-	
+
 	@Override
 	public List<Map<String, Object>> searchPlainFormResponse(SearchRequest searchRequest) {
 		try {
@@ -204,8 +199,7 @@ public class FormsDaoImpl implements FormsDao {
 	@Override
 	public Boolean addLogs(ActivityLogs activityLogs) {
 		return elasticsearchRepo.writeDatatoElastic(activityLogs,
-				RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE), appConfig.getActivityLogIndex(),
-				appConfig.getActivityLogIndexType());
+				RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE), appConfig.getActivityLogIndex());
 	}
 
 }

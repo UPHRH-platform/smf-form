@@ -59,6 +59,6 @@ public class WorkflowUtil {
 
 	public static Boolean updateWorkflow(WorkflowDto workflowDto) {
 		return elasticsearchRepo.writeDatatoElastic(workflowDto, String.valueOf(new Date().getTime()),
-				appConfig.getWorkflowLogIndex(), appConfig.getFormIndexType());
+				appConfig.getWorkflowLogIndex());
 	}
 }

@@ -87,11 +87,10 @@ public class ElasticSearchRepository {
 				RestClient.builder(new HttpHost(appConfig.getElasticHost(), appConfig.getElasticPort())));
 
 	}
-	
+
 	private RestHighLevelClient connectToElasticSearch2() {
 		final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-		credentialsProvider.setCredentials(AuthScope.ANY,
-				new UsernamePasswordCredentials("username", "password"));
+		credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("username", "password"));
 
 		HttpClientConfigCallback httpClientConfigCallback = new HttpClientConfigCallback() {
 			@Override
@@ -99,9 +98,8 @@ public class ElasticSearchRepository {
 				return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
 			}
 		};
-		return new RestHighLevelClient(
-				RestClient.builder(new HttpHost("hostname",443, "https"))
-				.setHttpClientConfigCallback(httpClientConfigCallback)); 
+		return new RestHighLevelClient(RestClient.builder(new HttpHost("hostname", 443, "https"))
+				.setHttpClientConfigCallback(httpClientConfigCallback));
 
 	}
 
@@ -134,9 +132,9 @@ public class ElasticSearchRepository {
 		return false;
 	}
 
-	public Boolean writeDatatoElastic(Object object, String id, String indexName, String documentType) {
+	public Boolean writeDatatoElastic(Object object, String id, String indexName) {
 		try {
-			IndexRequest indexRequest = new IndexRequest(indexName, documentType, id).source(new Gson().toJson(object),
+			IndexRequest indexRequest = new IndexRequest().index(indexName).id(id).source(new Gson().toJson(object),
 					XContentType.JSON);
 			IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
 			if (!StringUtils.isBlank(response.toString()))
@@ -149,9 +147,9 @@ public class ElasticSearchRepository {
 	}
 
 	// Update ES Data
-	public Boolean updateElasticData(Object object, String id, String indexName, String documentType) {
+	public Boolean updateElasticData(Object object, String id, String indexName) {
 		try {
-			UpdateRequest updateRequest = new UpdateRequest(indexName, documentType, id).doc(new Gson().toJson(object),
+			UpdateRequest updateRequest = new UpdateRequest().index(indexName).id(id).doc(new Gson().toJson(object),
 					XContentType.JSON);
 			UpdateResponse response = client.update(updateRequest, RequestOptions.DEFAULT);
 			if (!StringUtils.isBlank(response.toString()))
@@ -225,12 +223,12 @@ public class ElasticSearchRepository {
 		}
 		return response;
 	}
-	
+
 	public MultiSearchResponse executeMultiSearchRequest(List<SearchRequest> searchRequests) {
 		MultiSearchResponse response = null;
 		try {
 			MultiSearchRequest multiRequest = new MultiSearchRequest();
-			for(SearchRequest request : searchRequests) { 
+			for (SearchRequest request : searchRequests) {
 				multiRequest.add(request);
 			}
 			response = client.msearch(multiRequest, RequestOptions.DEFAULT);

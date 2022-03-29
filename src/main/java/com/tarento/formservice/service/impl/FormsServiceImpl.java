@@ -154,8 +154,7 @@ public class FormsServiceImpl implements FormsService {
 		boolBuilder.must().add(QueryBuilders.matchQuery(Constants.Parameters.ID, newForm.getId()));
 		searchSourceBuilder.query(boolBuilder);
 		SearchRequest sRequest;
-		sRequest = new SearchRequest(appConfig.getFormIndex()).types(appConfig.getFormIndexType())
-				.source(searchSourceBuilder);
+		sRequest = new SearchRequest(appConfig.getFormIndex()).source(searchSourceBuilder);
 		return sRequest;
 	}
 
@@ -238,8 +237,7 @@ public class FormsServiceImpl implements FormsService {
 						.subAggregation(AggregationBuilders.topHits("LatestVersion").from(0).size(1)
 								.version(Boolean.FALSE).explain(Boolean.FALSE)
 								.sort(SortBuilders.fieldSort("version").order(SortOrder.DESC))));
-		return new SearchRequest(appConfig.getFormIndex()).types(appConfig.getFormIndexType())
-				.source(searchSourceBuilder);
+		return new SearchRequest(appConfig.getFormIndex()).source(searchSourceBuilder);
 	}
 
 	private BoolQueryBuilder roleBasedFormQuery(UserInfo userInfo) {
@@ -275,8 +273,7 @@ public class FormsServiceImpl implements FormsService {
 						.subAggregation(AggregationBuilders.topHits("LatestVersion").from(0).size(1)
 								.version(Boolean.FALSE).explain(Boolean.FALSE)
 								.sort(SortBuilders.fieldSort("version").order(SortOrder.DESC))));
-		return new SearchRequest(appConfig.getFormIndex()).types(appConfig.getFormIndexType())
-				.source(searchSourceBuilder);
+		return new SearchRequest(appConfig.getFormIndex()).source(searchSourceBuilder);
 	}
 
 	@Override
@@ -372,8 +369,7 @@ public class FormsServiceImpl implements FormsService {
 			searchSourceBuilder.sort(Constants.TIMESTAMP, SortOrder.DESC);
 			System.out.println(searchSourceBuilder);
 			// es call
-			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
-					.types(appConfig.getFormIndexType()).source(searchSourceBuilder);
+			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex()).source(searchSourceBuilder);
 			LOGGER.info("Search Request : " + searchRequest);
 			List<Map<String, Object>> response = formsDao.searchResponse(searchRequest);
 			if (searchRequestDto != null && searchRequestDto.getFilterObjects() != null) {
@@ -470,7 +466,7 @@ public class FormsServiceImpl implements FormsService {
 						searchSourceBuilder.aggregation(AggregationBuilders.terms("Total Pending")
 								.field(Constants.ElasticSearchFields.MAPPING.get(Constants.STATUS)));
 						SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex())
-								.types(appConfig.getFormIndexType()).source(searchSourceBuilder);
+								.source(searchSourceBuilder);
 						LOGGER.info("Search Request : " + searchRequest);
 						List<Map<String, Object>> responseNode = formsDao.searchAggregationResponse(searchRequest,
 								"Total Pending");
@@ -514,7 +510,7 @@ public class FormsServiceImpl implements FormsService {
 						SearchSourceBuilder totalPendingAggrSourceBuilder = new SearchSourceBuilder().size(0);
 						totalPendingAggrSourceBuilder.aggregation(totalPendingAggregationFilter);
 						SearchRequest totalPendingSearchRequest = new SearchRequest(appConfig.getFormDataIndex())
-								.types(appConfig.getFormIndexType()).source(totalPendingAggrSourceBuilder);
+								.source(totalPendingAggrSourceBuilder);
 						LOGGER.info("Search Request : " + totalPendingSearchRequest);
 						List<Map<String, Object>> totalPendingResponse = formsDao
 								.searchAggregationResponse(totalPendingSearchRequest, "Inspector Total Pending");
@@ -534,7 +530,7 @@ public class FormsServiceImpl implements FormsService {
 						SearchSourceBuilder receivedTodayAggrSourceBuilder = new SearchSourceBuilder().size(0);
 						receivedTodayAggrSourceBuilder.aggregation(receivedTodayAggregationFilter);
 						SearchRequest receivedTodaySearchRequest = new SearchRequest(appConfig.getFormDataIndex())
-								.types(appConfig.getFormIndexType()).source(receivedTodayAggrSourceBuilder);
+								.source(receivedTodayAggrSourceBuilder);
 						LOGGER.info("Search Request : " + receivedTodaySearchRequest);
 						List<Map<String, Object>> receivedTodayResponse = formsDao
 								.searchAggregationResponse(receivedTodaySearchRequest, "Received Today");
@@ -553,7 +549,7 @@ public class FormsServiceImpl implements FormsService {
 						SearchSourceBuilder reviewedTodayAggrSourceBuilder = new SearchSourceBuilder().size(0);
 						reviewedTodayAggrSourceBuilder.aggregation(reviewedTodayAggregationFilter);
 						SearchRequest reviewedTodaySearchRequest = new SearchRequest(appConfig.getFormDataIndex())
-								.types(appConfig.getFormIndexType()).source(reviewedTodayAggrSourceBuilder);
+								.source(reviewedTodayAggrSourceBuilder);
 						LOGGER.info("Search Request : " + reviewedTodaySearchRequest);
 						List<Map<String, Object>> reviewedTodayResponse = formsDao
 								.searchAggregationResponse(reviewedTodaySearchRequest, "Reviewed Today");
@@ -621,16 +617,15 @@ public class FormsServiceImpl implements FormsService {
 
 	@Override
 	public Boolean savePlainForm(IncomingData incomingData) {
-		Boolean indexed = null; 
+		Boolean indexed = null;
 		try {
-				indexed = formsDao.addPlainFormData(incomingData);
+			indexed = formsDao.addPlainFormData(incomingData);
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "savePlainForm", e.getMessage()));
 		}
 		return indexed;
 	}
 
-	
 	@Override
 	public Map<String, Object> getApplicationById(String applicationId, UserInfo userInfo) {
 		SearchRequestDto searchRequestDto = new SearchRequestDto();
@@ -820,8 +815,7 @@ public class FormsServiceImpl implements FormsService {
 	public ConcurrentMap<Long, State> fetchAllStates() {
 		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
 		// es call
-		SearchRequest searchRequest = new SearchRequest(appConfig.getFormStateIndex())
-				.types(appConfig.getFormIndexType()).source(searchSourceBuilder);
+		SearchRequest searchRequest = new SearchRequest(appConfig.getFormStateIndex()).source(searchSourceBuilder);
 		LOGGER.info("Search Request : " + searchRequest);
 		return formsDao.fetchAllStates(searchRequest);
 	}
@@ -831,7 +825,7 @@ public class FormsServiceImpl implements FormsService {
 		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
 		// es call
 		SearchRequest searchRequest = new SearchRequest(appConfig.getFormStateMatrixIndex())
-				.types(appConfig.getFormIndexType()).source(searchSourceBuilder);
+				.source(searchSourceBuilder);
 		LOGGER.info("Search Request : " + searchRequest);
 		return formsDao.fetchAllStateMatrix(searchRequest);
 	}
@@ -979,7 +973,7 @@ public class FormsServiceImpl implements FormsService {
 					new String[] {});
 			searchSourceBuilder.sort(SortBuilders.fieldSort(Constants.TIMESTAMP).order(SortOrder.DESC));
 			SearchRequest searchRequest = new SearchRequest(appConfig.getActivityLogIndex())
-					.types(appConfig.getActivityLogIndexType()).source(searchSourceBuilder);
+					.source(searchSourceBuilder);
 			return formsDao.searchResponse(searchRequest);
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "getActivityLogs", e.getMessage()));
@@ -1069,8 +1063,7 @@ public class FormsServiceImpl implements FormsService {
 			searchSourceBuilder.query(boolBuilder);
 			System.out.println(searchSourceBuilder);
 			// es call
-			SearchRequest searchRequest = new SearchRequest("fs-plain-form")
-					.types("forms").source(searchSourceBuilder);
+			SearchRequest searchRequest = new SearchRequest("fs-plain-form").types("forms").source(searchSourceBuilder);
 			LOGGER.info("Search Request : " + searchRequest);
 			List<Map<String, Object>> response = formsDao.searchPlainFormResponse(searchRequest);
 			return response;
@@ -1087,13 +1080,11 @@ public class FormsServiceImpl implements FormsService {
 			// query builder
 			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
 			BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
-			boolBuilder.must().add(
-					QueryBuilders.termsQuery("_id", id));
+			boolBuilder.must().add(QueryBuilders.termsQuery("_id", id));
 			searchSourceBuilder.query(boolBuilder);
 			System.out.println(searchSourceBuilder);
 			// es call
-			SearchRequest searchRequest = new SearchRequest("fs-plain-form")
-					.types("forms").source(searchSourceBuilder);
+			SearchRequest searchRequest = new SearchRequest("fs-plain-form").types("forms").source(searchSourceBuilder);
 			LOGGER.info("Search Request : " + searchRequest);
 			List<Map<String, Object>> response = formsDao.searchPlainFormResponse(searchRequest);
 			return response;
