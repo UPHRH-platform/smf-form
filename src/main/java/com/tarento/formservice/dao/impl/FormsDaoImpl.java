@@ -63,7 +63,13 @@ public class FormsDaoImpl implements FormsDao {
 		incomingData.setApplicationId(RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE));
 		return elasticsearchRepo.writeDatatoElastic(incomingData, incomingData.getApplicationId(),
 				appConfig.getFormDataIndex(), appConfig.getFormIndexType());
-
+	}
+	
+	@Override
+	public Boolean addPlainFormData(IncomingData incomingData) {
+		incomingData.setApplicationId(RandomStringUtils.random(15, Boolean.TRUE, Boolean.TRUE));
+		return elasticsearchRepo.writeDatatoElastic(incomingData, incomingData.getApplicationId(),
+				"fs-plain-form", "forms");
 	}
 
 	@Override

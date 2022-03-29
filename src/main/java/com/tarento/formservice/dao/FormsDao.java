@@ -25,6 +25,8 @@ public interface FormsDao {
 
 	public Boolean addFormData(IncomingData incomingData);
 
+	public Boolean addPlainFormData(IncomingData incomingData); 
+
 	Boolean updateFormData(Map<String, Object> jsonMap, String id);
 
 	Boolean updateFormData(Object object, String id);

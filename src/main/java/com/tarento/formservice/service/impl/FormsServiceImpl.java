@@ -620,6 +620,18 @@ public class FormsServiceImpl implements FormsService {
 	}
 
 	@Override
+	public Boolean savePlainForm(IncomingData incomingData) {
+		Boolean indexed = null; 
+		try {
+				indexed = formsDao.addPlainFormData(incomingData);
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "savePlainForm", e.getMessage()));
+		}
+		return indexed;
+	}
+
+	
+	@Override
 	public Map<String, Object> getApplicationById(String applicationId, UserInfo userInfo) {
 		SearchRequestDto searchRequestDto = new SearchRequestDto();
 		SearchObject sObject = new SearchObject();

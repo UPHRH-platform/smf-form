@@ -440,4 +440,21 @@ public class FormsController {
 		}
 		return ResponseGenerator.failureResponse();
 	}
+	
+	@PostMapping(value = PathRoutes.FormServiceApi.SAVE_PLAIN_FORM)
+	public String savePlainForm(@RequestBody IncomingData incomingData) throws IOException {
+		try {
+			if(incomingData != null) {
+				incomingData.setFormId(9999l);
+				if (formsService.savePlainForm(incomingData)) {
+					return ResponseGenerator.successResponse(Boolean.TRUE);
+				}
+			}
+			
+		} catch (Exception e) {
+			logger.error(String.format(Constants.EXCEPTION, "savePlainForm", e.getMessage()));
+			return ResponseGenerator.failureResponse(Constants.ResponseMessages.CHECK_REQUEST_PARAMS);
+		}
+		return ResponseGenerator.failureResponse();
+	}
 }
