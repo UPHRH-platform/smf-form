@@ -603,6 +603,7 @@ public class FormsServiceImpl implements FormsService {
 				incomingData.setTimestamp(DateUtils.getCurrentTimestamp());
 				incomingData.setCreatedDate(DateUtils.getYyyyMmDdInUTC());
 				indexed = formsDao.addFormData(incomingData);
+				appStatusTrack(indexed, objectMapper.convertValue(incomingData, Map.class), action, userInfo);
 			} else {
 				Map<String, Object> applicationObject = getApplicationById(incomingData.getApplicationId(), userInfo);
 				incomingData.setUpdatedDate(DateUtils.getYyyyMmDdInUTC());
