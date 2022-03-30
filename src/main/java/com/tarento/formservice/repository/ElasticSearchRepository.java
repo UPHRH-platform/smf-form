@@ -136,6 +136,7 @@ public class ElasticSearchRepository {
 		try {
 			IndexRequest indexRequest = new IndexRequest().index(indexName).id(id).source(new Gson().toJson(object),
 					XContentType.JSON);
+			LOGGER.info("Index request: " + indexRequest);
 			IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
 			if (!StringUtils.isBlank(response.toString()))
 				LOGGER.info("Response : {}", response);
