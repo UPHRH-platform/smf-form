@@ -246,10 +246,10 @@ public class FormsServiceImpl implements FormsService {
 			// Returning all the published & unpublished forms for regulator & inspector
 			// login and only published form for institute login
 			for (Role role : userInfo.getRoles()) {
-				if (role.getName().equals(Roles.INSTITUTION.name())) {
+				if (role.getName().equalsIgnoreCase(Roles.INSTITUTION.name())) {
 					boolQuery.must(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.PUBLISH.name()));
-				} else if (role.getName().equals(Roles.REGULATOR.name())
-						|| role.getName().equals(Roles.INSPECTOR.name())) {
+				} else if (role.getName().equalsIgnoreCase(Roles.REGULATOR.name())
+						|| role.getName().equalsIgnoreCase(Roles.INSPECTOR.name())) {
 					boolQuery
 							.should(QueryBuilders.boolQuery()
 									.mustNot(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.DRAFT.name())))
@@ -365,9 +365,7 @@ public class FormsServiceImpl implements FormsService {
 					}
 				}
 			}
-			searchSourceBuilder.query(boolBuilder);
-			searchSourceBuilder.sort(Constants.TIMESTAMP, SortOrder.DESC);
-			System.out.println(searchSourceBuilder);
+			searchSourceBuilder.query(boolBuilder).sort(Constants.TIMESTAMP, SortOrder.DESC);
 			// es call
 			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex()).source(searchSourceBuilder);
 			LOGGER.info("Search Request : " + searchRequest);
@@ -417,10 +415,10 @@ public class FormsServiceImpl implements FormsService {
 		if (userInfo != null && userInfo.getRoles() != null) {
 			for (Role role : userInfo.getRoles()) {
 				SearchObject roleBasedSearch = new SearchObject();
-				if (role.getName().equals(Roles.INSTITUTION.name())) {
+				if (role.getName().equalsIgnoreCase(Roles.INSTITUTION.name())) {
 					roleBasedSearch.setKey(Constants.CREATED_BY);
 					roleBasedSearch.setValues(userInfo.getEmailId());
-				} else if (role.getName().equals(Roles.INSPECTOR.name())) {
+				} else if (role.getName().equalsIgnoreCase(Roles.INSPECTOR.name())) {
 					roleBasedSearch.setKey(Constants.ASSIGNED_TO);
 					roleBasedSearch.setValues(userInfo.getId());
 				}
@@ -438,7 +436,8 @@ public class FormsServiceImpl implements FormsService {
 	private void setRoleBasedExcludeSearchObject(UserInfo userInfo, SearchRequestDto searchRequestDto) {
 		if (userInfo != null && userInfo.getRoles() != null) {
 			for (Role role : userInfo.getRoles()) {
-				if (role.getName().equals(Roles.REGULATOR.name()) || role.getName().equals(Roles.INSPECTOR.name())) {
+				if (role.getName().equalsIgnoreCase(Roles.REGULATOR.name())
+						|| role.getName().equalsIgnoreCase(Roles.INSPECTOR.name())) {
 					SearchObject roleBasedSearch = new SearchObject();
 					roleBasedSearch.setKey(Constants.STATUS);
 					roleBasedSearch.setValues(Status.DRAFT.name());
@@ -461,7 +460,7 @@ public class FormsServiceImpl implements FormsService {
 			// query builder
 			if (userInfo != null && userInfo.getRoles() != null) {
 				for (Role role : userInfo.getRoles()) {
-					if (role.getName().equals(Roles.REGULATOR.name())) {
+					if (role.getName().equalsIgnoreCase(Roles.REGULATOR.name())) {
 						SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0);
 						searchSourceBuilder.aggregation(AggregationBuilders.terms("Total Pending")
 								.field(Constants.ElasticSearchFields.MAPPING.get(Constants.STATUS)));
