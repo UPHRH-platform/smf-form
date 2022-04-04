@@ -64,12 +64,14 @@ public class ElasticSearchRepository {
 	private AppConfiguration appConfig;
 
 	private RestHighLevelClient client;
+	private RestHighLevelClient client2;
 
 	@Autowired
 	private ElasticSearchRepository(AppConfiguration appConfiguration, RestTemplate restTemp) {
 		appConfig = appConfiguration;
 		restTemplate = restTemp;
 		client = connectToElasticSearch();
+		client2 = connectToElasticSearch2();
 	}
 
 	private RestHighLevelClient connectToElasticSearch() {
@@ -83,14 +85,17 @@ public class ElasticSearchRepository {
 				return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
 			}
 		};
+//		return new RestHighLevelClient(
+//				RestClient.builder(new HttpHost(appConfig.getElasticHost(), appConfig.getElasticPort())));
 		return new RestHighLevelClient(
-				RestClient.builder(new HttpHost(appConfig.getElasticHost(), appConfig.getElasticPort())));
-
+				RestClient.builder(new HttpHost(appConfig.getElasticHost(),appConfig.getElasticPort(), "https"))
+				.setHttpClientConfigCallback(httpClientConfigCallback));
 	}
 
 	private RestHighLevelClient connectToElasticSearch2() {
 		final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-		credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("username", "password"));
+		credentialsProvider.setCredentials(AuthScope.ANY,
+				new UsernamePasswordCredentials("elastic", "PuAz@itAqwsaR34bYu"));
 
 		HttpClientConfigCallback httpClientConfigCallback = new HttpClientConfigCallback() {
 			@Override
@@ -98,8 +103,9 @@ public class ElasticSearchRepository {
 				return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
 			}
 		};
-		return new RestHighLevelClient(RestClient.builder(new HttpHost("hostname", 443, "https"))
-				.setHttpClientConfigCallback(httpClientConfigCallback));
+		return new RestHighLevelClient(
+				RestClient.builder(new HttpHost("elastic.pulz.app",443, "https"))
+				.setHttpClientConfigCallback(httpClientConfigCallback)); 
 
 	}
 
@@ -138,6 +144,7 @@ public class ElasticSearchRepository {
 					XContentType.JSON);
 			LOGGER.info("Index request: " + indexRequest);
 			IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
+			client2.index(indexRequest, RequestOptions.DEFAULT);
 			if (!StringUtils.isBlank(response.toString()))
 				LOGGER.info("Response : {}", response);
 		} catch (Exception e) {
@@ -224,7 +231,21 @@ public class ElasticSearchRepository {
 		}
 		return response;
 	}
+	
+	public MultiSearchResponse executeMultiSearchRequest2(SearchRequest searchRequest) {
+		MultiSearchResponse response = null;
+		try {
+			MultiSearchRequest multiRequest = new MultiSearchRequest();
+			multiRequest.add(searchRequest);
 
+			response = client2.msearch(multiRequest, RequestOptions.DEFAULT);
+		} catch (IOException e) {
+			LOGGER.error(marker, "Encountered an error while connecting : ", e);
+			LOGGER.error(marker, "Error Message to report :{} ", e.getMessage());
+		}
+		return response;
+	}
+	
 	public MultiSearchResponse executeMultiSearchRequest(List<SearchRequest> searchRequests) {
 		MultiSearchResponse response = null;
 		try {

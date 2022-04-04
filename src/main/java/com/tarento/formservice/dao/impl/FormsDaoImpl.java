@@ -102,7 +102,7 @@ public class FormsDaoImpl implements FormsDao {
 	public List<Map<String, Object>> searchPlainFormResponse(SearchRequest searchRequest) {
 		try {
 			List<Map<String, Object>> responseData = new ArrayList<>();
-			MultiSearchResponse response = elasticsearchRepo.executeMultiSearchRequest(searchRequest);
+			MultiSearchResponse response = elasticsearchRepo.executeMultiSearchRequest2(searchRequest);
 			SearchResponse searchResponse = response.getResponses()[0].getResponse();
 			SearchHit[] hit = searchResponse.getHits().getHits();
 			for (SearchHit hits : hit) {
