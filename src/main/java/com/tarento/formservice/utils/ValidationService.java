@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,6 +20,8 @@ import com.tarento.formservice.models.FormDetail;
 
 @Service
 public class ValidationService {
+
+	public static final Logger LOGGER = LoggerFactory.getLogger(ValidationService.class);
 
 	public String validateCreateForm(FormDetail form) throws JsonProcessingException {
 
@@ -136,7 +140,7 @@ public class ValidationService {
 			}
 			return dataObjectMap;
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOGGER.error(String.format(Constants.EXCEPTION, "removeEmptyFields", e.getMessage()));
 		}
 		return dataObject;
 	}
