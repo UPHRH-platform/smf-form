@@ -2,11 +2,17 @@ package com.tarento.formservice.utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tarento.formservice.model.IncomingData;
 import com.tarento.formservice.model.Status;
 import com.tarento.formservice.models.Field;
@@ -14,6 +20,8 @@ import com.tarento.formservice.models.FormDetail;
 
 @Service
 public class ValidationService {
+
+	public static final Logger LOGGER = LoggerFactory.getLogger(ValidationService.class);
 
 	public String validateCreateForm(FormDetail form) throws JsonProcessingException {
 
@@ -55,6 +63,10 @@ public class ValidationService {
 		}
 		if (incomingData.getDataObject() == null) {
 			return Constants.ResponseMessages.DATA_OBJECT_MISSING;
+		} else {
+			if (incomingData.getDataObject() instanceof Map) {
+				incomingData.setDataObject(removeEmptyFields(incomingData.getDataObject()));
+			}
 		}
 		return Constants.ResponseCodes.SUCCESS;
 	}
@@ -94,11 +106,43 @@ public class ValidationService {
 		}
 		if (incomingData.getDataObject() == null) {
 			return Constants.ResponseMessages.DATA_OBJECT_MISSING;
+		} else {
+			if (incomingData.getDataObject() instanceof Map) {
+				incomingData.setDataObject(removeEmptyFields(incomingData.getDataObject()));
+			}
 		}
 		if (incomingData.getInspectorSummaryDataObject() == null) {
 			return Constants.ResponseMessages.INSPECTOR_SUMMARY_MISSING;
 		}
 		return Constants.ResponseCodes.SUCCESS;
+	}
+
+	/**
+	 * Iterates the data object and removes if any empty key or value present with
+	 * in the data object
+	 * 
+	 * @param dataObject
+	 *            Object
+	 * @return Object
+	 */
+	public Object removeEmptyFields(Object dataObject) {
+		try {
+			ConcurrentHashMap<String, Object> dataObjectMap = new ObjectMapper().convertValue(dataObject,
+					new TypeReference<ConcurrentHashMap<String, Object>>() {
+					});
+			for (Map.Entry<String, Object> entry : dataObjectMap.entrySet()) {
+				if (entry.getKey().equals(StringUtils.EMPTY) || (entry.getValue() instanceof String
+						&& (entry.getValue() == null || entry.getValue().equals(StringUtils.EMPTY)))) {
+					dataObjectMap.remove(entry.getKey());
+				} else if (entry.getValue() instanceof Map) {
+					entry.setValue(removeEmptyFields(entry.getValue()));
+				}
+			}
+			return dataObjectMap;
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "removeEmptyFields", e.getMessage()));
+		}
+		return dataObject;
 	}
 
 	public String validateReturnedApplication(IncomingData incomingData) {
