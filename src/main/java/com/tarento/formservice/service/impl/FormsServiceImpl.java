@@ -185,7 +185,6 @@ public class FormsServiceImpl implements FormsService {
 								form = gson.fromJson(eachInnerHit.findValue("sourceAsMap").toString(), Form.class);
 							}
 							form.setNumberOfRecords((long) randInt(1, 1000));
-							LOGGER.info("Each Form : {}", gson.toJson(form));
 							formList.add(form);
 						}
 					}
@@ -943,7 +942,11 @@ public class FormsServiceImpl implements FormsService {
 						IncomingData updatedAppData = objectMapper.convertValue(updatedAppMap, IncomingData.class);
 
 						// update activity logs
-						activityService.applicationActivity(applicationData, updatedAppData, userInfo);
+						if (action.equalsIgnoreCase(Status.NEW.name())) {
+							activityService.applicationActivity(null, updatedAppData, userInfo);
+						} else {
+							activityService.applicationActivity(applicationData, updatedAppData, userInfo);
+						}
 
 						// send notification
 						if (action.equals(Constants.WorkflowActions.ASSIGN_INSPECTOR)) {

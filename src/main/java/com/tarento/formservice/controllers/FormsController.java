@@ -123,7 +123,9 @@ public class FormsController {
 						incomingData.setUpdatedBy(userInfo.getEmailId());
 					}
 				}
-				if (formsService.saveFormSubmitv1(incomingData, userInfo, null)) {
+				if (formsService.saveFormSubmitv1(incomingData, userInfo,
+						StringUtils.isBlank(incomingData.getApplicationId()) ? Status.NEW.name()
+								: Status.REVIEW.name())) {
 					return ResponseGenerator.successResponse(Boolean.TRUE);
 				}
 			} catch (Exception e) {
@@ -440,24 +442,24 @@ public class FormsController {
 		}
 		return ResponseGenerator.failureResponse();
 	}
-	
+
 	@PostMapping(value = PathRoutes.FormServiceApi.SAVE_PLAIN_FORM)
 	public String savePlainForm(@RequestBody IncomingData incomingData) throws IOException {
 		try {
-			if(incomingData != null) {
+			if (incomingData != null) {
 				incomingData.setFormId(9999l);
 				if (formsService.savePlainForm(incomingData)) {
 					return ResponseGenerator.successResponse(Boolean.TRUE);
 				}
 			}
-			
+
 		} catch (Exception e) {
 			logger.error(String.format(Constants.EXCEPTION, "savePlainForm", e.getMessage()));
 			return ResponseGenerator.failureResponse(Constants.ResponseMessages.CHECK_REQUEST_PARAMS);
 		}
 		return ResponseGenerator.failureResponse();
 	}
-	
+
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_ALL_PLAIN_FORMS, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getAllPlainForms() throws JsonProcessingException {
 		List<Map<String, Object>> responseData = new ArrayList<>();
@@ -467,9 +469,10 @@ public class FormsController {
 		}
 		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
 	}
-	
+
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_PLAIN_FORM_BY_ID, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String getPlainFormById(@RequestParam(value = Constants.APPLICATION_ID, required = true) String applicationId)
+	public String getPlainFormById(
+			@RequestParam(value = Constants.APPLICATION_ID, required = true) String applicationId)
 			throws JsonProcessingException {
 		List<Map<String, Object>> responseData = formsService.getPlainFormsById(applicationId);
 		if (responseData != null) {
