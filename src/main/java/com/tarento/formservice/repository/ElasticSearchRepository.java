@@ -85,11 +85,8 @@ public class ElasticSearchRepository {
 				return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
 			}
 		};
-//		return new RestHighLevelClient(
-//				RestClient.builder(new HttpHost(appConfig.getElasticHost(), appConfig.getElasticPort())));
 		return new RestHighLevelClient(
-				RestClient.builder(new HttpHost(appConfig.getElasticHost(),appConfig.getElasticPort(), "https"))
-				.setHttpClientConfigCallback(httpClientConfigCallback));
+					RestClient.builder(new HttpHost(appConfig.getElasticHost(), appConfig.getElasticPort())));
 	}
 
 	private RestHighLevelClient connectToElasticSearch2() {
