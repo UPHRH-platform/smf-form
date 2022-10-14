@@ -763,6 +763,10 @@ public class FormsServiceImpl implements FormsService {
 				assign.setAssignedDate(DateUtils.getYyyyMmDdInUTC());
 				requestData.setInspection(assign);
 				requestData.setStatus(assign.getStatus());
+
+				
+				LOGGER.info(objectMapper.writeValueAsString(requestData));
+				LOGGER.info(objectMapper.writeValueAsString(assign));
 				Boolean response = formsDao.updateFormData(requestData, assign.getApplicationId());
 				appStatusTrack(response,
 						(applicationMap != null && applicationMap.size() > 0 ? applicationMap.get(0) : null),
