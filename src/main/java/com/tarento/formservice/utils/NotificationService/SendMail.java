@@ -59,6 +59,7 @@ public class SendMail {
 		props.put("mail.smtp.socketFactory.port", appConfig.getSmtpPort());
 		props.put("mail.smtp.auth", appConfig.getSmtpAuth());
 		props.put("mail.smtp.port", appConfig.getSmtpPort());
+		props.put("mail.smtp.starttls.enable", "true");
 	}
 
 	/**
