@@ -47,7 +47,7 @@ public class NotificationUtil {
 
 	private static String returnSubject = "Application Returned";
 	private static String returnBody = "The <b>" + formName
-			+ "</b> application got returned from the regulator. please review your application and submit it back.";
+			+ "</b> has been returned by the UP SMF. Please make the necessary changes and resubmit the form.";
 
 	private static String approveSubject = "Application approved";
 	private static String approveBody = "The <b>" + formName + "</b> application is approved.";
@@ -56,11 +56,12 @@ public class NotificationUtil {
 	private static String rejectBody = "The <b>" + formName + "</b> application is rejected.";
 
 	private static String sentInspectionSubject = "Application sent for inspection";
-	private static String sentInspectionBody = "The <b>" + formName + "</b> application is sent for inspection.";
+	private static String sentInspectionBody = "The <b>" + formName + "</b> has been verified by the UP SMF.\n" +
+			"Please keep all relevant documents / infrastructure ready for on-ground assessment.";
 
 	private static String assignedInspectionSubject = "Application assigned for inspection";
-	private static String assignedInspectionBody = "The <b>" + formName
-			+ "</b> application is assigned to you for inspection which is scheduled on " + date;
+	private static String assignedInspectionBody = "An on-ground assessment has been scheduled for you on " + date +
+			". You will be able to view the form on the day of assessment.";
 
 	private static String inspectionCompletedSubject = "Application inspection completed";
 	private static String inspectionCompletedBody = "The <b>" + formName + "</b> application inspection completed.";
