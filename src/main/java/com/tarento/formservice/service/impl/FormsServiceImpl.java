@@ -1,5 +1,6 @@
 package com.tarento.formservice.service.impl;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -43,15 +44,18 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.tarento.formservice.dao.FormsDao;
+import com.tarento.formservice.dao.InstituteCoursesDao;
 import com.tarento.formservice.model.AssignApplication;
 import com.tarento.formservice.model.Assignee;
 import com.tarento.formservice.model.Consent;
 import com.tarento.formservice.model.IncomingData;
+import com.tarento.formservice.model.InstituteFormDataDto;
 import com.tarento.formservice.model.KeyValue;
 import com.tarento.formservice.model.KeyValueList;
 import com.tarento.formservice.model.ResponseData;
@@ -68,6 +72,7 @@ import com.tarento.formservice.model.WorkflowDto;
 import com.tarento.formservice.models.Field;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
+import com.tarento.formservice.models.InstitueFormExcelDto;
 import com.tarento.formservice.repository.ElasticSearchRepository;
 import com.tarento.formservice.repository.RestService;
 import com.tarento.formservice.service.ActivityService;
@@ -76,6 +81,7 @@ import com.tarento.formservice.utils.AppConfiguration;
 import com.tarento.formservice.utils.CloudStorage;
 import com.tarento.formservice.utils.Constants;
 import com.tarento.formservice.utils.DateUtils;
+import com.tarento.formservice.utils.ExcelHelper;
 import com.tarento.formservice.utils.WorkflowUtil;
 import com.tarento.formservice.utils.NotificationService.NotificationUtil;
 
@@ -98,6 +104,9 @@ public class FormsServiceImpl implements FormsService {
 
 	@Autowired
 	private ActivityService activityService;
+	
+	@Autowired
+	InstituteCoursesDao instituteCoursesDao;
 
 	@Override
 	public Form createForm(FormDetail newForm) throws IOException {
@@ -1101,5 +1110,30 @@ public class FormsServiceImpl implements FormsService {
 		}
 		return null;
 	}
+	
+	@Override
+	 public ByteArrayInputStream getInstituteFormData(Long orgId) {
+		
+		List<InstituteFormDataDto> dataList = new ArrayList<InstituteFormDataDto>();
+		
+		    List<Object[]> dataListDto = instituteCoursesDao.findInstituteForm(orgId);
+		    
+		    for(Object[] dto : dataListDto) {
+		    	InstituteFormDataDto data = new InstituteFormDataDto();
+		    	data.setCenterCode(String.valueOf(dto[0]));
+		    	data.setDistrictCode(String.valueOf(dto[1]));
+		    	data.setInstituteName(String.valueOf(dto[2]));
+		    	data.setDegree(String.valueOf(dto[3]));
+		    	data.setCourse(String.valueOf(dto[4]));
+		    	dataList.add(data);
+		    }
+
+		    System.out.println("************************");
+		    System.out.println(dataList.size());
+		    System.out.println("***********************");
+		    
+		    ByteArrayInputStream in = ExcelHelper.instituteToExcel(dataList);
+		    return in;
+		  }
 
 }

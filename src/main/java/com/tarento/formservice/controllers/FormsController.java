@@ -11,7 +11,11 @@ import org.apache.tomcat.util.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,6 +40,7 @@ import com.tarento.formservice.model.Status;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
+import com.tarento.formservice.models.InstituteFormDataRequest;
 import com.tarento.formservice.service.FormsService;
 import com.tarento.formservice.utils.Constants;
 import com.tarento.formservice.utils.PathRoutes;
@@ -481,4 +486,16 @@ public class FormsController {
 		}
 		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
 	}
+	@GetMapping(value = PathRoutes.FormServiceApi.GET_INSTITUTE_FORM_DATA_EXCEL)
+	public ResponseEntity<Resource> getFile(@RequestBody InstituteFormDataRequest instituteFormDataRequest) {
+	    String filename = "institute.xlsx";
+	    InputStreamResource file = new InputStreamResource(formsService.getInstituteFormData(instituteFormDataRequest.getOrgId()));
+
+	    return ResponseEntity.ok()
+	        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+	        .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
+	        .body(file);
+	  }
+	
+	
 }
