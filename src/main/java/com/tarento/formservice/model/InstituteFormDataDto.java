@@ -11,7 +11,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class InstituteFormDataDto {
 
 	private String districtCode;
@@ -19,8 +18,6 @@ public class InstituteFormDataDto {
 	private String instituteName;
 	private String degree;
 	private String course;
-	//private String nursingCouseOffered;
-	//private String paramedicalCourseOffered;
 	private String formsSavedAsDraft;
 	private String formsSubmitted;
 	private String formsSubmittedTimestamp;

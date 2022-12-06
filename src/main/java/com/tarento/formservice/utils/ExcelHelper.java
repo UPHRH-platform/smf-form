@@ -15,7 +15,6 @@ import com.tarento.formservice.model.InstituteFormDataDto;
 
 public class ExcelHelper {
 	
-	//static String[] HEADERs = { "SI","District Name", "Parent Training Center Code", "Name of Institution", "Nursing course offered(Y/N)", "Paramedical course offered(Y/N)", "Forms(s) saved as draft", "Forms(s) submitted", "Timestamp of forms(s) submission" };
 	static String[] HEADERs = { "SI","District Name", "Parent Training Center Code", "Name of Institution", "Degree", "Course", "Forms(s) saved as draft", "Forms(s) submitted", "Timestamp of forms(s) submission" };
 	
 	static String SHEET = "Institute and forms Details";
@@ -38,17 +37,15 @@ public class ExcelHelper {
 		      for (InstituteFormDataDto data : dataList) {
 		        Row row = sheet.createRow(rowIdx++);
 
-		        row.createCell(0).setCellValue(rowIdx);
+		        row.createCell(0).setCellValue(rowIdx-1);
 		        row.createCell(1).setCellValue(data.getDistrictCode());
 		        row.createCell(2).setCellValue(data.getCenterCode());
 		        row.createCell(3).setCellValue(data.getInstituteName());
 		        row.createCell(4).setCellValue(data.getDegree());
 		        row.createCell(5).setCellValue(data.getCourse());
-		        //row.createCell(4).setCellValue(data.getNursingCouseOffered());
-		        //row.createCell(5).setCellValue(data.getParamedicalCourseOffered());
-		        //row.createCell(6).setCellValue(data.getFormsSavedAsDraft());
-		        //row.createCell(7).setCellValue(data.getFormsSubmitted());
-		        //row.createCell(8).setCellValue(data.getFormsSubmittedTimestamp());
+		        row.createCell(6).setCellValue(data.getFormsSavedAsDraft());
+		        row.createCell(7).setCellValue(data.getFormsSubmitted());
+		        row.createCell(8).setCellValue(data.getFormsSubmittedTimestamp());
 		      }
 
 		      workbook.write(out);
