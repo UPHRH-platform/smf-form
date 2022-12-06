@@ -1,8 +1,10 @@
 package com.tarento.formservice.service.impl;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -13,6 +15,7 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -43,15 +46,19 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.mchange.v2.codegen.bean.BeangenUtils;
 import com.tarento.formservice.dao.FormsDao;
+import com.tarento.formservice.dao.InstituteCoursesDao;
 import com.tarento.formservice.model.AssignApplication;
 import com.tarento.formservice.model.Assignee;
 import com.tarento.formservice.model.Consent;
 import com.tarento.formservice.model.IncomingData;
+import com.tarento.formservice.model.InstituteFormDataDto;
 import com.tarento.formservice.model.KeyValue;
 import com.tarento.formservice.model.KeyValueList;
 import com.tarento.formservice.model.ResponseData;
@@ -68,6 +75,7 @@ import com.tarento.formservice.model.WorkflowDto;
 import com.tarento.formservice.models.Field;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
+import com.tarento.formservice.models.InstitueFormExcelDto;
 import com.tarento.formservice.repository.ElasticSearchRepository;
 import com.tarento.formservice.repository.RestService;
 import com.tarento.formservice.service.ActivityService;
@@ -76,6 +84,7 @@ import com.tarento.formservice.utils.AppConfiguration;
 import com.tarento.formservice.utils.CloudStorage;
 import com.tarento.formservice.utils.Constants;
 import com.tarento.formservice.utils.DateUtils;
+import com.tarento.formservice.utils.ExcelHelper;
 import com.tarento.formservice.utils.WorkflowUtil;
 import com.tarento.formservice.utils.NotificationService.NotificationUtil;
 
@@ -98,6 +107,9 @@ public class FormsServiceImpl implements FormsService {
 
 	@Autowired
 	private ActivityService activityService;
+	
+	@Autowired
+	InstituteCoursesDao instituteCoursesDao;
 
 	@Override
 	public Form createForm(FormDetail newForm) throws IOException {
@@ -1100,6 +1112,63 @@ public class FormsServiceImpl implements FormsService {
 			LOGGER.error(String.format(Constants.EXCEPTION, "getApplications", e.getMessage()));
 		}
 		return null;
+	}
+	
+	@Override
+	 public ByteArrayInputStream getInstituteFormData(Long orgId) {
+		
+		List<InstituteFormDataDto> dataList = new ArrayList<InstituteFormDataDto>();
+		
+		    List<Object[]> dataListDto = instituteCoursesDao.findInstituteForm(orgId);
+		    
+		    for(Object[] dto : dataListDto) {
+		    	InstituteFormDataDto data = new InstituteFormDataDto();
+		    	data.setCenterCode(String.valueOf(dto[0]));
+		    	data.setDistrictCode(String.valueOf(dto[1]));
+		    	String emailId = String.valueOf(dto[2]);
+		    	
+		    	data.setInstituteName(emailId);
+		    	data.setDegree(String.valueOf(dto[3]));
+		    	data.setCourse(String.valueOf(dto[4]));
+		    	List<Map<String, Object>>  responseData = this.getApplicationForInstitues(emailId);
+		    	if(responseData != null && responseData.size()>0) {
+		    		for(Map<String, Object> mp : responseData) {
+		    			InstituteFormDataDto dInnernal = new InstituteFormDataDto();
+		    			try {
+							BeanUtils.copyProperties(dInnernal, data);
+							dInnernal.setFormsSubmitted(String.valueOf(mp.get("title")));
+							dInnernal.setFormsSavedAsDraft(String.valueOf(mp.get("status")));
+							dInnernal.setFormsSubmittedTimestamp(String.valueOf(mp.get("timestamp")));
+							dataList.add(dInnernal);
+							
+						} catch (IllegalAccessException | InvocationTargetException e) {
+							e.printStackTrace();
+						}
+		    		}
+		    	}else {
+		    		dataList.add(data);
+		    	}
+		    	
+		    	
+		    }
+
+		    ByteArrayInputStream in = ExcelHelper.instituteToExcel(dataList);
+		    return in;
+		  }
+	
+	public List<Map<String, Object>> getApplicationForInstitues(String emailId){
+		SearchRequestDto searchRequestDto = new SearchRequestDto();
+		SearchObject searchObject = new SearchObject();
+		searchObject.setKey("createdBy");
+		searchObject.setValues(emailId);
+		
+		List<SearchObject> searchObjects = new ArrayList<>();
+		searchObjects.add(searchObject);
+		
+		searchRequestDto.setSearchObjects(searchObjects);
+		List<Map<String, Object>>  responseData = this.getApplications(null, searchRequestDto);
+		
+		return responseData;
 	}
 
 }
