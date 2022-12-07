@@ -40,7 +40,6 @@ import com.tarento.formservice.model.Status;
 import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
-import com.tarento.formservice.models.InstituteFormDataRequest;
 import com.tarento.formservice.service.FormsService;
 import com.tarento.formservice.utils.Constants;
 import com.tarento.formservice.utils.PathRoutes;
@@ -488,9 +487,9 @@ public class FormsController {
 	}
 	
 	@GetMapping(value = PathRoutes.FormServiceApi.GET_INSTITUTE_FORM_DATA_EXCEL)
-	public ResponseEntity<Resource> getFile(@RequestBody InstituteFormDataRequest instituteFormDataRequest) {
+	public ResponseEntity<Resource> getFile(@RequestParam(value = Constants.ORG_ID, required = true) Long orgId) {
 	    String filename = "institute.xlsx";
-	    InputStreamResource file = new InputStreamResource(formsService.getInstituteFormData(instituteFormDataRequest.getOrgId()));
+	    InputStreamResource file = new InputStreamResource(formsService.getInstituteFormData(orgId));
 
 	    return ResponseEntity.ok()
 	        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
