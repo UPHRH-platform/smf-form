@@ -15,7 +15,7 @@ import org.sunbird.cloud.storage.factory.StorageServiceFactory;
 
 import scala.Option;
 
-@Service
+
 public class CloudStorage {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(CloudStorage.class);

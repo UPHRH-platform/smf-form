@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.tarento.formservice.model.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.slf4j.Logger;
@@ -24,16 +25,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.Gson;
-import com.tarento.formservice.model.AssignApplication;
-import com.tarento.formservice.model.Consent;
-import com.tarento.formservice.model.FormData;
-import com.tarento.formservice.model.IncomingData;
-import com.tarento.formservice.model.KeyValue;
-import com.tarento.formservice.model.KeyValueList;
-import com.tarento.formservice.model.SearchObject;
-import com.tarento.formservice.model.SearchRequestDto;
-import com.tarento.formservice.model.Status;
-import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
 import com.tarento.formservice.service.FormsService;
@@ -163,6 +154,22 @@ public class FormsController {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
 		responseData = formsService.getApplications(userInfo, searchRequestDto);
+		if (responseData != null) {
+			return ResponseGenerator.successResponse(responseData);
+		}
+		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
+	}
+
+	@PostMapping(value = PathRoutes.FormServiceApi.GET_INSTITUTE_DATA, produces = MediaType.APPLICATION_JSON_VALUE)
+	public String getInstituteData(
+			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
+			@RequestBody InstituteDownloadRequestDto instituteDownloadRequestDto) throws JsonProcessingException {
+		List<Map<String, Object>> responseData = new ArrayList<>();
+		UserInfo userInfo = null;
+		if (StringUtils.isNotBlank(xUserInfo)) {
+			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
+		}
+		responseData = formsService.getInstitutesData(userInfo, instituteDownloadRequestDto);
 		if (responseData != null) {
 			return ResponseGenerator.successResponse(responseData);
 		}

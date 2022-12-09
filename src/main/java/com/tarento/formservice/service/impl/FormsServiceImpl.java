@@ -13,10 +13,13 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import com.tarento.formservice.model.*;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.core.CountRequest;
+import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
@@ -48,23 +51,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.tarento.formservice.dao.FormsDao;
-import com.tarento.formservice.model.AssignApplication;
-import com.tarento.formservice.model.Assignee;
-import com.tarento.formservice.model.Consent;
-import com.tarento.formservice.model.IncomingData;
-import com.tarento.formservice.model.KeyValue;
-import com.tarento.formservice.model.KeyValueList;
-import com.tarento.formservice.model.ResponseData;
-import com.tarento.formservice.model.Result;
-import com.tarento.formservice.model.Role;
-import com.tarento.formservice.model.Roles;
-import com.tarento.formservice.model.SearchObject;
-import com.tarento.formservice.model.SearchRequestDto;
-import com.tarento.formservice.model.State;
-import com.tarento.formservice.model.StateMatrix;
-import com.tarento.formservice.model.Status;
-import com.tarento.formservice.model.UserInfo;
-import com.tarento.formservice.model.WorkflowDto;
 import com.tarento.formservice.models.Field;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
@@ -379,6 +365,65 @@ public class FormsServiceImpl implements FormsService {
 		}
 		return null;
 	}
+
+	@Override
+	public List<Map<String, Object>> getInstitutesData(UserInfo userInfo, InstituteDownloadRequestDto instituteDownloadRequestDto) {
+		try {
+			// count builder
+			CountRequest countRequest = new CountRequest(appConfig.getFormDataIndex()).query(QueryBuilders.matchAllQuery());
+			CountResponse countResponse = elasticRepository.executeCountRequest(countRequest);
+			LOGGER.debug("count Response : {}", countResponse);
+			if(countResponse == null || countResponse.getCount() <= 0) {
+				// no data in index
+				return null;
+			}
+			// query builder
+			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+			// setting size and range in query
+			setSizeAndRangeLimit(instituteDownloadRequestDto, searchSourceBuilder, countResponse);
+			// creating bool query
+			BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
+			boolBuilder.must(QueryBuilders.matchAllQuery());
+			searchSourceBuilder.query(boolBuilder).sort(Constants.TIMESTAMP, SortOrder.DESC);
+			// es call
+			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex()).source(searchSourceBuilder);
+			LOGGER.info("Search Request : " + searchRequest);
+			return formsDao.searchResponse(searchRequest);
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "getApplications", e.getMessage()));
+		}
+		return null;
+	}
+
+	private static void setSizeAndRangeLimit(InstituteDownloadRequestDto instituteDownloadRequestDto,
+											 SearchSourceBuilder searchSourceBuilder,
+											 CountResponse countResponse) {
+		// setting from limit if size is present in request
+		if(instituteDownloadRequestDto.getSize() != null && instituteDownloadRequestDto.getSize() > 0) {
+			searchSourceBuilder.size(instituteDownloadRequestDto.getSize());
+			int fromRange = 0;
+			if(instituteDownloadRequestDto.getPage() == 0) {
+				fromRange = instituteDownloadRequestDto.getSize()*(instituteDownloadRequestDto.getPage());
+			} else if(instituteDownloadRequestDto.getPage() > 0) {
+				fromRange = instituteDownloadRequestDto.getSize()*(instituteDownloadRequestDto.getPage()-1);
+			}
+			searchSourceBuilder.from(fromRange);
+		} else {
+			int count = Long.valueOf(countResponse.getCount()).intValue();
+			searchSourceBuilder.size(count);
+		}
+	}
+
+	public InstituteCSVResponseDto createCSVFile(List<Map<String, Object>> instituteData) {
+		if(instituteData == null || instituteData.isEmpty()) {
+			//return error
+		}
+		for(Map<String, Object> data : instituteData) {
+			System.out.print("data : "+data);
+		}
+		return null;
+	}
+
 
 	/**
 	 * Add filters in search response

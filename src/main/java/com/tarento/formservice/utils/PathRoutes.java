@@ -11,6 +11,7 @@ public interface PathRoutes {
 		final String SAVE_FORM_SUBMIT_V1 = "/v1/saveFormSubmit";
 		final String SAVE_FORM_SUBMIT_BULK = "/saveFormSubmitBulk";
 		final String GET_ALL_APPLICATIONS = "/getAllApplications";
+		final String GET_INSTITUTE_DATA = "/getInstituteData";
 		final String GET_APPLICATIONS_BY_ID = "/getApplicationsById";
 		final String GET_APPLICATIONS_STATUS_COUNT = "/getApplicationsStatusCount";
 		final String FILE_UPLOAD = "/fileUpload";
