@@ -903,6 +903,7 @@ public class FormsServiceImpl implements FormsService {
 				// update assignee inspection status in data object
 				Boolean isLeadIns = Boolean.FALSE;
 				Boolean inspectionCompleted = Boolean.TRUE;
+
 				if (applicationData != null && applicationData.getInspection() != null
 						&& applicationData.getInspection().getAssignedTo() != null) {
 					for (Assignee assignee : applicationData.getInspection().getAssignedTo()) {
@@ -910,19 +911,34 @@ public class FormsServiceImpl implements FormsService {
 								&& assignee.getLeadInspector()) {
 							isLeadIns = Boolean.TRUE;
 							assignee.setStatus(workflowDto.getNextState());
+							if(incomingData.getInspectionCompleted()) {
+								assignee.setStatus(Constants.WorkflowActions.COMPLETED_INSPECTION);
+							}
+							
 							assignee.setConsentDate(DateUtils.getYyyyMmDdInUTC());
 						} else if (StringUtils.isBlank(assignee.getStatus())) {
 							inspectionCompleted = Boolean.FALSE;
 						}
 					}
 				}
+				if(incomingData.getInspectionCompleted()) {
+					inspectionCompleted = Boolean.TRUE;
+				}
+			
 				// allow only lead inspector to submit inspection details
 				if (isLeadIns) {
 					incomingData.setInspection(applicationData.getInspection());
 					incomingData.setInspectionDate(DateUtils.getYyyyMmDdInUTC());
 					incomingData.getInspection().setInspectionDate(DateUtils.getYyyyMmDdInUTC());
+					
+					/*
 					String nextStatus = inspectionCompleted ? workflowDto.getNextState()
 							: Status.LEADINSCOMPLETED.name();
+					*/		
+					
+					String nextStatus = inspectionCompleted ? Status.INSCOMPLETED.name()
+							: Status.LEADINSCOMPLETED.name();
+					
 					incomingData.getInspection().setStatus(nextStatus);
 					if (inspectionCompleted) {
 						incomingData.setStatus(workflowDto.getNextState());
