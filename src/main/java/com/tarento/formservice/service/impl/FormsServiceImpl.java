@@ -916,9 +916,9 @@ public class FormsServiceImpl implements FormsService {
 							}
 							
 							assignee.setConsentDate(DateUtils.getYyyyMmDdInUTC());
-						} else if (StringUtils.isBlank(assignee.getStatus())) {
+						} /*else if (StringUtils.isBlank(assignee.getStatus())) {
 							inspectionCompleted = Boolean.FALSE;
-						}
+						}*/
 					}
 				}
 				if(incomingData.getInspectionCompleted()) {
@@ -926,7 +926,7 @@ public class FormsServiceImpl implements FormsService {
 				}
 			
 				// allow only lead inspector to submit inspection details
-				if (isLeadIns) {
+				//if (isLeadIns) {
 					incomingData.setInspection(applicationData.getInspection());
 					incomingData.setInspectionDate(DateUtils.getYyyyMmDdInUTC());
 					incomingData.getInspection().setInspectionDate(DateUtils.getYyyyMmDdInUTC());
@@ -949,7 +949,7 @@ public class FormsServiceImpl implements FormsService {
 							inspectionCompleted ? Constants.WorkflowActions.COMPLETED_INSPECTION
 									: Constants.WorkflowActions.LEAD_INSPECTION_COMPLETED);
 					return response;
-				}
+				//}
 			}
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "submitInspection", e.getMessage()));
