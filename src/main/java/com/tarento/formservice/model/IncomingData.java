@@ -33,6 +33,6 @@ public class IncomingData {
 	private String reviewedDate;
 	private String inspectionDate;
 	private String inspectionCompletedDate;
-	private Boolean inspectionCompleted;
+	private Boolean inspectionCompleted = Boolean.FALSE;
 
 }

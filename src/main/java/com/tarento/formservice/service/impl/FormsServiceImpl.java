@@ -892,6 +892,7 @@ public class FormsServiceImpl implements FormsService {
 	@Override
 	public Boolean submitInspection(IncomingData incomingData, UserInfo userInfo) {
 		try {
+			Boolean inspectionCompleted = incomingData.getInspectionCompleted();
 			Map<String, Object> applicationMap = getApplicationById(incomingData.getApplicationId(), userInfo);
 			if (applicationMap != null) {
 				IncomingData applicationData = objectMapper.convertValue(applicationMap, IncomingData.class);
@@ -902,7 +903,6 @@ public class FormsServiceImpl implements FormsService {
 
 				// update assignee inspection status in data object
 				Boolean isLeadIns = Boolean.FALSE;
-				Boolean inspectionCompleted = Boolean.TRUE;
 
 				if (applicationData != null && applicationData.getInspection() != null
 						&& applicationData.getInspection().getAssignedTo() != null) {
@@ -916,17 +916,14 @@ public class FormsServiceImpl implements FormsService {
 							}
 							
 							assignee.setConsentDate(DateUtils.getYyyyMmDdInUTC());
-						} else if (StringUtils.isBlank(assignee.getStatus())) {
+						} /*else if (StringUtils.isBlank(assignee.getStatus())) {
 							inspectionCompleted = Boolean.FALSE;
-						}
+						}*/
 					}
 				}
-				if(incomingData.getInspectionCompleted()) {
-					inspectionCompleted = Boolean.TRUE;
-				}
-			
+				
 				// allow only lead inspector to submit inspection details
-				if (isLeadIns) {
+				//if (isLeadIns) {
 					incomingData.setInspection(applicationData.getInspection());
 					incomingData.setInspectionDate(DateUtils.getYyyyMmDdInUTC());
 					incomingData.getInspection().setInspectionDate(DateUtils.getYyyyMmDdInUTC());
@@ -949,7 +946,7 @@ public class FormsServiceImpl implements FormsService {
 							inspectionCompleted ? Constants.WorkflowActions.COMPLETED_INSPECTION
 									: Constants.WorkflowActions.LEAD_INSPECTION_COMPLETED);
 					return response;
-				}
+				//}
 			}
 		} catch (Exception e) {
 			LOGGER.error(String.format(Constants.EXCEPTION, "submitInspection", e.getMessage()));

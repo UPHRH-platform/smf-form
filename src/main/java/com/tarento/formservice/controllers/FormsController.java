@@ -288,6 +288,7 @@ public class FormsController {
 		String validation = validationService.validateInspectionObject(incomingData);
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			IncomingData inspectionData = new IncomingData();
+			inspectionData.setInspectionCompleted(incomingData.getInspectionCompleted());
 			inspectionData.setInspectorDataObject(incomingData);
 			inspectionData.setApplicationId(incomingData.getApplicationId());
 			inspectionData.setInspectorSummaryDataObject(incomingData.getInspectorSummaryDataObject());
