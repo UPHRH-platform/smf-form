@@ -892,6 +892,7 @@ public class FormsServiceImpl implements FormsService {
 	@Override
 	public Boolean submitInspection(IncomingData incomingData, UserInfo userInfo) {
 		try {
+			Boolean inspectionCompleted = incomingData.getInspectionCompleted();
 			Map<String, Object> applicationMap = getApplicationById(incomingData.getApplicationId(), userInfo);
 			if (applicationMap != null) {
 				IncomingData applicationData = objectMapper.convertValue(applicationMap, IncomingData.class);
@@ -902,7 +903,6 @@ public class FormsServiceImpl implements FormsService {
 
 				// update assignee inspection status in data object
 				Boolean isLeadIns = Boolean.FALSE;
-				Boolean inspectionCompleted = Boolean.TRUE;
 
 				if (applicationData != null && applicationData.getInspection() != null
 						&& applicationData.getInspection().getAssignedTo() != null) {
@@ -921,10 +921,7 @@ public class FormsServiceImpl implements FormsService {
 						}*/
 					}
 				}
-				if(incomingData.getInspectionCompleted()) {
-					inspectionCompleted = Boolean.TRUE;
-				}
-			
+				
 				// allow only lead inspector to submit inspection details
 				//if (isLeadIns) {
 					incomingData.setInspection(applicationData.getInspection());
