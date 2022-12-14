@@ -289,6 +289,8 @@ public class FormsController {
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			IncomingData inspectionData = new IncomingData();
 			inspectionData.setInspectionCompleted(incomingData.getInspectionCompleted());
+			inspectionData.setLatitude(incomingData.getLatitude());
+			inspectionData.setLongitude(incomingData.getLongitude());
 			inspectionData.setInspectorDataObject(incomingData);
 			inspectionData.setApplicationId(incomingData.getApplicationId());
 			inspectionData.setInspectorSummaryDataObject(incomingData.getInspectorSummaryDataObject());
