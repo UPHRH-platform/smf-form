@@ -34,5 +34,7 @@ public class IncomingData {
 	private String inspectionDate;
 	private String inspectionCompletedDate;
 	private Boolean inspectionCompleted = Boolean.FALSE;
+	private Double latitude;
+	private Double longitude;
 
 }
