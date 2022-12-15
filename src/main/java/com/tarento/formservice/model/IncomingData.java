@@ -12,6 +12,7 @@ public class IncomingData {
 	private Long id;
 	private Long formId;
 	private String title;
+	private String districtName;
 	private String applicationId;
 	private String recordId;
 	private int version;
