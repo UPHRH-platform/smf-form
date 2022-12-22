@@ -35,7 +35,7 @@ public interface FormsService {
 	
 	List<Map<String, Object>> getAllPlainForms();
 
-	List<Map<String, Object>> getInstitutesData(UserInfo userInfo, InstituteDownloadRequestDto instituteDownloadRequestDto);
+	String getInstitutesData(UserInfo userInfo, InstituteDownloadRequestDto instituteDownloadRequestDto);
 
 	KeyValueList getApplicationsStatusCount(UserInfo userInfo);
 

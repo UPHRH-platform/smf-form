@@ -164,12 +164,11 @@ public class FormsController {
 	public String getInstituteData(
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
 			@RequestBody InstituteDownloadRequestDto instituteDownloadRequestDto) throws JsonProcessingException {
-		List<Map<String, Object>> responseData = new ArrayList<>();
 		UserInfo userInfo = null;
 		if (StringUtils.isNotBlank(xUserInfo)) {
 			userInfo = new Gson().fromJson(xUserInfo, UserInfo.class);
 		}
-		responseData = formsService.getInstitutesData(userInfo, instituteDownloadRequestDto);
+		String responseData = formsService.getInstitutesData(userInfo, instituteDownloadRequestDto);
 		if (responseData != null) {
 			return ResponseGenerator.successResponse(responseData);
 		}
