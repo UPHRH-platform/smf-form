@@ -12,6 +12,7 @@ public class IncomingData {
 	private Long id;
 	private Long formId;
 	private String title;
+	private String districtName;
 	private String applicationId;
 	private String recordId;
 	private int version;
@@ -33,5 +34,8 @@ public class IncomingData {
 	private String reviewedDate;
 	private String inspectionDate;
 	private String inspectionCompletedDate;
+	private Boolean inspectionCompleted = Boolean.FALSE;
+	private Double latitude;
+	private Double longitude;
 
 }

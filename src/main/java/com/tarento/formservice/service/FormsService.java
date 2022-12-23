@@ -1,5 +1,6 @@
 package com.tarento.formservice.service;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -68,5 +69,7 @@ public interface FormsService {
 	public void submitBulkInspection(List<IncomingData> inspectionDataList, UserInfo userInfo);
 
 	public void consentBulkApplication(List<Consent> consentList, UserInfo userInfo);
+
+	public ByteArrayInputStream getInstituteFormData(Long orgId);
 
 }

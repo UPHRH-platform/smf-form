@@ -12,7 +12,11 @@ import org.apache.tomcat.util.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -290,6 +294,9 @@ public class FormsController {
 		String validation = validationService.validateInspectionObject(incomingData);
 		if (validation.equals(Constants.ResponseCodes.SUCCESS)) {
 			IncomingData inspectionData = new IncomingData();
+			inspectionData.setInspectionCompleted(incomingData.getInspectionCompleted());
+			inspectionData.setLatitude(incomingData.getLatitude());
+			inspectionData.setLongitude(incomingData.getLongitude());
 			inspectionData.setInspectorDataObject(incomingData);
 			inspectionData.setApplicationId(incomingData.getApplicationId());
 			inspectionData.setInspectorSummaryDataObject(incomingData.getInspectorSummaryDataObject());
@@ -487,4 +494,17 @@ public class FormsController {
 		}
 		return ResponseGenerator.failureResponse(Constants.ResponseMessages.ERROR_MESSAGE);
 	}
+	
+	@GetMapping(value = PathRoutes.FormServiceApi.GET_INSTITUTE_FORM_DATA_EXCEL)
+	public ResponseEntity<Resource> getFile(@RequestParam(value = Constants.ORG_ID, required = true) Long orgId) {
+	    String filename = "institute.xlsx";
+	    InputStreamResource file = new InputStreamResource(formsService.getInstituteFormData(orgId));
+
+	    return ResponseEntity.ok()
+	        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+	        .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
+	        .body(file);
+	  }
+	
+	
 }

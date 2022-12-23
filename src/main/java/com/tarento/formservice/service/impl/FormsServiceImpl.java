@@ -1,5 +1,6 @@
 package com.tarento.formservice.service.impl;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -14,6 +15,18 @@ import java.util.stream.Collectors;
 import com.opencsv.CSVWriter;
 import com.tarento.formservice.model.*;
 import org.apache.commons.io.FileUtils;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
+
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -46,14 +59,36 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.mchange.v2.codegen.bean.BeangenUtils;
 import com.tarento.formservice.dao.FormsDao;
+import com.tarento.formservice.dao.InstituteCoursesDao;
+import com.tarento.formservice.model.AssignApplication;
+import com.tarento.formservice.model.Assignee;
+import com.tarento.formservice.model.Consent;
+import com.tarento.formservice.model.IncomingData;
+import com.tarento.formservice.model.InstituteFormDataDto;
+import com.tarento.formservice.model.KeyValue;
+import com.tarento.formservice.model.KeyValueList;
+import com.tarento.formservice.model.ResponseData;
+import com.tarento.formservice.model.Result;
+import com.tarento.formservice.model.Role;
+import com.tarento.formservice.model.Roles;
+import com.tarento.formservice.model.SearchObject;
+import com.tarento.formservice.model.SearchRequestDto;
+import com.tarento.formservice.model.State;
+import com.tarento.formservice.model.StateMatrix;
+import com.tarento.formservice.model.Status;
+import com.tarento.formservice.model.UserInfo;
+import com.tarento.formservice.model.WorkflowDto;
 import com.tarento.formservice.models.Field;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
+import com.tarento.formservice.models.InstitueFormExcelDto;
 import com.tarento.formservice.repository.ElasticSearchRepository;
 import com.tarento.formservice.repository.RestService;
 import com.tarento.formservice.service.ActivityService;
@@ -62,6 +97,7 @@ import com.tarento.formservice.utils.AppConfiguration;
 import com.tarento.formservice.utils.CloudStorage;
 import com.tarento.formservice.utils.Constants;
 import com.tarento.formservice.utils.DateUtils;
+import com.tarento.formservice.utils.ExcelHelper;
 import com.tarento.formservice.utils.WorkflowUtil;
 import com.tarento.formservice.utils.NotificationService.NotificationUtil;
 
@@ -84,6 +120,9 @@ public class FormsServiceImpl implements FormsService {
 
     @Autowired
     private ActivityService activityService;
+    
+    @Autowired
+    InstituteCoursesDao instituteCoursesDao;
 
     @Override
     public Form createForm(FormDetail newForm) throws IOException {
@@ -298,73 +337,75 @@ public class FormsServiceImpl implements FormsService {
         return formsDao.updateFormData(jsonMap, id);
     }
 
-    @Override
-    public List<Map<String, Object>> getApplications(UserInfo userInfo, SearchRequestDto searchRequestDto) {
-        try {
-            // query builder
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
-            BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
-            setRoleBasedSearchObject(userInfo, searchRequestDto);
-            setRoleBasedExcludeSearchObject(userInfo, searchRequestDto);
-            if (searchRequestDto != null) {
-                if (searchRequestDto.getSearchObjects() != null) {
-                    for (SearchObject objects : searchRequestDto.getSearchObjects()) {
-                        String key = objects.getKey();
-                        Object values = objects.getValues();
-                        if (Constants.ElasticSearchFields.MAPPING.containsKey(key)) {
-                            boolBuilder.must().add(
-                                    QueryBuilders.termsQuery(Constants.ElasticSearchFields.MAPPING.get(key), values));
-                            /*
-                             * boolBuilder.must()
-                             * .add(QueryBuilders.matchQuery(Constants.ElasticSearchFields.MAPPING.get(key),
-                             * values));
-                             */
-                        } else {
-                            // In the case where UI tries to send random values which are not configured in
-                            // our ES Mapping, the API should send empty set as a response.
-                            // So here, we just query as empty set and we know that we will get empty set as
-                            // a response
-                            boolBuilder.must().add(QueryBuilders.matchQuery(Constants.EMPTY_SET, Constants.EMPTY_SET));
-                        }
-                    }
-                }
-                if (searchRequestDto.getExcludeObject() != null) {
-                    for (SearchObject objects : searchRequestDto.getExcludeObject()) {
-                        String key = objects.getKey();
-                        Object values = objects.getValues();
-                        if (Constants.ElasticSearchFields.MAPPING.containsKey(key)) {
-                            boolBuilder.mustNot().add(
-                                    QueryBuilders.termsQuery(Constants.ElasticSearchFields.MAPPING.get(key), values));
-                            /*
-                             * boolBuilder.must()
-                             * .add(QueryBuilders.matchQuery(Constants.ElasticSearchFields.MAPPING.get(key),
-                             * values));
-                             */
-                        } else {
-                            // In the case where UI tries to send random values which are not configured in
-                            // our ES Mapping, the API should send empty set as a response.
-                            // So here, we just query as empty set and we know that we will get empty set as
-                            // a response
-                            boolBuilder.must().add(QueryBuilders.matchQuery(Constants.EMPTY_SET, Constants.EMPTY_SET));
-                        }
-                    }
-                }
-            }
-            searchSourceBuilder.query(boolBuilder).sort(Constants.TIMESTAMP, SortOrder.DESC);
-            // es call
-            SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex()).source(searchSourceBuilder);
-            LOGGER.info("Search Request : " + searchRequest);
-            List<Map<String, Object>> response = formsDao.searchResponse(searchRequest);
-            if (searchRequestDto != null && searchRequestDto.getFilterObjects() != null) {
-                return filterSearchResults(response, searchRequestDto.getFilterObjects(), userInfo);
-            }
-            return response;
+   
 
-        } catch (Exception e) {
-            LOGGER.error(String.format(Constants.EXCEPTION, "getApplications", e.getMessage()));
-        }
-        return null;
-    }
+    @Override
+	public List<Map<String, Object>> getApplications(UserInfo userInfo, SearchRequestDto searchRequestDto) {
+		try {
+			// query builder
+			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
+			BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
+			setRoleBasedSearchObject(userInfo, searchRequestDto);
+			setRoleBasedExcludeSearchObject(userInfo, searchRequestDto);
+			if (searchRequestDto != null) {
+				if (searchRequestDto.getSearchObjects() != null) {
+					for (SearchObject objects : searchRequestDto.getSearchObjects()) {
+						String key = objects.getKey();
+						Object values = objects.getValues();
+						if (Constants.ElasticSearchFields.MAPPING.containsKey(key)) {
+							boolBuilder.must().add(
+									QueryBuilders.termsQuery(Constants.ElasticSearchFields.MAPPING.get(key), values));
+							/*
+							 * boolBuilder.must()
+							 * .add(QueryBuilders.matchQuery(Constants.ElasticSearchFields.MAPPING.get(key),
+							 * values));
+							 */
+						} else {
+							// In the case where UI tries to send random values which are not configured in
+							// our ES Mapping, the API should send empty set as a response.
+							// So here, we just query as empty set and we know that we will get empty set as
+							// a response
+							boolBuilder.must().add(QueryBuilders.matchQuery(Constants.EMPTY_SET, Constants.EMPTY_SET));
+						}
+					}
+				}
+				if (searchRequestDto.getExcludeObject() != null) {
+					for (SearchObject objects : searchRequestDto.getExcludeObject()) {
+						String key = objects.getKey();
+						Object values = objects.getValues();
+						if (Constants.ElasticSearchFields.MAPPING.containsKey(key)) {
+							boolBuilder.mustNot().add(
+									QueryBuilders.termsQuery(Constants.ElasticSearchFields.MAPPING.get(key), values));
+							/*
+							 * boolBuilder.must()
+							 * .add(QueryBuilders.matchQuery(Constants.ElasticSearchFields.MAPPING.get(key),
+							 * values));
+							 */
+						} else {
+							// In the case where UI tries to send random values which are not configured in
+							// our ES Mapping, the API should send empty set as a response.
+							// So here, we just query as empty set and we know that we will get empty set as
+							// a response
+							boolBuilder.must().add(QueryBuilders.matchQuery(Constants.EMPTY_SET, Constants.EMPTY_SET));
+						}
+					}
+				}
+			}
+			searchSourceBuilder.query(boolBuilder).sort(Constants.TIMESTAMP, SortOrder.DESC);
+			// es call
+			SearchRequest searchRequest = new SearchRequest(appConfig.getFormDataIndex()).source(searchSourceBuilder);
+			LOGGER.info("Search Request : " + searchRequest);
+			List<Map<String, Object>> response = formsDao.searchResponse(searchRequest);
+			if (searchRequestDto != null && searchRequestDto.getFilterObjects() != null) {
+				return filterSearchResults(response, searchRequestDto.getFilterObjects(), userInfo);
+			}
+			return response;
+
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "getApplications", e.getMessage()));
+		}
+		return null;
+	}
 
     @Override
     public String getInstitutesData(UserInfo userInfo, InstituteDownloadRequestDto instituteDownloadRequestDto) {
@@ -986,6 +1027,7 @@ public class FormsServiceImpl implements FormsService {
         }
         return null;
     }
+    
 
     public ConcurrentMap<Long, State> fetchAllStates() {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(1000);
@@ -1004,7 +1046,7 @@ public class FormsServiceImpl implements FormsService {
         LOGGER.info("Search Request : " + searchRequest);
         return formsDao.fetchAllStateMatrix(searchRequest);
     }
-
+    
     @Override
     public Boolean updateApplicationStatus(IncomingData incomingData, UserInfo userInfo, String status) {
         try {
@@ -1049,57 +1091,72 @@ public class FormsServiceImpl implements FormsService {
 
     }
 
-    @Override
-    public Boolean submitInspection(IncomingData incomingData, UserInfo userInfo) {
-        try {
-            Map<String, Object> applicationMap = getApplicationById(incomingData.getApplicationId(), userInfo);
-            if (applicationMap != null) {
-                IncomingData applicationData = objectMapper.convertValue(applicationMap, IncomingData.class);
-                // get workflow next status
-                WorkflowDto workflowDto = new WorkflowDto(applicationData, userInfo,
-                        Constants.WorkflowActions.COMPLETED_INSPECTION);
-                WorkflowUtil.getNextStateForMyRequest(workflowDto);
 
-                // update assignee inspection status in data object
-                Boolean isLeadIns = Boolean.FALSE;
-                Boolean inspectionCompleted = Boolean.TRUE;
-                if (applicationData != null && applicationData.getInspection() != null
-                        && applicationData.getInspection().getAssignedTo() != null) {
-                    for (Assignee assignee : applicationData.getInspection().getAssignedTo()) {
-                        if (assignee.getId().equals(userInfo.getId()) && assignee.getLeadInspector() != null
-                                && assignee.getLeadInspector()) {
-                            isLeadIns = Boolean.TRUE;
-                            assignee.setStatus(workflowDto.getNextState());
-                            assignee.setConsentDate(DateUtils.getYyyyMmDdInUTC());
-                        } else if (StringUtils.isBlank(assignee.getStatus())) {
-                            inspectionCompleted = Boolean.FALSE;
-                        }
-                    }
-                }
-                // allow only lead inspector to submit inspection details
-                if (isLeadIns) {
-                    incomingData.setInspection(applicationData.getInspection());
-                    incomingData.setInspectionDate(DateUtils.getYyyyMmDdInUTC());
-                    incomingData.getInspection().setInspectionDate(DateUtils.getYyyyMmDdInUTC());
-                    String nextStatus = inspectionCompleted ? workflowDto.getNextState()
-                            : Status.LEADINSCOMPLETED.name();
-                    incomingData.getInspection().setStatus(nextStatus);
-                    if (inspectionCompleted) {
-                        incomingData.setStatus(workflowDto.getNextState());
-                        incomingData.setInspectionCompletedDate(DateUtils.getYyyyMmDdInUTC());
-                        incomingData.getInspection().setInspectionCompletedDate(DateUtils.getYyyyMmDdInUTC());
-                    }
-                    Boolean response = saveFormSubmitv1(incomingData, userInfo,
-                            inspectionCompleted ? Constants.WorkflowActions.COMPLETED_INSPECTION
-                                    : Constants.WorkflowActions.LEAD_INSPECTION_COMPLETED);
-                    return response;
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error(String.format(Constants.EXCEPTION, "submitInspection", e.getMessage()));
-        }
-        return Boolean.FALSE;
-    }
+   
+    @Override
+	public Boolean submitInspection(IncomingData incomingData, UserInfo userInfo) {
+		try {
+			Boolean inspectionCompleted = incomingData.getInspectionCompleted();
+			Map<String, Object> applicationMap = getApplicationById(incomingData.getApplicationId(), userInfo);
+			if (applicationMap != null) {
+				IncomingData applicationData = objectMapper.convertValue(applicationMap, IncomingData.class);
+				// get workflow next status
+				WorkflowDto workflowDto = new WorkflowDto(applicationData, userInfo,
+						Constants.WorkflowActions.COMPLETED_INSPECTION);
+				WorkflowUtil.getNextStateForMyRequest(workflowDto);
+
+				// update assignee inspection status in data object
+				Boolean isLeadIns = Boolean.FALSE;
+
+				if (applicationData != null && applicationData.getInspection() != null
+						&& applicationData.getInspection().getAssignedTo() != null) {
+					for (Assignee assignee : applicationData.getInspection().getAssignedTo()) {
+						if (assignee.getId().equals(userInfo.getId()) && assignee.getLeadInspector() != null
+								&& assignee.getLeadInspector()) {
+							isLeadIns = Boolean.TRUE;
+							assignee.setStatus(workflowDto.getNextState());
+							if(incomingData.getInspectionCompleted()) {
+								assignee.setStatus(Constants.WorkflowActions.COMPLETED_INSPECTION);
+							}
+							
+							assignee.setConsentDate(DateUtils.getYyyyMmDdInUTC());
+						} /*else if (StringUtils.isBlank(assignee.getStatus())) {
+							inspectionCompleted = Boolean.FALSE;
+						}*/
+					}
+				}
+				
+				// allow only lead inspector to submit inspection details
+				//if (isLeadIns) {
+					incomingData.setInspection(applicationData.getInspection());
+					incomingData.setInspectionDate(DateUtils.getYyyyMmDdInUTC());
+					incomingData.getInspection().setInspectionDate(DateUtils.getYyyyMmDdInUTC());
+					
+					/*
+					String nextStatus = inspectionCompleted ? workflowDto.getNextState()
+							: Status.LEADINSCOMPLETED.name();
+					*/		
+					
+					String nextStatus = inspectionCompleted ? Status.INSCOMPLETED.name()
+							: Status.LEADINSCOMPLETED.name();
+					
+					incomingData.getInspection().setStatus(nextStatus);
+					if (inspectionCompleted) {
+						incomingData.setStatus(workflowDto.getNextState());
+						incomingData.setInspectionCompletedDate(DateUtils.getYyyyMmDdInUTC());
+						incomingData.getInspection().setInspectionCompletedDate(DateUtils.getYyyyMmDdInUTC());
+					}
+					Boolean response = saveFormSubmitv1(incomingData, userInfo,
+							inspectionCompleted ? Constants.WorkflowActions.COMPLETED_INSPECTION
+									: Constants.WorkflowActions.LEAD_INSPECTION_COMPLETED);
+					return response;
+				//}
+			}
+		} catch (Exception e) {
+			LOGGER.error(String.format(Constants.EXCEPTION, "submitInspection", e.getMessage()));
+		}
+		return Boolean.FALSE;
+	}
 
     /**
      * Creates an async operation to send notification & update activity logs on
@@ -1159,6 +1216,7 @@ public class FormsServiceImpl implements FormsService {
             return null;
         }
     }
+    
 
     @Override
     public Boolean consentApplication(Consent consent, UserInfo userInfo) {
@@ -1206,7 +1264,7 @@ public class FormsServiceImpl implements FormsService {
         }
         return Boolean.FALSE;
     }
-
+    
     @Override
     public void submitBulkInspection(List<IncomingData> inspectionDataList, UserInfo userInfo) {
         new Thread(() -> {
@@ -1232,6 +1290,7 @@ public class FormsServiceImpl implements FormsService {
             }
         }).start();
     }
+    
 
     @Override
     public List<Map<String, Object>> getAllPlainForms() {
@@ -1252,6 +1311,8 @@ public class FormsServiceImpl implements FormsService {
         }
         return null;
     }
+    
+
 
     @Override
     public List<Map<String, Object>> getPlainFormsById(String id) {
@@ -1273,5 +1334,68 @@ public class FormsServiceImpl implements FormsService {
         }
         return null;
     }
+
+
+
+	
+
+	
+	@Override
+	 public ByteArrayInputStream getInstituteFormData(Long orgId) {
+		
+		List<InstituteFormDataDto> dataList = new ArrayList<InstituteFormDataDto>();
+		
+		   
+			List<Object[]> dataListDto = instituteCoursesDao.findInstituteForm(orgId);
+		    
+		    for(Object[] dto : dataListDto) {
+		    	InstituteFormDataDto data = new InstituteFormDataDto();
+		    	data.setCenterCode(String.valueOf(dto[0]));
+		    	data.setDistrictCode(String.valueOf(dto[1]));
+		    	String emailId = String.valueOf(dto[2]);
+		    	
+		    	data.setInstituteName(emailId);
+		    	data.setDegree(String.valueOf(dto[3]));
+		    	data.setCourse(String.valueOf(dto[4]));
+		    	List<Map<String, Object>>  responseData = this.getApplicationForInstitues(emailId);
+		    	if(responseData != null && responseData.size()>0) {
+		    		for(Map<String, Object> mp : responseData) {
+		    			InstituteFormDataDto dInnernal = new InstituteFormDataDto();
+		    			try {
+							BeanUtils.copyProperties(dInnernal, data);
+							dInnernal.setFormsSubmitted(String.valueOf(mp.get("title")));
+							dInnernal.setFormsSavedAsDraft(String.valueOf(mp.get("status")));
+							dInnernal.setFormsSubmittedTimestamp(String.valueOf(mp.get("timestamp")));
+							dataList.add(dInnernal);
+							
+						} catch (IllegalAccessException | InvocationTargetException e) {
+							e.printStackTrace();
+						}
+		    		}
+		    	}else {
+		    		dataList.add(data);
+		    	}
+		    	
+		    	
+		    }
+
+		    ByteArrayInputStream in = ExcelHelper.instituteToExcel(dataList);
+		    return in;
+		  }
+	
+	public List<Map<String, Object>> getApplicationForInstitues(String emailId){
+		SearchRequestDto searchRequestDto = new SearchRequestDto();
+		SearchObject searchObject = new SearchObject();
+		searchObject.setKey("createdBy");
+		searchObject.setValues(emailId);
+		
+		List<SearchObject> searchObjects = new ArrayList<>();
+		searchObjects.add(searchObject);
+		
+		searchRequestDto.setSearchObjects(searchObjects);
+		List<Map<String, Object>>  responseData = this.getApplications(null, searchRequestDto);
+		
+		return responseData;
+	}
 
 }

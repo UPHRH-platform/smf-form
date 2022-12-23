@@ -31,6 +31,7 @@ public interface PathRoutes {
 		final String SAVE_PLAIN_FORM = "/v1/savePlainForm";
 		final String GET_ALL_PLAIN_FORMS = "/getAllPlainForms";
 		final String GET_PLAIN_FORM_BY_ID = "/getPlainFormById";
+		final String GET_INSTITUTE_FORM_DATA_EXCEL="/getInstituteFormDataInExcel";
 	}
 
 	public interface JsonFormServiceApi {
