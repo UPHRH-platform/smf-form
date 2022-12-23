@@ -6,17 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
+import com.tarento.formservice.model.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.tarento.formservice.model.AssignApplication;
-import com.tarento.formservice.model.Consent;
-import com.tarento.formservice.model.IncomingData;
-import com.tarento.formservice.model.KeyValueList;
-import com.tarento.formservice.model.ResponseData;
-import com.tarento.formservice.model.SearchRequestDto;
-import com.tarento.formservice.model.State;
-import com.tarento.formservice.model.StateMatrix;
-import com.tarento.formservice.model.UserInfo;
 import com.tarento.formservice.models.Form;
 import com.tarento.formservice.models.FormDetail;
 
@@ -43,6 +35,8 @@ public interface FormsService {
 	List<Map<String, Object>> getPlainFormsById(String id);
 	
 	List<Map<String, Object>> getAllPlainForms();
+
+	String getInstitutesData(UserInfo userInfo, InstituteDownloadRequestDto instituteDownloadRequestDto);
 
 	KeyValueList getApplicationsStatusCount(UserInfo userInfo);
 

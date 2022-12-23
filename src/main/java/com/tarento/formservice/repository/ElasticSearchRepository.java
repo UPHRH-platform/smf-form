@@ -25,6 +25,8 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.core.CountRequest;
+import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -262,6 +264,17 @@ public class ElasticSearchRepository {
 		SearchResponse response = null;
 		try {
 			response = client.search(searchRequest, RequestOptions.DEFAULT);
+		} catch (IOException e) {
+			LOGGER.error(marker, "Encountered an error while connecting : ", e);
+			LOGGER.error(marker, "Error Message to report : {}", e.getMessage());
+		}
+		return response;
+	}
+
+	public CountResponse executeCountRequest(CountRequest countRequest) {
+		CountResponse response = null;
+		try {
+			response = client.count(countRequest, RequestOptions.DEFAULT);
 		} catch (IOException e) {
 			LOGGER.error(marker, "Encountered an error while connecting : ", e);
 			LOGGER.error(marker, "Error Message to report : {}", e.getMessage());
