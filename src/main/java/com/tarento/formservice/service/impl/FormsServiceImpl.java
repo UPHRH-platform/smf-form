@@ -286,13 +286,14 @@ public class FormsServiceImpl implements FormsService {
         } else {
             boolQuery.must(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.PUBLISH.name()));
         }
+        boolQuery.mustNot(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.DELETED.name()));
 
         return boolQuery;
     }
 
     private SearchRequest buildQueryForGetQueryById(Long id) {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().size(0)
-                .query(QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("id", id)))
+                .query(QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("id", id)).mustNot(QueryBuilders.matchPhraseQuery(Constants.STATUS, Status.DELETED.name())))
                 .aggregation(AggregationBuilders.terms("UniqueFormId").field("id").size(100)
                         .subAggregation(AggregationBuilders.topHits("LatestVersion").from(0).size(1)
                                 .version(Boolean.FALSE).explain(Boolean.FALSE)

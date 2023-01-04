@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum Status {
 	DRAFT("Draft"), NEW("New"), REVIEW("Review"), PUBLISH("Publish"), UNPUBLISH("Unpublish"), INSCOMPLETED(
-			"INSCOMPLETED"), LEADINSCOMPLETED("LEADINSCOMPLETED"), SENTFORINS("SENTFORINS");
+			"INSCOMPLETED"), LEADINSCOMPLETED("LEADINSCOMPLETED"), SENTFORINS("SENTFORINS"),
+	DELETED("Deleted"),DUPLICATE("Duplicate");
 
 	private String value;
 
