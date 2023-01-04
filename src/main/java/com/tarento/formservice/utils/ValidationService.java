@@ -174,7 +174,9 @@ public class ValidationService {
 		} else if (StringUtils.isNotBlank(form.getStatus())
 				&& form.getStatus().equalsIgnoreCase(Status.UNPUBLISH.name())) {
 			form.setStatus(Status.UNPUBLISH.name());
-		} else {
+		} else if (StringUtils.isNotBlank(form.getStatus()) && form.getStatus().equalsIgnoreCase(Status.DELETED.name())){
+			form.setStatus(Status.DELETED.name());
+		}else {
 			form.setStatus(Status.PUBLISH.name());
 		}
 	}
