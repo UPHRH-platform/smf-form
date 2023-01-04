@@ -79,20 +79,6 @@ public class FormsController {
 		return ResponseGenerator.successResponse(formsService.getFormById(formId));
 	}
 	
-	@PostMapping(value = PathRoutes.FormServiceApi.GET_FORM_BY_ID, produces = MediaType.APPLICATION_JSON_VALUE)
-	public String deleteFormById(
-			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo,
-			@RequestParam(value = Constants.ID, required = true) String id) throws JsonProcessingException {
-		Long formId = null;
-		if (id.length() <= 13) {
-			formId = Long.parseLong(id);
-		} else if (id instanceof String) {
-			FormData fData = decodeValue(String.valueOf(id));
-			formId = fData.getId();
-		}
-		return ResponseGenerator.successResponse(formsService.getFormById(formId));
-	}
-
 	@PostMapping(value = PathRoutes.FormServiceApi.CREATE_FORM)
 	public String createForm(@RequestBody FormDetail form,
 			@RequestHeader(value = Constants.Parameters.X_USER_INFO, required = false) String xUserInfo)
